@@ -84,7 +84,7 @@ Key components:
 ### Compile
 
 ```bash
-g++ main.cpp -o game
+g++ comp2113.cpp -o game
 ```
 
 ### Run
