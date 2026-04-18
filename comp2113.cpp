@@ -48,6 +48,69 @@ void showHelp() {
     cout << "=====================================\n\n";
 }
 
+// =====Catch princess=====
+void princessRoomMinigame(Player &p, bool isTrial) {
+    const int roomSize = 15;
+    char room[roomSize][roomSize];
+    srand(time(0));
+
+    int maxSteps = isTrial ? 15 : (12 + (p.hp + 9) / 10); 
+
+    for (int i = 0; i < roomSize; i++) {
+        for (int j = 0; j < roomSize; j++) {
+            if (i == 0 || i == roomSize - 1 || j == 0 || j == roomSize - 1) room[i][j] = '#';
+            else {
+                bool isWall = (rand() % 100 < 30);
+                if (i == roomSize/2 || j == roomSize/2 || i == j || i == (roomSize-1-j)) isWall = false;
+                room[i][j] = (isWall ? '#' : '.');
+            }
+        }
+    }
+
+    int rpx = 1, rpy = 1; 
+    int rgx = roomSize/2, rgy = roomSize/2;
+    int stepsUsed = 0;
+
+    while (true) {
+        cout << "\n--- PRINCESS CHASE ---  Steps Left: " << (maxSteps - stepsUsed) << "\n";
+        for (int i = 0; i < roomSize; i++) {
+            for (int j = 0; j < roomSize; j++) {
+                if (i == rpx && j == rpy) cout << "P ";
+                else if (i == rgx && j == rgy) cout << "G ";
+                else cout << room[i][j] << " ";
+            }
+            cout << endl;
+        }
+
+        if (rpx == rgx && rpy == rgy) {
+            cout << "\n🎉 VICTORY! You caught the princess!\n";
+            return;
+        }
+        if (stepsUsed >= maxSteps) {
+            cout << "\n⌛ FAILED! The princess ran away...\n";
+            p.hp = 0; return;
+        }
+
+        char m; cout << "Move (WASD): "; cin >> m;
+        int nx = rpx, ny = rpy;
+        m = tolower(m);
+        if (m == 'w') nx--; else if (m == 's') nx++;
+        else if (m == 'a') ny--; else if (m == 'd') ny++;
+
+        if (nx > 0 && nx < roomSize-1 && ny > 0 && ny < roomSize-1 && room[nx][ny] != '#') {
+            rpx = nx; rpy = ny;
+            stepsUsed++;
+        }
+
+        if (stepsUsed > 0 && stepsUsed % 2 == 0) {
+            int dx[] = {-1, 1, 0, 0}, dy[] = {0, 0, -1, 1};
+            int dir = rand() % 4;
+            int ngx = rgx + dx[dir], ngy = rgy + dy[dir];
+            if (room[ngx][ngy] == '.') { rgx = ngx; rgy = ngy; }
+        }
+    }
+}
+
 // ===== Difficulty =====
 void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) {
     int diff;
@@ -57,7 +120,12 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
     cout << "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)\n";
     cout << "4. Hell (20x20 map, enemy atk 12-18, boss atk 18-25)\n";
     cin >> diff;
-
+    if (diff == 0) {
+        Player tempP; 
+        tempP.hasKey = true; 
+        princessRoomMinigame(tempP, true); 
+        exit(0); 
+    }
     if (diff == 1) { SIZE = 9; enemyMin=5; enemyMax=10; bossMin=10; bossMax=15; }
     else if (diff == 2) { SIZE = 12; enemyMin=8; enemyMax=12; bossMin=12; bossMax=18; }
     else if (diff == 3) { SIZE = 15; enemyMin=10; enemyMax=15; bossMin=15; bossMax=22; }
@@ -311,11 +379,11 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
         if (!p.hasKey) {
             cout << "🚫 You have not found the key yet! Cannot rescue princess.\n";
         } else {
-            cout << "🎉 You rescued the princess! Victory!\n";
+            princessRoomMinigame(p, false);
+            grid[px][py] = '.';
         }
         return;
     }
-
     if (grid[px][py] == '.') event(p, enemyMin, enemyMax, bossMin, bossMax);
 }
 
