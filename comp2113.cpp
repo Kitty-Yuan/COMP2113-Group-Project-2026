@@ -4,6 +4,8 @@
 #include <ctime>
 #include <algorithm>
 #include <limits>
+#include <ncurses.h>
+#include <sstream>
 using namespace std;
 
 int SIZE; 
@@ -23,29 +25,84 @@ struct Player {
 
 int px = 0, py = 0;
 int gx, gy;
+int cursorY = 0; // Global cursor for display
+int cursorX = 0;
+
+
+int getCenteredX(const string &text) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    return max(0, (maxX - static_cast<int>(text.size())) / 2);
+}
+
+int getCenteredStartY(int totalLines) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    return max(0, (maxY - totalLines) / 2);
+}
+
+void centerPrint(int y, const string &text) {
+    mvprintw(y, getCenteredX(text), "%s", text.c_str());
+}
+
+char normalizeMoveKey(int key) {
+    if (key == 'w' || key == 'W' || key == KEY_UP) return 'w';
+    if (key == 's' || key == 'S' || key == KEY_DOWN) return 's';
+    if (key == 'a' || key == 'A' || key == KEY_LEFT) return 'a';
+    if (key == 'd' || key == 'D' || key == KEY_RIGHT) return 'd';
+    return '\0';
+}
+
+
+
+
+void ncWait() {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    string hint = "Press any key to continue...";
+    mvprintw(maxY - 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+    refresh();
+    wgetch(stdscr);
+}
 
 // ===== Intro =====
 void showIntro() {
-    cout << "===== Knight Maze RPG =====\n";
-    cout << "Press Enter to continue...\n";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cout << "You are a brave knight, sent into a dangerous maze to rescue the princess.\n";
-    cout << "Press Enter to continue...\n"; cin.get();
-    cout << "In the maze, you will encounter traps, enemies, merchants, and a Boss.\n";
-    cout << "Press Enter to continue...\n"; cin.get();
-    cout << "You must find the key and rescue the princess!\n\n";
-    cout << "Press Enter to continue...\n"; cin.get();
+    clear();
+    vector<string> lines = {
+        "===== Knight Maze RPG =====",
+        "",
+        "You are a brave knight, sent into a dangerous maze to rescue the princess.",
+        "",
+        "In the maze, you will encounter traps, enemies, merchants, and a Boss.",
+        "",
+        "You must find the key and rescue the princess!"
+    };
+    int startY = getCenteredStartY(static_cast<int>(lines.size()));
+    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+        centerPrint(startY + i, lines[i]);
+    }
+    refresh();
+    ncWait();
 }
 
 void showHelp() {
-    cout << "\n📖 Help:\n";
-    cout << "- Movement: Enter w a s d to move.\n";
-    cout << "- Battle: Choose 1 Normal Attack, 2 Strong Attack, 3 Defend.\n";
-    cout << "- Merchant: Buy or rob (risk).\n";
-    cout << "- Chest: May contain gold, potion, or monster.\n";
-    cout << "- Level up: EXP reaches 100 → auto level up.\n";
-    cout << "- Victory: Find the key and rescue the princess.\n";
-    cout << "=====================================\n\n";
+    clear();
+    vector<string> lines = {
+        "===== HELP =====",
+        "",
+        "- Movement: Enter w a s d or arrow keys to move.",
+        "- Battle: Choose 1 Normal Attack, 2 Strong Attack, 3 Defend.",
+        "- Merchant: Buy or rob (risk).",
+        "- Chest: May contain gold, potion, or monster.",
+        "- Level up: EXP reaches 100 = auto level up.",
+        "- Victory: Find the key and rescue the princess."
+    };
+    int startY = getCenteredStartY(static_cast<int>(lines.size()));
+    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+        centerPrint(startY + i, lines[i]);
+    }
+    refresh();
+    ncWait();
 }
 
 // =====Catch princess=====
@@ -72,28 +129,47 @@ void princessRoomMinigame(Player &p, bool isTrial) {
     int stepsUsed = 0;
 
     while (true) {
-        cout << "\n--- PRINCESS CHASE ---  Steps Left: " << (maxSteps - stepsUsed) << "\n";
+        clear();
+        int mapWidth = roomSize * 2;
+        int blockHeight = roomSize + 4;
+        int startY = getCenteredStartY(blockHeight);
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        int startX = max(0, (maxX - mapWidth) / 2);
+        string title = "PRINCESS CHASE - Steps Left: " + to_string(maxSteps - stepsUsed);
+        centerPrint(startY, title);
+        
         for (int i = 0; i < roomSize; i++) {
+            string row;
             for (int j = 0; j < roomSize; j++) {
-                if (i == rpx && j == rpy) cout << "P ";
-                else if (i == rgx && j == rgy) cout << "G ";
-                else cout << room[i][j] << " ";
+                if (i == rpx && j == rpy) row += 'P';
+                else if (i == rgx && j == rgy) row += 'G';
+                else row += room[i][j];
+                row += ' ';
             }
-            cout << endl;
+            mvprintw(startY + 2 + i, startX, "%s", row.c_str());
         }
 
         if (rpx == rgx && rpy == rgy) {
-            cout << "\n🎉 VICTORY! You caught the princess!\n";
+            centerPrint(startY + roomSize + 3, "VICTORY! You caught the princess!");
+            refresh();
+            ncWait();
             return;
         }
         if (stepsUsed >= maxSteps) {
-            cout << "\n⌛ FAILED! The princess ran away...\n";
-            p.hp = 0; return;
+            centerPrint(startY + roomSize + 3, "FAILED! The princess ran away...");
+            p.hp = 0;
+            refresh();
+            ncWait();
+            return;
         }
 
-        char m; cout << "Move (WASD): "; cin >> m;
+        centerPrint(startY + roomSize + 3, "Move (W/A/S/D or Arrow Keys):");
+        refresh();
+        
+        int key = wgetch(stdscr);
+        char m = normalizeMoveKey(key);
         int nx = rpx, ny = rpy;
-        m = tolower(m);
         if (m == 'w') nx--; else if (m == 's') nx++;
         else if (m == 'a') ny--; else if (m == 'd') ny++;
 
@@ -113,43 +189,65 @@ void princessRoomMinigame(Player &p, bool isTrial) {
 
 // ===== Difficulty =====
 void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) {
-    int diff;
-    cout << "Choose difficulty (1-4):\n";
-    cout << "1. Easy (9x9 map, enemy atk 5-10, boss atk 10-15)\n";
-    cout << "2. Normal (12x12 map, enemy atk 8-12, boss atk 12-18)\n";
-    cout << "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)\n";
-    cout << "4. Hell (20x20 map, enemy atk 12-18, boss atk 18-25)\n";
-    cin >> diff;
-    if (diff == 0) {
-        Player tempP; 
-        tempP.hasKey = true; 
-        princessRoomMinigame(tempP, true); 
-        exit(0); 
+    int diff = 0;
+    
+    while (diff < 1 || diff > 4) {
+        clear();
+        vector<string> lines = {
+            "Choose difficulty (1-4):",
+            "1. Easy (9x9 map, enemy atk 5-10, boss atk 10-15)",
+            "2. Normal (12x12 map, enemy atk 8-12, boss atk 12-18)",
+            "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)",
+            "4. Hell (20x20 map, enemy atk 12-18, boss atk 18-25)",
+            "Enter choice: 1 / 2 / 3 / 4"
+        };
+        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+            centerPrint(startY + i, lines[i]);
+        }
+        refresh();
+        
+        int ch = wgetch(stdscr);
+        if (ch >= '1' && ch <= '4') {
+            diff = ch - '0';
+        }
     }
+    
     if (diff == 1) { SIZE = 9; enemyMin=5; enemyMax=10; bossMin=10; bossMax=15; }
     else if (diff == 2) { SIZE = 12; enemyMin=8; enemyMax=12; bossMin=12; bossMax=18; }
     else if (diff == 3) { SIZE = 15; enemyMin=10; enemyMax=15; bossMin=15; bossMax=22; }
     else { SIZE = 20; enemyMin=12; enemyMax=18; bossMin=18; bossMax=25; }
 
     gx = SIZE - 1; gy = SIZE - 1;
-    cout << "You chose Lv" << diff << "! Map size " << SIZE << "x" << SIZE << "\n";
+    clear();
+    string result = "You chose Lv" + to_string(diff) + "! Map size " + to_string(SIZE) + "x" + to_string(SIZE);
+    centerPrint(getCenteredStartY(1), result);
+    refresh();
+    ncWait();
 }
 
 // ===== Level Up =====
 void levelUp(Player &p) {
+    int y = 0;
     while (p.exp >= 100) {
         p.exp -= 100;
         p.level++;
         p.hp += 20;
         p.atk += 5;
         p.def += 3;
-        cout << "✨ Level Up! Lv " << p.level << " HP+20 ATK+5 DEF+3\n";
+        clear();
+        mvprintw(y++, 0, "Level Up! Lv %d HP+20 ATK+5 DEF+3", p.level);
+        refresh();
+        napms(1000); // Wait 1 second
     }
 }
 
 // ===== Tutorial =====
 void tutorial(Player &p) {
-    cout << "\n===== Tutorial =====\n";
+    clear();
+    centerPrint(getCenteredStartY(1), "===== TUTORIAL =====");
+    refresh();
+    ncWait();
 
     char demoMap[5][5] = {
         {'P','.','#','.','.'},
@@ -160,172 +258,229 @@ void tutorial(Player &p) {
     };
 
     bool hasKey = false;
-    int x=0,y=0;
+    int x=0, y_pos=0;
 
     while (true) {
+        clear();
+        int y = 0;
+        int mapWidth = 10;
+        int blockHeight = 10;
+        int startY = getCenteredStartY(blockHeight + 3);
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        int startX = max(0, (maxX - mapWidth) / 2);
+        
         // Print map
-        cout << "\n🗺 Tutorial Map\n";
+        centerPrint(startY + y++, "Tutorial Map:");
         for (int i=0;i<5;i++) {
+            string row;
             for (int j=0;j<5;j++) {
-                if (i==x && j==y) cout << "P ";
-                else cout << demoMap[i][j] << " ";
+                if (i==x && j==y_pos) row += 'P';
+                else row += demoMap[i][j];
+                row += ' ';
             }
-            cout << endl;
+            mvprintw(startY + y, startX, "%s", row.c_str());
+            y++;
         }
 
         // Show stats
-        cout << "\nHP=" << p.hp << " ATK=" << p.atk << " DEF=" << p.def
-             << " GOLD=" << p.gold << " EXP=" << p.exp << " LV=" << p.level
-             << " KEY=" << (hasKey ? "Y" : "N") << "\n";
-
+        string stats = "HP=" + to_string(p.hp) +
+                       " ATK=" + to_string(p.atk) +
+                       " DEF=" + to_string(p.def) +
+                       " GOLD=" + to_string(p.gold) +
+                       " EXP=" + to_string(p.exp) +
+                       " LV=" + to_string(p.level) +
+                       " KEY=" + (hasKey ? string("Y") : string("N"));
+        centerPrint(startY + y++, stats);
+        
         // Input move
-        cout << "\nMove (w a s d): ";
-        char m; cin >> m;
-        if (cin.fail() || (m!='w'&&m!='a'&&m!='s'&&m!='d')) {
-            cin.clear(); cin.ignore(10000,'\n');
-            cout << "Invalid input! Need help? Type help.\n";
-            string cmd; cin >> cmd;
-            if (cmd=="help") showHelp();
+        centerPrint(startY + y++, "Move (W/A/S/D or Arrow Keys):");
+        refresh();
+        
+        int key = wgetch(stdscr);
+        char m = normalizeMoveKey(key);
+        if (m == '\0') {
             continue;
         }
 
-        int nx=x, ny=y;
+        int nx=x, ny=y_pos;
         if (m=='w') nx--; else if (m=='s') nx++;
         else if (m=='a') ny--; else if (m=='d') ny++;
+        
         if (nx<0||nx>=5||ny<0||ny>=5||demoMap[nx][ny]=='#') {
-            cout << "🧱 Blocked!\n"; continue;
+            continue;
         }
 
-        x=nx; y=ny;
-        cout << "👉 Entered new area...\n";
+        x=nx; y_pos=ny;
 
-        if (demoMap[x][y]=='K') {
-            cout << "🔑 You found the key!\n";
-            hasKey=true; demoMap[x][y]='.';
+        if (demoMap[x][y_pos]=='K') {
+            clear();
+            centerPrint(getCenteredStartY(1), "You found the key!");
+            hasKey=true; 
+            demoMap[x][y_pos]='.';
+            refresh();
+            napms(500);
         }
-        else if (demoMap[x][y]=='B') {
-            cout << "⚔️ Enemy encountered!\n";
+        else if (demoMap[x][y_pos]=='B') {
+            clear();
+            centerPrint(getCenteredStartY(1), "Enemy encountered!");
+            refresh();
+            napms(500);
+            
             int enemyHP=20;
             int minPower=5,maxPower=7;
             while (enemyHP>0 && p.hp>0) {
-                int choice;
-                cout << "\nChoose action: 1 Normal 2 Strong 3 Defend\n";
-                cin >> choice;
-                if (cin.fail() || (choice!=1 && choice!=2 && choice!=3)) {
-                    cin.clear(); cin.ignore(10000,'\n');
-                    cout << "Invalid input! Need help? Type help.\n";
-                    string cmd; cin >> cmd;
-                    if (cmd=="help") showHelp();
-                    continue;
-                }
+                clear();
+                y = 0;
+                mvprintw(y++, 0, "BATTLE - Your HP: %d | Enemy HP: %d", p.hp, enemyHP);
+                mvprintw(y++, 0, "Choose: 1) Normal  2) Strong  3) Defend");
+                refresh();
+                
+                int choice = wgetch(stdscr);
+                
                 int playerAttack=0;
-                if (choice==1) playerAttack=rand()%p.atk+1;
-                else if (choice==2 && rand()%100<50) playerAttack=p.atk+rand()%5;
-                else if (choice==3){p.hp+=5; cout<<"Defend +5HP!\n";}
+                if (choice=='1') playerAttack=rand()%p.atk+1;
+                else if (choice=='2' && rand()%100<50) playerAttack=p.atk+rand()%5;
+                else if (choice=='3'){p.hp+=5;}
+                
                 enemyHP-=playerAttack;
-                if(playerAttack>0) cout<<"You dealt "<<playerAttack<<" damage!\n";
-                if(enemyHP<=0){cout<<"🎉 Enemy defeated!\n"; p.gold+=10; p.exp+=20; break;}
+                
+                clear();
+                y = 0;
+                if(playerAttack>0) mvprintw(y++, 0, "You dealt %d damage!", playerAttack);
+                if(enemyHP<=0){
+                    mvprintw(y++, 0, "Enemy defeated!");
+                    p.gold+=10; 
+                    p.exp+=20; 
+                    refresh();
+                    napms(500);
+                    break;
+                }
+                
                 int edmg=(rand()%(maxPower-minPower+1))+minPower;
-                if(choice==3) edmg-=p.def;
+                if(choice=='3') edmg-=p.def;
                 if(edmg<1) edmg=1;
                 p.hp-=edmg;
-                cout<<"Enemy dealt "<<edmg<<" damage!\n";
+                mvprintw(y++, 0, "Enemy dealt %d damage!", edmg);
+                refresh();
+                napms(500);
             }
-            demoMap[x][y]='.';
+            demoMap[x][y_pos]='.';
         }
-        else if (demoMap[x][y]=='G') {
+        else if (demoMap[x][y_pos]=='G') {
+            clear();
             if (!hasKey) {
-                cout << "🚫 You have not found the key yet! Cannot rescue princess.\n";
+                centerPrint(getCenteredStartY(1), "You have not found the key yet! Cannot rescue princess.");
+                refresh();
+                napms(500);
                 continue;
             } else {
-                cout << "🎉 You rescued the princess! Tutorial complete!\n";
+                centerPrint(getCenteredStartY(1), "You rescued the princess! Tutorial complete!");
+                refresh();
+                ncWait();
                 break;
             }
         }
     }
-
-    cout << "Press Enter to start the real game...\n";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cin.get();
 }
 
 // ===== Battle System =====
 void fight(Player &p, int enemyMin, int enemyMax) {
-    cout << "\n⚔️ You encountered an enemy!\n";
+    int y = getCenteredStartY(4);
+    clear();
+    centerPrint(y++, "You encountered an enemy!");
+    centerPrint(y++, "Enemy attack range: " + to_string(enemyMin) + " - " + to_string(enemyMax));
+    refresh();
+    napms(1000);
+    
     int enemyHP = 30 + rand() % 20;
-    cout << "Enemy attack range: " << enemyMin << " - " << enemyMax << "\n";
 
     while (enemyHP > 0 && p.hp > 0) {
-        int choice;
-        cout << "\nChoose action: 1 Normal 2 Strong 3 Defend\n";
-        cin >> choice;
-        if (cin.fail() || (choice!=1 && choice!=2 && choice!=3)) {
-            cin.clear(); cin.ignore(10000,'\n');
-            cout << "Invalid input! Need help? Type help.\n";
-            string cmd; cin >> cmd;
-            if (cmd=="help") showHelp();
-            continue;
-        }
-
+        clear();
+        y = getCenteredStartY(4);
+        centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Enemy HP: " + to_string(enemyHP));
+        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+        refresh();
+        
+        int choice = wgetch(stdscr);
+        
         int playerAttack = 0;
-        if (choice == 1) playerAttack = rand() % p.atk + 1;
-        else if (choice == 2 && rand() % 100 < 50) playerAttack = p.atk + rand() % 5;
-        else if (choice == 3) { p.hp += 5; cout << "Defend +5HP!\n"; }
+        if (choice == '1') playerAttack = rand() % p.atk + 1;
+        else if (choice == '2' && rand() % 100 < 50) playerAttack = p.atk + rand() % 5;
+        else if (choice == '3') { p.hp += 5; }
 
         enemyHP -= playerAttack;
-        if (playerAttack > 0) cout << "You dealt " << playerAttack << " damage!\n";
+        
+        clear();
+        y = getCenteredStartY(4);
+        if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
+        else centerPrint(y++, "Attack missed!");
 
         if (enemyHP <= 0) {
-            cout << "🎉 Enemy defeated! +20 Gold, +50 EXP\n";
+            centerPrint(y++, "Enemy defeated! +20 Gold, +50 EXP");
             p.gold += 20; p.exp += 50; levelUp(p);
+            refresh();
+            ncWait();
             break;
         }
 
         int dmg = (rand() % (enemyMax - enemyMin + 1)) + enemyMin;
-        if (choice == 3) dmg -= p.def;
+        if (choice == '3') dmg -= p.def;
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
-        cout << "Enemy dealt " << dmg << " damage!\n";
+        centerPrint(y++, "Enemy dealt " + to_string(dmg) + " damage!");
+        refresh();
+        napms(800);
     }
 }
 
 // ===== Boss Fight =====
 void bossFight(Player &p, int bossMin, int bossMax) {
-    cout << "👹 Boss battle begins!\n";
+    int y = getCenteredStartY(4);
+    clear();
+    centerPrint(y++, "Boss battle begins!");
+    centerPrint(y++, "Boss attack range: " + to_string(bossMin) + " - " + to_string(bossMax));
+    refresh();
+    napms(1000);
+    
     int bossHP = 100;
-    cout << "Boss attack range: " << bossMin << " - " << bossMax << "\n";
 
     while (bossHP > 0 && p.hp > 0) {
-        int choice;
-        cout << "\nChoose action: 1 Normal 2 Strong 3 Defend\n";
-        cin >> choice;
-        if (cin.fail() || (choice!=1 && choice!=2 && choice!=3)) {
-            cin.clear(); cin.ignore(10000,'\n');
-            cout << "Invalid input! Need help? Type help.\n";
-            string cmd; cin >> cmd;
-            if (cmd=="help") showHelp();
-            continue;
-        }
-
+        clear();
+        y = getCenteredStartY(4);
+        centerPrint(y++, "BOSS BATTLE - Your HP: " + to_string(p.hp) + " | Boss HP: " + to_string(bossHP));
+        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+        refresh();
+        
+        int choice = wgetch(stdscr);
+        
         int playerAttack = 0;
-        if (choice == 1) playerAttack = rand() % p.atk + 1;
-        else if (choice == 2 && rand() % 100 < 50) playerAttack = p.atk + rand() % 10;
-        else if (choice == 3) { p.hp += 10; cout << "Defend +10HP!\n"; }
+        if (choice == '1') playerAttack = rand() % p.atk + 1;
+        else if (choice == '2' && rand() % 100 < 50) playerAttack = p.atk + rand() % 10;
+        else if (choice == '3') { p.hp += 10; }
 
         bossHP -= playerAttack;
-        if (playerAttack > 0) cout << "You dealt " << playerAttack << " damage!\n";
+        
+        clear();
+        y = getCenteredStartY(4);
+        if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
+        else centerPrint(y++, "Attack missed!");
 
         if (bossHP <= 0) {
-            cout << "🎉 Boss defeated! +100 Gold, +200 EXP\n";
+            centerPrint(y++, "Boss defeated! +100 Gold, +200 EXP");
             p.gold += 100; p.exp += 200; levelUp(p);
+            refresh();
+            ncWait();
             break;
         }
 
         int dmg = (rand() % (bossMax - bossMin + 1)) + bossMin;
-        if (choice == 3) dmg -= p.def;
+        if (choice == '3') dmg -= p.def;
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
-        cout << "Boss dealt " << dmg << " damage!\n";
+        centerPrint(y++, "Boss dealt " + to_string(dmg) + " damage!");
+        refresh();
+        napms(800);
     }
 }
 
@@ -333,27 +488,50 @@ void bossFight(Player &p, int bossMin, int bossMax) {
 void event(Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
     int r = rand() % 100;
     if (r < 40) fight(p, enemyMin, enemyMax);       // Enemy 40%
-    else if (r < 60) { cout << "🛒 You met a merchant! (Shop not implemented)\n"; }
-    else if (r < 75) { cout << "👴 You met an old man. He heals you +10HP.\n"; p.hp += 10; }
-    else cout << "🌿 Quiet area. Nothing happens.\n";
+    else if (r < 60) {
+        clear();
+        centerPrint(getCenteredStartY(1), "You met a merchant! (Shop not implemented)");
+    }
+    else if (r < 75) {
+        clear();
+        centerPrint(getCenteredStartY(1), "You met an old man. He heals you +10HP.");
+        p.hp += 10;
+    }
+    else {
+        clear();
+        centerPrint(getCenteredStartY(1), "Quiet area. Nothing happens.");
+    }
+    refresh();
+    ncWait();
 }
 
 // ===== Map Display =====
 void displayMap() {
-    cout << "\n🗺 MAP\n";
-    cout << "=====================\n";
+    int mapWidth = SIZE * 2;
+    int blockHeight = SIZE + 4;
+    int startY = getCenteredStartY(blockHeight + 3);
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    int startX = max(0, (maxX - mapWidth) / 2);
+
+    centerPrint(startY, "MAP");
+    mvprintw(startY + 1, startX, "=====================");
     for (int i = 0; i < SIZE; i++) {
+        string row;
         for (int j = 0; j < SIZE; j++) {
             if (i == px && j == py) {
-                cout << "P ";
+                row += 'P';
                 discovered[i][j] = true;
             }
-            else if (!discovered[i][j]) cout << "? ";
-            else cout << grid[i][j] << " ";
+            else if (!discovered[i][j]) row += '?';
+            else row += grid[i][j];
+            row += ' ';
         }
-        cout << endl;
+        mvprintw(startY + 2 + i, startX, "%s", row.c_str());
     }
-    cout << "=====================\n";
+    mvprintw(startY + 2 + SIZE, startX, "=====================");
+    cursorY = startY + 3 + SIZE;
+    cursorX = startX;
 }
 
 // ===== Movement =====
@@ -365,19 +543,51 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
     else if (m == 'd') ny++;
 
     if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) return;
-    if (grid[nx][ny] == '#') { cout << "🧱 Blocked!\n"; return; }
+    if (grid[nx][ny] == '#') { 
+        clear();
+        centerPrint(getCenteredStartY(1), "Blocked!");
+        refresh();
+        napms(500);
+        return; 
+    }
 
     px = nx; py = ny;
     discovered[px][py] = true;
-    cout << "\n👉 Entered new area...\n";
 
-    if (grid[px][py] == 'K') { cout << "🔑 You found the key!\n"; p.hasKey = true; grid[px][py] = '.'; return; }
-    if (grid[px][py] == 'T') { cout << "💥 Trap! HP -15\n"; p.hp -= 15; grid[px][py] = '.'; return; }
-    if (grid[px][py] == 'C') { cout << "🎁 Chest! +20 Gold\n"; p.gold += 20; grid[px][py] = '.'; return; }
+    if (grid[px][py] == 'K') { 
+        clear();
+        centerPrint(getCenteredStartY(1), "You found the key!");
+        p.hasKey = true; 
+        grid[px][py] = '.';
+        refresh();
+        napms(500);
+        return; 
+    }
+    if (grid[px][py] == 'T') { 
+        clear();
+        centerPrint(getCenteredStartY(1), "Trap! HP -15");
+        p.hp -= 15; 
+        grid[px][py] = '.';
+        refresh();
+        napms(500);
+        return; 
+    }
+    if (grid[px][py] == 'C') { 
+        clear();
+        centerPrint(getCenteredStartY(1), "Chest! +20 Gold");
+        p.gold += 20; 
+        grid[px][py] = '.';
+        refresh();
+        napms(500);
+        return; 
+    }
     if (grid[px][py] == 'B') { bossFight(p, bossMin, bossMax); grid[px][py] = '.'; return; }
     if (grid[px][py] == 'G') {
         if (!p.hasKey) {
-            cout << "🚫 You have not found the key yet! Cannot rescue princess.\n";
+            clear();
+            centerPrint(getCenteredStartY(1), "You have not found the key yet! Cannot rescue princess.");
+            refresh();
+            napms(500);
         } else {
             princessRoomMinigame(p, false);
             grid[px][py] = '.';
@@ -389,6 +599,15 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
 
 // ===== Main =====
 int main() {
+    //初始化 ncurses
+    initscr();
+    clear();
+    noecho();
+    cbreak();
+    keypad(stdscr, TRUE);
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+
     srand(time(0));
     Player p;
     showIntro();
@@ -412,38 +631,52 @@ int main() {
     grid[rand()%SIZE][rand()%SIZE] = 'C'; // Chest
 
     while (true) {
+        clear();
+        cursorY = 0;
+        
+        // Display map
         displayMap();
-
-        cout << "\nHP=" << p.hp << " ATK=" << p.atk << " DEF=" << p.def
-             << " GOLD=" << p.gold << " EXP=" << p.exp << " LV=" << p.level
-             << " KEY=" << (p.hasKey ? "Y" : "N") << "\n";
+        
+        // Display stats
+        string stats = "HP=" + to_string(p.hp) +
+                       " ATK=" + to_string(p.atk) +
+                       " DEF=" + to_string(p.def) +
+                       " GOLD=" + to_string(p.gold) +
+                       " EXP=" + to_string(p.exp) +
+                       " LV=" + to_string(p.level) +
+                       " KEY=" + (p.hasKey ? string("Y") : string("N"));
+        centerPrint(cursorY++, stats);
+        
+        refresh();
 
         if (p.hp <= 0) { 
-            cout << "💀 You died. Game Over.\n"; 
+            clear();
+            centerPrint(getCenteredStartY(1), "You died. Game Over.");
+            refresh();
+            ncWait();
             break; 
         }
         if (px == gx && py == gy && p.hasKey) { 
-            cout << "🎉 You rescued the princess! Victory!\n"; 
+            clear();
+            centerPrint(getCenteredStartY(1), "You rescued the princess! Victory!");
+            refresh();
+            ncWait();
             break; 
         }
         if (px == gx && py == gy && !p.hasKey) {
-            cout << "🚫 You have not found the key yet! Cannot rescue princess.\n";
+            centerPrint(cursorY++, "You have not found the key yet! Cannot rescue princess.");
         }
 
-        char m;
-        cout << "\nMove WASD: ";
-        cin >> m;
-        if (cin.fail() || (m!='w'&&m!='a'&&m!='s'&&m!='d')) {
-            cin.clear(); cin.ignore(10000,'\n');
-            cout << "Invalid input! Need help? Type help.\n";
-            string cmd; cin >> cmd;
-            if (cmd=="help") showHelp();
-        } else movePlayer(m, p, enemyMin, enemyMax, bossMin, bossMax);
+        centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
+        refresh();
+        
+        int key = wgetch(stdscr);
+        char m = normalizeMoveKey(key);
+        if (m != '\0') {
+            movePlayer(m, p, enemyMin, enemyMax, bossMin, bossMax);
+        }
     }
 
-    cout << "\n===== Game Over =====\n";
-    cout << "Final Stats: HP=" << p.hp << " ATK=" << p.atk << " DEF=" << p.def
-         << " GOLD=" << p.gold << " EXP=" << p.exp << " LV=" << p.level
-         << " KEY=" << (p.hasKey ? "Y" : "N") << "\n";
+    endwin();
     return 0;
 }
