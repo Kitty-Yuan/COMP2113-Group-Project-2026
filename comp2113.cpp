@@ -440,6 +440,12 @@ void tutorial(Player &p) {
                        " KEY=" + (hasKey ? string("Y") : string("N"));
         centerPrint(startY + y++, stats);
         
+
+        show_ATT(p.hp, 100, "HP", 5, 5);
+        show_ATT(p.atk, 50, "ATK", 7, 5);
+        show_ATT(p.def, 30, "DEF", 9, 5);
+        refresh();  
+        
         // Input move
         centerPrint(startY + y++, "Move (W/A/S/D or Arrow Keys):");
         refresh();

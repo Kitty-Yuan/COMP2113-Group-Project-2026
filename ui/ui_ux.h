@@ -36,5 +36,6 @@ void showHelp();
 bool isWindowLargeEnough();
 void enforceWindowSizeGate();
 int readKeyWithWindowGuard();
+void show_ATT(int value, int maxVal, std::string type, int y, int x);
 
 #endif

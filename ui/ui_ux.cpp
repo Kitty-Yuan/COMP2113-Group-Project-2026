@@ -41,7 +41,35 @@ string title = R"(
     |____/ \___/|_|   |_|   |_____|_| \_\
 )";
 
-void show_HP() {
+void show_ATT(int value, int maxVal, string type, int y, int x) {
+    const int BAR_LENGTH = 12;
+
+    int filled_count = (int)((double)value / maxVal * BAR_LENGTH);
+
+    std::string hp_bar;
+    for (int i = 0; i < filled_count; i++) {
+        hp_bar += "|";
+    }
+
+    mvprintw(y, x, "|");
+    if (type == "HP") {
+        attron(COLOR_PAIR(3) | A_BOLD); 
+    } else if (type == "ATK") {
+        attron(COLOR_PAIR(2) | A_BOLD); 
+    } else if (type == "DEF") {
+        attron(COLOR_PAIR(4) | A_BOLD);  
+    }
+    mvprintw(y, x + 1, "%s", hp_bar.c_str());
+    if (type == "HP") {
+        attroff(COLOR_PAIR(3) | A_BOLD);
+    } else if (type == "ATK") {
+        attroff(COLOR_PAIR(2) | A_BOLD);
+    } else if (type == "DEF") {
+        attroff(COLOR_PAIR(4) | A_BOLD);
+    }
+
+    mvprintw(y, x + 1 + BAR_LENGTH, "|");
+    mvprintw(y, x + 1 + BAR_LENGTH + 2, "%s: %d / %d", type == "HP" ? "HP" : "ATK", value, maxVal);
 }
 
 // ===== Monster assets =====
