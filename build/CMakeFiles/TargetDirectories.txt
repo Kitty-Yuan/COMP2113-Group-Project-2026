@@ -1,3 +1,3 @@
-/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles/comp2113.dir
-/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles/edit_cache.dir
-/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles/rebuild_cache.dir
+/Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026/build/CMakeFiles/comp2113.dir
+/Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026/build/CMakeFiles/edit_cache.dir
+/Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026/build/CMakeFiles/rebuild_cache.dir

@@ -659,32 +659,52 @@ void event(Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
 }
 
 // ===== Map Display =====
-void displayMap() {
-    int mapWidth = SIZE * 2;
-    int blockHeight = SIZE + 4;
-    int startY = getCenteredStartY(blockHeight + 3);
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-    int startX = max(0, (maxX - mapWidth) / 2);
+#include <ncurses.h>
 
-    centerPrint(startY, "MAP");
+void displayMap() {
+    clear();
+
+    int termH, termW;
+    getmaxyx(stdscr, termH, termW); 
+
+    int mapH = SIZE + 2; 
+    int mapW = SIZE * 2; 
+
+    int startY = (termH - mapH) / 2;
+    int startX = (termW - mapW) / 2;
+
+    if (startY < 0) startY = 0;
+    if (startX < 0) startX = 0;
+
+    mvprintw(startY, startX, "[MAP]");
     mvprintw(startY + 1, startX, "=====================");
+
+    int screenY = startY + 2;
+
     for (int i = 0; i < SIZE; i++) {
-        string row;
+
+        int screenX = startX;
+        move(screenY + i, screenX);
+
         for (int j = 0; j < SIZE; j++) {
+
             if (i == px && j == py) {
-                row += 'P';
+                printw("P ");
                 discovered[i][j] = true;
             }
-            else if (!discovered[i][j]) row += '?';
-            else row += grid[i][j];
-            row += ' ';
+            else if (!discovered[i][j]) {
+                if (grid[i][j] == '#') printw("# ");
+                else printw("? ");
+            }
+            else {
+                printw("%c ", grid[i][j]);
+            }
         }
-        mvprintw(startY + 2 + i, startX, "%s", row.c_str());
     }
-    mvprintw(startY + 2 + SIZE, startX, "=====================");
-    cursorY = startY + 3 + SIZE;
-    cursorX = startX;
+
+    mvprintw(screenY + SIZE, startX, "=====================");
+
+    refresh();
 }
 
 // ===== Movement =====
