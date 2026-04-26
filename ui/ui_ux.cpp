@@ -92,10 +92,11 @@ Monster ghost = {
 Monster mushroom = {
     "Mushroom",
     R"(
- .-o-OO-o-.
-(__________)
- |  *   * |
- |________|
+   .--OO--.
+ /--_    _--\
+(___@____@___)
+    |    |
+    (____)
 )",
     "Spore Burst: Releases spores that damage and poison enemies.",
     "Fungal Shield: Creates a temporary shield that absorbs damage.",
