@@ -1,6 +1,10 @@
 file(REMOVE_RECURSE
   "CMakeFiles/comp2113.dir/comp2113.cpp.o"
   "CMakeFiles/comp2113.dir/comp2113.cpp.o.d"
+  "CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o"
+  "CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o.d"
+  "CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o"
+  "CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o.d"
   "comp2113"
   "comp2113.pdb"
 )

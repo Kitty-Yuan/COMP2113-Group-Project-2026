@@ -853,4 +853,6 @@ CMakeFiles/comp2113.dir/comp2113.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/ncurses_dll.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/unctrl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/curses.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/sstream
+  /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/sstream \
+  /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/user_save_system/user_save_system.h \
+  /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/ui/ui_ux.h

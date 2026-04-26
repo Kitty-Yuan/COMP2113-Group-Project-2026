@@ -153,6 +153,54 @@ comp2113.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/comp2113.cpp.s
 .PHONY : comp2113.cpp.s
 
+ui/ui_ux.o: ui/ui_ux.cpp.o
+.PHONY : ui/ui_ux.o
+
+# target to build an object file
+ui/ui_ux.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o
+.PHONY : ui/ui_ux.cpp.o
+
+ui/ui_ux.i: ui/ui_ux.cpp.i
+.PHONY : ui/ui_ux.i
+
+# target to preprocess a source file
+ui/ui_ux.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/ui/ui_ux.cpp.i
+.PHONY : ui/ui_ux.cpp.i
+
+ui/ui_ux.s: ui/ui_ux.cpp.s
+.PHONY : ui/ui_ux.s
+
+# target to generate assembly for a file
+ui/ui_ux.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/ui/ui_ux.cpp.s
+.PHONY : ui/ui_ux.cpp.s
+
+user_save_system/user_save_system.o: user_save_system/user_save_system.cpp.o
+.PHONY : user_save_system/user_save_system.o
+
+# target to build an object file
+user_save_system/user_save_system.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o
+.PHONY : user_save_system/user_save_system.cpp.o
+
+user_save_system/user_save_system.i: user_save_system/user_save_system.cpp.i
+.PHONY : user_save_system/user_save_system.i
+
+# target to preprocess a source file
+user_save_system/user_save_system.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.i
+.PHONY : user_save_system/user_save_system.cpp.i
+
+user_save_system/user_save_system.s: user_save_system/user_save_system.cpp.s
+.PHONY : user_save_system/user_save_system.s
+
+# target to generate assembly for a file
+user_save_system/user_save_system.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comp2113.dir/build.make CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.s
+.PHONY : user_save_system/user_save_system.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -165,6 +213,12 @@ help:
 	@echo "... comp2113.o"
 	@echo "... comp2113.i"
 	@echo "... comp2113.s"
+	@echo "... ui/ui_ux.o"
+	@echo "... ui/ui_ux.i"
+	@echo "... ui/ui_ux.s"
+	@echo "... user_save_system/user_save_system.o"
+	@echo "... user_save_system/user_save_system.i"
+	@echo "... user_save_system/user_save_system.s"
 .PHONY : help
 
 

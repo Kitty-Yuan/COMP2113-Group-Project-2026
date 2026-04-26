@@ -10,6 +10,8 @@ find_package(Curses REQUIRED)
 
 add_executable(comp2113
     comp2113.cpp
+    ui/ui_ux.cpp
+    user_save_system/user_save_system.cpp
 )
 
 target_include_directories(comp2113 PRIVATE ${CURSES_INCLUDE_DIRS})

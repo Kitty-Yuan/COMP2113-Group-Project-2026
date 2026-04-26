@@ -4,8 +4,11 @@
 #include <ctime>
 #include <algorithm>
 #include <limits>
+#include <cctype>
 #include <ncurses.h>
 #include <sstream>
+#include "user_save_system/user_save_system.h"
+#include "ui/ui_ux.h"
 using namespace std;
 
 int SIZE; 
@@ -28,23 +31,6 @@ int gx, gy;
 int cursorY = 0; // Global cursor for display
 int cursorX = 0;
 
-
-int getCenteredX(const string &text) {
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-    return max(0, (maxX - static_cast<int>(text.size())) / 2);
-}
-
-int getCenteredStartY(int totalLines) {
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-    return max(0, (maxY - totalLines) / 2);
-}
-
-void centerPrint(int y, const string &text) {
-    mvprintw(y, getCenteredX(text), "%s", text.c_str());
-}
-
 char normalizeMoveKey(int key) {
     if (key == 'w' || key == 'W' || key == KEY_UP) return 'w';
     if (key == 's' || key == 'S' || key == KEY_DOWN) return 's';
@@ -53,56 +39,177 @@ char normalizeMoveKey(int key) {
     return '\0';
 }
 
-
-
-
-void ncWait() {
+string promptInputLine(int y, const string &label, bool maskInput) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
-    string hint = "Press any key to continue...";
-    mvprintw(maxY - 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+    int startX = max(0, (maxX - 50) / 2);
+
+    mvprintw(y, startX, "%s", label.c_str());
+    move(y, startX + static_cast<int>(label.size()));
     refresh();
-    wgetch(stdscr);
+
+    string input;
+    while (true) {
+        int ch = readKeyWithWindowGuard();
+        if (ch == '\n' || ch == KEY_ENTER) {
+            break;
+        }
+
+        if (ch == KEY_BACKSPACE || ch == 127 || ch == 8) {
+            if (!input.empty()) {
+                input.pop_back();
+                int currentX = startX + static_cast<int>(label.size()) + static_cast<int>(input.size());
+                mvaddch(y, currentX, ' ');
+                move(y, currentX);
+            }
+            continue;
+        }
+
+        if (!isprint(ch) || input.size() >= 32) {
+            continue;
+        }
+
+        input.push_back(static_cast<char>(ch));
+        addch(maskInput ? '*' : ch);
+        refresh();
+    }
+
+    return input;
 }
 
-// ===== Intro =====
-void showIntro() {
-    clear();
-    vector<string> lines = {
-        "===== Knight Maze RPG =====",
-        "",
-        "You are a brave knight, sent into a dangerous maze to rescue the princess.",
-        "",
-        "In the maze, you will encounter traps, enemies, merchants, and a Boss.",
-        "",
-        "You must find the key and rescue the princess!"
-    };
-    int startY = getCenteredStartY(static_cast<int>(lines.size()));
-    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-        centerPrint(startY + i, lines[i]);
+bool authenticateUser(string &username) {
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        clear();
+        vector<string> tips = {
+            "===== USER LOGIN =====",
+            "Use only letters, digits, _ or - (max 32 chars).",
+            "Existing user: enter correct password to restore progress.",
+            "New user: account will be created automatically.",
+            ""
+        };
+        int startY = getCenteredStartY(static_cast<int>(tips.size()) + 4);
+        for (int i = 0; i < static_cast<int>(tips.size()); i++) {
+            centerPrint(startY + i, tips[i]);
+        }
+
+        string inputName = promptInputLine(startY + static_cast<int>(tips.size()), "Username: ", false);
+        string inputPassword = promptInputLine(startY + static_cast<int>(tips.size()) + 1, "Password: ", true);
+
+        user_save_system::AuthResult result = user_save_system::loginOrRegister(inputName, inputPassword);
+        clear();
+        centerPrint(getCenteredStartY(2), result.message);
+        if (result.authenticated) {
+            username = inputName;
+            centerPrint(getCenteredStartY(2) + 1, "Authentication success.");
+            refresh();
+            napms(700);
+            return true;
+        }
+
+        centerPrint(getCenteredStartY(2) + 1, "Press any key to retry.");
+        refresh();
+        ncWait();
     }
-    refresh();
-    ncWait();
+
+    return false;
 }
 
-void showHelp() {
-    clear();
-    vector<string> lines = {
-        "===== HELP =====",
-        "",
-        "- Movement: Enter w a s d or arrow keys to move.",
-        "- Battle: Choose 1 Normal Attack, 2 Strong Attack, 3 Defend.",
-        "- Merchant: Buy or rob (risk).",
-        "- Chest: May contain gold, potion, or monster.",
-        "- Level up: EXP reaches 100 = auto level up.",
-        "- Victory: Find the key and rescue the princess."
-    };
-    int startY = getCenteredStartY(static_cast<int>(lines.size()));
-    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-        centerPrint(startY + i, lines[i]);
+user_save_system::SaveData buildSaveData(const Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
+    user_save_system::SaveData data;
+    data.valid = true;
+    data.size = SIZE;
+    data.px = px;
+    data.py = py;
+    data.gx = gx;
+    data.gy = gy;
+    data.enemyMin = enemyMin;
+    data.enemyMax = enemyMax;
+    data.bossMin = bossMin;
+    data.bossMax = bossMax;
+
+    data.hp = p.hp;
+    data.atk = p.atk;
+    data.def = p.def;
+    data.gold = p.gold;
+    data.exp = p.exp;
+    data.level = p.level;
+    data.hasKey = p.hasKey;
+
+    data.gridRows.assign(SIZE, string(SIZE, '.'));
+    data.discoveredRows.assign(SIZE, string(SIZE, '0'));
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            data.gridRows[i][j] = grid[i][j];
+            data.discoveredRows[i][j] = discovered[i][j] ? '1' : '0';
+        }
     }
-    refresh();
-    ncWait();
+
+    return data;
+}
+
+bool applySaveData(const user_save_system::SaveData &data, Player &p, int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) {
+    if (!data.valid || data.size <= 0 || data.size > 50) {
+        return false;
+    }
+
+    SIZE = data.size;
+    px = data.px;
+    py = data.py;
+    gx = data.gx;
+    gy = data.gy;
+
+    enemyMin = data.enemyMin;
+    enemyMax = data.enemyMax;
+    bossMin = data.bossMin;
+    bossMax = data.bossMax;
+
+    p.hp = data.hp;
+    p.atk = data.atk;
+    p.def = data.def;
+    p.gold = data.gold;
+    p.exp = data.exp;
+    p.level = data.level;
+    p.hasKey = data.hasKey;
+
+    if (static_cast<int>(data.gridRows.size()) != SIZE || static_cast<int>(data.discoveredRows.size()) != SIZE) {
+        return false;
+    }
+
+    for (int i = 0; i < SIZE; i++) {
+        if (static_cast<int>(data.gridRows[i].size()) != SIZE || static_cast<int>(data.discoveredRows[i].size()) != SIZE) {
+            return false;
+        }
+        for (int j = 0; j < SIZE; j++) {
+            grid[i][j] = data.gridRows[i][j];
+            discovered[i][j] = (data.discoveredRows[i][j] == '1');
+            visited[i][j] = false;
+        }
+    }
+
+    if (px < 0 || px >= SIZE || py < 0 || py >= SIZE || gx < 0 || gx >= SIZE || gy < 0 || gy >= SIZE) {
+        return false;
+    }
+
+    discovered[px][py] = true;
+    return true;
+}
+
+void initializeNewMap() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            grid[i][j] = (rand()%100 < 25 ? '#' : '.');
+            visited[i][j] = false;
+            discovered[i][j] = false;
+        }
+    }
+
+    grid[gx][gy] = 'G';
+    grid[SIZE/2][SIZE/2] = 'B';
+    grid[rand()%SIZE][rand()%SIZE] = 'K';
+    grid[rand()%SIZE][rand()%SIZE] = 'T';
+    grid[rand()%SIZE][rand()%SIZE] = 'C';
+    discovered[px][py] = true;
 }
 
 // =====Catch princess=====
@@ -167,7 +274,7 @@ void princessRoomMinigame(Player &p, bool isTrial) {
         centerPrint(startY + roomSize + 3, "Move (W/A/S/D or Arrow Keys):");
         refresh();
         
-        int key = wgetch(stdscr);
+        int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
         int nx = rpx, ny = rpy;
         if (m == 'w') nx--; else if (m == 's') nx++;
@@ -207,7 +314,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         }
         refresh();
         
-        int ch = wgetch(stdscr);
+        int ch = readKeyWithWindowGuard();
         if (ch >= '1' && ch <= '4') {
             diff = ch - '0';
         }
@@ -297,7 +404,7 @@ void tutorial(Player &p) {
         centerPrint(startY + y++, "Move (W/A/S/D or Arrow Keys):");
         refresh();
         
-        int key = wgetch(stdscr);
+        int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
         if (m == '\0') {
             continue;
@@ -336,7 +443,7 @@ void tutorial(Player &p) {
                 mvprintw(y++, 0, "Choose: 1) Normal  2) Strong  3) Defend");
                 refresh();
                 
-                int choice = wgetch(stdscr);
+                int choice = readKeyWithWindowGuard();
                 
                 int playerAttack=0;
                 if (choice=='1') playerAttack=rand()%p.atk+1;
@@ -402,7 +509,7 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
-        int choice = wgetch(stdscr);
+        int choice = readKeyWithWindowGuard();
         
         int playerAttack = 0;
         if (choice == '1') playerAttack = rand() % p.atk + 1;
@@ -452,7 +559,7 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
-        int choice = wgetch(stdscr);
+        int choice = readKeyWithWindowGuard();
         
         int playerAttack = 0;
         if (choice == '1') playerAttack = rand() % p.atk + 1;
@@ -608,27 +715,45 @@ int main() {
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 
+    enforceWindowSizeGate();
+
     srand(time(0));
     Player p;
+    showTitle();
     showIntro();
 
-    int enemyMin, enemyMax, bossMin, bossMax;
-    chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
-    tutorial(p);
-
-    // Initialize map
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            grid[i][j] = (rand()%100 < 25 ? '#' : '.'); // Random walls
-            visited[i][j] = false;
-            discovered[i][j] = false;
-        }
+    string username;
+    if (!authenticateUser(username)) {
+        clear();
+        centerPrint(getCenteredStartY(1), "Authentication failed too many times. Exit.");
+        refresh();
+        ncWait();
+        endwin();
+        return 0;
     }
-    grid[gx][gy] = 'G'; // Princess
-    grid[SIZE/2][SIZE/2] = 'B'; // Boss
-    grid[rand()%SIZE][rand()%SIZE] = 'K'; // Key
-    grid[rand()%SIZE][rand()%SIZE] = 'T'; // Trap
-    grid[rand()%SIZE][rand()%SIZE] = 'C'; // Chest
+
+    int enemyMin, enemyMax, bossMin, bossMax;
+    bool loadedFromSave = false;
+    user_save_system::SaveData loadedData;
+    if (user_save_system::hasSave(username) && user_save_system::loadProgress(username, loadedData)) {
+        loadedFromSave = applySaveData(loadedData, p, enemyMin, enemyMax, bossMin, bossMax);
+        clear();
+        if (loadedFromSave) {
+            centerPrint(getCenteredStartY(1), "Save found. Progress restored.");
+        } else {
+            centerPrint(getCenteredStartY(1), "Save file is invalid. Starting a new game.");
+        }
+        refresh();
+        napms(800);
+    }
+
+    if (!loadedFromSave) {
+        chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+        tutorial(p);
+        initializeNewMap();
+    }
+
+    user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
 
     while (true) {
         clear();
@@ -670,10 +795,11 @@ int main() {
         centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
         refresh();
         
-        int key = wgetch(stdscr);
+        int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
         if (m != '\0') {
             movePlayer(m, p, enemyMin, enemyMax, bossMin, bossMax);
+            user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
         }
     }
 

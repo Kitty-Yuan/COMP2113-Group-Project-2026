@@ -86,19 +86,51 @@ CMakeFiles/comp2113.dir/comp2113.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/comp2113.dir/comp2113.cpp.s"
 	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/comp2113.cpp -o CMakeFiles/comp2113.dir/comp2113.cpp.s
 
+CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o: CMakeFiles/comp2113.dir/flags.make
+CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o: /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/ui/ui_ux.cpp
+CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o: CMakeFiles/comp2113.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o -MF CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o.d -o CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o -c /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/ui/ui_ux.cpp
+
+CMakeFiles/comp2113.dir/ui/ui_ux.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/comp2113.dir/ui/ui_ux.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/ui/ui_ux.cpp > CMakeFiles/comp2113.dir/ui/ui_ux.cpp.i
+
+CMakeFiles/comp2113.dir/ui/ui_ux.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/comp2113.dir/ui/ui_ux.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/ui/ui_ux.cpp -o CMakeFiles/comp2113.dir/ui/ui_ux.cpp.s
+
+CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o: CMakeFiles/comp2113.dir/flags.make
+CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o: /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/user_save_system/user_save_system.cpp
+CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o: CMakeFiles/comp2113.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o -MF CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o.d -o CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o -c /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/user_save_system/user_save_system.cpp
+
+CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/user_save_system/user_save_system.cpp > CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.i
+
+CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/user_save_system/user_save_system.cpp -o CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.s
+
 # Object files for target comp2113
 comp2113_OBJECTS = \
-"CMakeFiles/comp2113.dir/comp2113.cpp.o"
+"CMakeFiles/comp2113.dir/comp2113.cpp.o" \
+"CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o" \
+"CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o"
 
 # External object files for target comp2113
 comp2113_EXTERNAL_OBJECTS =
 
 comp2113: CMakeFiles/comp2113.dir/comp2113.cpp.o
+comp2113: CMakeFiles/comp2113.dir/ui/ui_ux.cpp.o
+comp2113: CMakeFiles/comp2113.dir/user_save_system/user_save_system.cpp.o
 comp2113: CMakeFiles/comp2113.dir/build.make
 comp2113: /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libcurses.tbd
 comp2113: /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libform.tbd
 comp2113: CMakeFiles/comp2113.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable comp2113"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable comp2113"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/comp2113.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
