@@ -12,7 +12,7 @@ Makefile
 !CMakeLists.txt
 
 # 编译产物
-comp2113          # 你的可执行文件名
+/comp2113
 *.o
 *.obj
 *.exe
@@ -30,7 +30,7 @@ comp2113          # 你的可执行文件名
 *.swp
 *.swo
 *~
-.DS_Store          # macOS 系统文件
+.DS_Store
 
 # 测试/临时文件
 Testing/
