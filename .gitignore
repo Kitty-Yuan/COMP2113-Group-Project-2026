@@ -1,0 +1,38 @@
+# 构建目录
+build/
+cmake-build-*/
+
+# CMake 生成的文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# 编译产物
+comp2113          # 你的可执行文件名
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.dll
+*.a
+*.lib
+
+# IDE 文件（根据你用的IDE选择）
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store          # macOS 系统文件
+
+# 测试/临时文件
+Testing/
+*.log
+*.tmp

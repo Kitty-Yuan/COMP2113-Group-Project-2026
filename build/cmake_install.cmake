@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026
+# Install script for directory: /Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,13 +34,13 @@ endif()
 
 # Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/usr/bin/objdump")
+  set(CMAKE_OBJDUMP "/Library/Developer/CommandLineTools/usr/bin/objdump")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026/build/install_local_manifest.txt"
+  file(WRITE "/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -56,6 +56,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/yuanshuyi/Desktop/COMP2113/GroupProject/COMP2113-Group-Project-2026/build/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/Users/zhouhanyu/Desktop/HKU/HKU_SEM2/2113/COMP2113-Group-Project-2026/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
