@@ -10,3 +10,5 @@ kt	123
 2	1
 h	1
 hi	h
+g	1
+gggg	1

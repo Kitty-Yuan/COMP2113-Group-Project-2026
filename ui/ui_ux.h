@@ -2,6 +2,7 @@
 #define UI_UX_H
 
 #include <string>
+#include <ncurses.h>
 
 struct Monster {
     std::string name;
@@ -20,6 +21,13 @@ extern std::string tree;
 extern std::string ground;
 extern std::string title;
 
+enum class TopButtonAction {
+    None,
+    Home,
+    Help,
+    Quit
+};
+
 void showTitle();
 void show_HP();
 
@@ -32,6 +40,8 @@ void centerPrint(int y, const std::string &text);
 void ncWait();
 void showIntro();
 void showHelp();
+void showButton();
+TopButtonAction getTopButtonActionFromMouse(const MEVENT &event);
 
 bool isWindowLargeEnough();
 void enforceWindowSizeGate();

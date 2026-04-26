@@ -39,6 +39,52 @@ char normalizeMoveKey(int key) {
     return '\0';
 }
 
+enum class PostDeathAction {
+    Home,
+    Quit
+};
+
+bool isPrimaryMouseClick(const MEVENT &event) {
+    mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED;
+    return (event.bstate & clickMask) != 0;
+}
+
+PostDeathAction promptPostDeathAction() {
+    while (true) {
+        clear();
+        vector<string> lines = {
+            "You died. Game Over.",
+            "",
+            "Click HOME (top-right) to return to difficulty selection.",
+            "Click QUIT (top-right) to quit the program."
+        };
+        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+            centerPrint(startY + i, lines[i]);
+        }
+        showButton();
+        refresh();
+
+        int ch = readKeyWithWindowGuard();
+        if (ch != KEY_MOUSE) {
+            continue;
+        }
+
+        MEVENT event;
+        if (getmouse(&event) != OK || !isPrimaryMouseClick(event)) {
+            continue;
+        }
+
+        TopButtonAction action = getTopButtonActionFromMouse(event);
+        if (action == TopButtonAction::Home) {
+            return PostDeathAction::Home;
+        }
+        if (action == TopButtonAction::Quit) {
+            return PostDeathAction::Quit;
+        }
+    }
+}
+
 string promptInputLine(int y,
                        const string &label,
                        bool maskInput,
@@ -778,6 +824,8 @@ int main() {
     noecho();
     cbreak();
     keypad(stdscr, TRUE);
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
+    mouseinterval(0);
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 
@@ -837,19 +885,29 @@ int main() {
                        " LV=" + to_string(p.level) +
                        " KEY=" + (p.hasKey ? string("Y") : string("N"));
         centerPrint(cursorY++, stats);
+        showButton();
         
         refresh();
 
         if (p.hp <= 0) { 
-            clear();
-            centerPrint(getCenteredStartY(1), "You died. Game Over.");
-            refresh();
-            ncWait();
-            break; 
+            PostDeathAction action = promptPostDeathAction();
+            if (action == PostDeathAction::Quit) {
+                break;
+            }
+
+            p = Player();
+            px = 0;
+            py = 0;
+            chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+            tutorial(p);
+            initializeNewMap();
+            user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+            continue;
         }
         if (px == gx && py == gy && p.hasKey) { 
             clear();
             centerPrint(getCenteredStartY(1), "You rescued the princess! Victory!");
+            showButton();
             refresh();
             ncWait();
             break; 
@@ -859,9 +917,36 @@ int main() {
         }
 
         centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
+        showButton();
         refresh();
         
         int key = readKeyWithWindowGuard();
+
+        if (key == KEY_MOUSE) {
+            MEVENT event;
+            if (getmouse(&event) == OK && isPrimaryMouseClick(event)) {
+                TopButtonAction action = getTopButtonActionFromMouse(event);
+                if (action == TopButtonAction::Help) {
+                    showHelp();
+                    continue;
+                }
+                if (action == TopButtonAction::Home) {
+                    p = Player();
+                    px = 0;
+                    py = 0;
+                    chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+                    tutorial(p);
+                    initializeNewMap();
+                    user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+                    continue;
+                }
+                if (action == TopButtonAction::Quit) {
+                    break;
+                }
+            }
+            continue;
+        }
+
         char m = normalizeMoveKey(key);
         if (m != '\0') {
             movePlayer(m, p, enemyMin, enemyMax, bossMin, bossMax);

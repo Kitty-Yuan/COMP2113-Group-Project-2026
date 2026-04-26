@@ -34,11 +34,12 @@ string ground = R"(
 )";
 
 string title = R"(
-   ____  _   _ ____  ____  _____ ____
-    / ___|| | | |  _ \|  _ \| ____|  _ \
-    \___ \| | | | |_) | |_) |  _| | |_) |
-   ___) | |_| |  __/|  __/| |___|  _ <
-    |____/ \___/|_|   |_|   |_____|_| \_\
+__  __                   _  __      _       _     _   
+|  \/  | __ _ _______   | |/ /_ __ (_) __ _| |__ | |_ 
+| |\/| |/ _` |_  / _ \  |   /|  _ \| |/ _` | '_ \| __|
+| |  | | (_| |/ /  __/  |   \| | | | | (_| | | | | |_ 
+|_|  |_|\__,_/___\___|  |_|\_\_| |_|_|\__, |_| |_|\__|
+                                      |___/
 )";
 
 void show_ATT(int value, int maxVal, string type, int y, int x) {
@@ -537,6 +538,9 @@ int readKeyWithWindowGuard() {
             refresh();
         }
 
+        showButton();
+        refresh();
+
         int ch = wgetch(stdscr);
         if (ch == ERR) {
             continue;
@@ -602,12 +606,30 @@ void showTitle() {
 
     while (true) {
         clear();
-        int startY = getCenteredStartY(7);
+        vector<string> titleLines;
+        {
+            istringstream iss(title);
+            string line;
+            while (getline(iss, line)) {
+                titleLines.push_back(line);
+            }
+        }
+
+        while (!titleLines.empty() && titleLines.front().empty()) {
+            titleLines.erase(titleLines.begin());
+        }
+        while (!titleLines.empty() && titleLines.back().empty()) {
+            titleLines.pop_back();
+        }
+
+        int startY = getCenteredStartY(static_cast<int>(titleLines.size()));
 
         if (has_colors()) {
             attron(COLOR_PAIR(2) | A_BOLD);
         }
-        centerPrint(startY, title);
+        for (int i = 0; i < static_cast<int>(titleLines.size()); i++) {
+            centerPrint(startY + i, titleLines[i]);
+        }
         if (has_colors()) {
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
@@ -681,4 +703,66 @@ void showHelp() {
         }
         break;
     }
+}
+
+
+void showButton(){
+    const int buttonWidth = 14;
+    const int buttonHeight = 3;
+    const int buttonGap = 1;
+    vector<string> labels = {"HOME", "HELP", "QUIT"};
+
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+
+    int startX = max(0, maxX - buttonWidth - 1);
+    int startY = 0;
+
+    if (has_colors()) {
+        attron(COLOR_PAIR(1) | A_BOLD);
+    }
+
+    for (int i = 0; i < static_cast<int>(labels.size()); i++) {
+        int buttonY = startY + i * (buttonHeight + buttonGap);
+        if (buttonY + buttonHeight > maxY) {
+            break;
+        }
+
+        mvprintw(buttonY, startX, "+------------+");
+        mvprintw(buttonY + 1, startX, "|            |");
+        mvprintw(buttonY + 2, startX, "+------------+");
+
+        int labelX = startX + max(0, (buttonWidth - static_cast<int>(labels[i].size())) / 2);
+        mvprintw(buttonY + 1, labelX, "%s", labels[i].c_str());
+    }
+
+    if (has_colors()) {
+        attroff(COLOR_PAIR(1) | A_BOLD);
+    }
+}
+
+TopButtonAction getTopButtonActionFromMouse(const MEVENT &event) {
+    const int buttonWidth = 14;
+    const int buttonHeight = 3;
+    const int buttonGap = 1;
+
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    int startX = max(0, maxX - buttonWidth - 1);
+    int startY = 0;
+
+    if (event.x < startX || event.x >= startX + buttonWidth) {
+        return TopButtonAction::None;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        int buttonY = startY + i * (buttonHeight + buttonGap);
+        if (event.y >= buttonY && event.y < buttonY + buttonHeight) {
+            if (i == 0) return TopButtonAction::Home;
+            if (i == 1) return TopButtonAction::Help;
+            return TopButtonAction::Quit;
+        }
+    }
+
+    return TopButtonAction::None;
 }
