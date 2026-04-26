@@ -39,7 +39,11 @@ char normalizeMoveKey(int key) {
     return '\0';
 }
 
-string promptInputLine(int y, const string &label, bool maskInput) {
+string promptInputLine(int y,
+                       const string &label,
+                       bool maskInput,
+                       const vector<string> *contextLines = nullptr,
+                       int contextStartY = 0) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
     int startX = max(0, (maxX - 50) / 2);
@@ -51,6 +55,29 @@ string promptInputLine(int y, const string &label, bool maskInput) {
     string input;
     while (true) {
         int ch = readKeyWithWindowGuard();
+        if (ch == KEY_RESIZE) {
+            getmaxyx(stdscr, maxY, maxX);
+            startX = max(0, (maxX - 50) / 2);
+
+            if (contextLines != nullptr) {
+                clear();
+                for (int i = 0; i < static_cast<int>(contextLines->size()); i++) {
+                    centerPrint(contextStartY + i, (*contextLines)[i]);
+                }
+            } else {
+                move(y, 0);
+                clrtoeol();
+            }
+
+            mvprintw(y, startX, "%s", label.c_str());
+            move(y, startX + static_cast<int>(label.size()));
+            for (char c : input) {
+                addch(maskInput ? '*' : c);
+            }
+            refresh();
+            continue;
+        }
+
         if (ch == '\n' || ch == KEY_ENTER) {
             break;
         }
@@ -92,8 +119,21 @@ bool authenticateUser(string &username) {
             centerPrint(startY + i, tips[i]);
         }
 
-        string inputName = promptInputLine(startY + static_cast<int>(tips.size()), "Username: ", false);
-        string inputPassword = promptInputLine(startY + static_cast<int>(tips.size()) + 1, "Password: ", true);
+        string inputName = promptInputLine(
+            startY + static_cast<int>(tips.size()),
+            "Username: ",
+            false,
+            &tips,
+            startY
+        );
+
+        string inputPassword = promptInputLine(
+            startY + static_cast<int>(tips.size()) + 1,
+            "Password: ",
+            true,
+            &tips,
+            startY
+        );
 
         user_save_system::AuthResult result = user_save_system::loginOrRegister(inputName, inputPassword);
         clear();

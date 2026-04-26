@@ -510,7 +510,7 @@ int readKeyWithWindowGuard() {
         }
 
         int ch = wgetch(stdscr);
-        if (ch == KEY_RESIZE || ch == ERR) {
+        if (ch == ERR) {
             continue;
         }
 
@@ -519,8 +519,24 @@ int readKeyWithWindowGuard() {
     }
 }
 
+bool shouldAdvanceFromWaitKey(int ch) {
+    // Accept only Space for a concise, explicit continue action.
+    if (ch == ERR || ch == KEY_RESIZE || ch == KEY_MOUSE) return false;
+    return ch == ' ';
+}
+
+void drawSpaceContinueHint() {
+    const string hint = "Press SPACE to continue...";
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    int hintY = max(0, maxY - 2);
+    move(hintY, 0);
+    clrtoeol();
+    mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+}
+
 void ncWait() {
-    string hint = "Press any key to continue...";
+    string hint = "Press SPACE to continue...";
 
     while (true) {
         enforceWindowSizeGate();
@@ -535,7 +551,7 @@ void ncWait() {
         refresh();
 
         int ch = readKeyWithWindowGuard();
-        if (ch == KEY_RESIZE || ch == ERR) {
+        if (!shouldAdvanceFromWaitKey(ch)) {
             continue;
         }
         break;
@@ -544,15 +560,43 @@ void ncWait() {
 
 
 void showTitle() {
-    clear();
-    int startY = getCenteredStartY(7);
-    centerPrint(startY, title);
-    refresh();
-    ncWait();
+    // Use a dedicated color pair for the title. If the terminal supports custom colors,
+    // define a softer pink; otherwise fall back to magenta.
+    if (has_colors()) {
+        if (can_change_color() && COLORS > 16) {
+            const short kPinkColor = 10;
+            init_color(2, 1000, 500, 800); // bright pink
+            init_pair(2, kPinkColor, COLOR_BLACK);
+        } else {
+            init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+        }
+    }
+
+    while (true) {
+        clear();
+        int startY = getCenteredStartY(7);
+
+        if (has_colors()) {
+            attron(COLOR_PAIR(2) | A_BOLD);
+        }
+        centerPrint(startY, title);
+        if (has_colors()) {
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        }
+
+        drawSpaceContinueHint();
+
+        refresh();
+
+        int ch = readKeyWithWindowGuard();
+        if (!shouldAdvanceFromWaitKey(ch)) {
+            continue;
+        }
+        break;
+    }
 }   
 
 void showIntro() {
-    clear();
     vector<string> lines = {
         "===== Knight Maze RPG =====",
         "",
@@ -562,16 +606,26 @@ void showIntro() {
         "",
         "You must find the key and rescue the princess!"
     };
-    int startY = getCenteredStartY(static_cast<int>(lines.size()));
-    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-        centerPrint(startY + i, lines[i]);
+
+    while (true) {
+        clear();
+        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+            centerPrint(startY + i, lines[i]);
+        }
+
+        drawSpaceContinueHint();
+        refresh();
+
+        int ch = readKeyWithWindowGuard();
+        if (!shouldAdvanceFromWaitKey(ch)) {
+            continue;
+        }
+        break;
     }
-    refresh();
-    ncWait();
 }
 
 void showHelp() {
-    clear();
     vector<string> lines = {
         "===== HELP =====",
         "",
@@ -582,10 +636,21 @@ void showHelp() {
         "- Level up: EXP reaches 100 = auto level up.",
         "- Victory: Find the key and rescue the princess."
     };
-    int startY = getCenteredStartY(static_cast<int>(lines.size()));
-    for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-        centerPrint(startY + i, lines[i]);
+
+    while (true) {
+        clear();
+        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+            centerPrint(startY + i, lines[i]);
+        }
+
+        drawSpaceContinueHint();
+        refresh();
+
+        int ch = readKeyWithWindowGuard();
+        if (!shouldAdvanceFromWaitKey(ch)) {
+            continue;
+        }
+        break;
     }
-    refresh();
-    ncWait();
 }
