@@ -28,7 +28,7 @@ enum class TopButtonAction {
     Quit
 };
 
-void showTitle();
+bool showTitle();
 void show_HP();
 
 int runSideScrollDemo();

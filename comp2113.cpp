@@ -45,7 +45,8 @@ enum class PostDeathAction {
 };
 
 bool isPrimaryMouseClick(const MEVENT &event) {
-    mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED;
+    mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
+                        BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
     return (event.bstate & clickMask) != 0;
 }
 
@@ -55,8 +56,8 @@ PostDeathAction promptPostDeathAction() {
         vector<string> lines = {
             "You died. Game Over.",
             "",
-            "Click HOME (top-right) to return to difficulty selection.",
-            "Click QUIT (top-right) to quit the program."
+            "Click HOME to return to title screen.",
+            "Click QUIT to quit the program."
         };
         int startY = getCenteredStartY(static_cast<int>(lines.size()));
         for (int i = 0; i < static_cast<int>(lines.size()); i++) {
@@ -824,8 +825,8 @@ int main() {
     noecho();
     cbreak();
     keypad(stdscr, TRUE);
-    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
-    mouseinterval(0);
+    mousemask(ALL_MOUSE_EVENTS, nullptr);
+    mouseinterval(150);
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 
@@ -833,7 +834,10 @@ int main() {
 
     srand(time(0));
     Player p;
-    showTitle();
+    if (!showTitle()) {
+        endwin();
+        return 0;
+    }
     showIntro();
 
     string username;
@@ -862,8 +866,8 @@ int main() {
     }
 
     if (!loadedFromSave) {
-        chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
         tutorial(p);
+        chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
         initializeNewMap();
     }
 
@@ -898,8 +902,11 @@ int main() {
             p = Player();
             px = 0;
             py = 0;
+            if (!showTitle()) {
+                break;
+            }
+            showIntro();
             chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
-            tutorial(p);
             initializeNewMap();
             user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
             continue;
@@ -934,8 +941,11 @@ int main() {
                     p = Player();
                     px = 0;
                     py = 0;
+                    if (!showTitle()) {
+                        break;
+                    }
+                    showIntro();
                     chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
-                    tutorial(p);
                     initializeNewMap();
                     user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
                     continue;

@@ -12,3 +12,10 @@ h	1
 hi	h
 g	1
 gggg	1
+zhou	q
+l	k
+s	g
+i	l
+a	a
+d	s
+b	b

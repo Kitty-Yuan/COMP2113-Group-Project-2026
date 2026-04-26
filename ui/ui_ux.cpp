@@ -40,6 +40,8 @@ __  __                   _  __      _       _     _
 | |  | | (_| |/ /  __/  |   \| | | | | (_| | | | | |_ 
 |_|  |_|\__,_/___\___|  |_|\_\_| |_|_|\__, |_| |_|\__|
                                       |___/
+
+                    MAZE NIGHT
 )";
 
 void show_ATT(int value, int maxVal, string type, int y, int x) {
@@ -591,7 +593,7 @@ void ncWait() {
 }
 
 
-void showTitle() {
+bool showTitle() {
     // Use a dedicated color pair for the title. If the terminal supports custom colors,
     // define a softer pink; otherwise fall back to magenta.
     if (has_colors()) {
@@ -634,15 +636,66 @@ void showTitle() {
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
 
+        const int buttonWidth = 14;
+        const int buttonHeight = 3;
+        const int buttonGap = 4;
+        const int buttonsTopY = startY + static_cast<int>(titleLines.size()) + 2;
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        const int totalButtonsWidth = buttonWidth * 2 + buttonGap;
+        const int buttonsStartX = max(0, (maxX - totalButtonsWidth) / 2);
+
+        const int manualX = buttonsStartX;
+        const int quitX = buttonsStartX + buttonWidth + buttonGap;
+
+        mvprintw(buttonsTopY, manualX, "+------------+");
+        mvprintw(buttonsTopY + 1, manualX, "|   MANUAL   |");
+        mvprintw(buttonsTopY + 2, manualX, "+------------+");
+
+        mvprintw(buttonsTopY, quitX, "+------------+");
+        mvprintw(buttonsTopY + 1, quitX, "|    QUIT    |");
+        mvprintw(buttonsTopY + 2, quitX, "+------------+");
+
         drawSpaceContinueHint();
+
+        const string hint = "Click MANUAL / QUIT, or press SPACE to start";
+        mvprintw(min(maxY - 4, buttonsTopY + buttonHeight + 1),
+                 max(0, (maxX - static_cast<int>(hint.size())) / 2),
+                 "%s",
+                 hint.c_str());
 
         refresh();
 
         int ch = readKeyWithWindowGuard();
+        if (ch == KEY_MOUSE) {
+            MEVENT event;
+            if (getmouse(&event) == OK) {
+                mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
+                                    BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
+                if ((event.bstate & clickMask) != 0) {
+                    bool hitManual =
+                        event.x >= manualX && event.x < manualX + buttonWidth &&
+                        event.y >= buttonsTopY && event.y < buttonsTopY + buttonHeight;
+                    bool hitQuit =
+                        event.x >= quitX && event.x < quitX + buttonWidth &&
+                        event.y >= buttonsTopY && event.y < buttonsTopY + buttonHeight;
+
+                    if (hitManual) {
+                        showHelp();
+                        continue;
+                    }
+                    if (hitQuit) {
+                        return false;
+                    }
+                }
+            }
+            continue;
+        }
+
         if (!shouldAdvanceFromWaitKey(ch)) {
             continue;
         }
-        break;
+        return true;
     }
 }   
 
@@ -686,54 +739,126 @@ void showHelp() {
         "- Level up: EXP reaches 100 = auto level up.",
         "- Victory: Find the key and rescue the princess."
     };
+    int contentWidth = 0;
+    for (const string &line : lines) {
+        contentWidth = max(contentWidth, static_cast<int>(line.size()));
+    }
+
+    const int popupWidth = max(66, contentWidth + 4);
+    const int popupHeight = static_cast<int>(lines.size()) + 6;
 
     while (true) {
-        clear();
-        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        int startY = max(0, (maxY - popupHeight) / 2);
+        int startX = max(0, (maxX - popupWidth) / 2);
+
+        WINDOW *popup = newwin(popupHeight, popupWidth, startY, startX);
+        keypad(popup, TRUE);
+        mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
+        werase(popup);
+        box(popup, 0, 0);
+        mvwprintw(popup, 0, 2, " HELP ");
+        mvwprintw(popup, 0, popupWidth - 4, "[X]");
+
         for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-            centerPrint(startY + i, lines[i]);
+            mvwprintw(popup, 2 + i, 2, "%s", lines[i].c_str());
         }
 
-        drawSpaceContinueHint();
-        refresh();
+        mvwprintw(popup, popupHeight - 2, 2, "Click [X] or press ESC to close.");
+        wrefresh(popup);
 
-        int ch = readKeyWithWindowGuard();
-        if (!shouldAdvanceFromWaitKey(ch)) {
-            continue;
+        const int closeX1 = startX + popupWidth - 4;
+        const int closeX2 = startX + popupWidth - 2;
+        const int closeY = startY;
+
+        while (true) {
+            int ch = wgetch(popup);
+            if (ch == KEY_RESIZE) {
+                delwin(popup);
+                touchwin(stdscr);
+                refresh();
+                break;
+            }
+            if (ch == 27) {
+                delwin(popup);
+                touchwin(stdscr);
+                refresh();
+                return;
+            }
+            if (ch != KEY_MOUSE) {
+                continue;
+            }
+
+            MEVENT event;
+            if (getmouse(&event) != OK) {
+                continue;
+            }
+
+            mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
+                                BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
+            if ((event.bstate & clickMask) == 0) {
+                continue;
+            }
+
+            if (event.y >= closeY && event.y <= closeY + 1 && event.x >= closeX1 - 1 && event.x <= closeX2 + 1) {
+                delwin(popup);
+                touchwin(stdscr);
+                refresh();
+                return;
+            }
         }
-        break;
     }
 }
 
+namespace {
+struct ButtonRect {
+    int x;
+    int y;
+    int width;
+    int height;
+    TopButtonAction action;
+};
 
-void showButton(){
+vector<ButtonRect> getTopButtonRects() {
     const int buttonWidth = 14;
     const int buttonHeight = 3;
     const int buttonGap = 1;
-    vector<string> labels = {"HOME", "HELP", "QUIT"};
 
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
-
     int startX = max(0, maxX - buttonWidth - 1);
     int startY = 0;
+
+    return {
+        {startX, startY + 0 * (buttonHeight + buttonGap), buttonWidth, buttonHeight, TopButtonAction::Home},
+        {startX, startY + 1 * (buttonHeight + buttonGap), buttonWidth, buttonHeight, TopButtonAction::Quit},
+        {startX, startY + 2 * (buttonHeight + buttonGap), buttonWidth, buttonHeight, TopButtonAction::Help},
+    };
+}
+}  // namespace
+
+
+void showButton(){
+    vector<string> labels = {"HOME", "QUIT", "MANUAL"};
 
     if (has_colors()) {
         attron(COLOR_PAIR(1) | A_BOLD);
     }
 
-    for (int i = 0; i < static_cast<int>(labels.size()); i++) {
-        int buttonY = startY + i * (buttonHeight + buttonGap);
-        if (buttonY + buttonHeight > maxY) {
+    vector<ButtonRect> rects = getTopButtonRects();
+    for (int i = 0; i < static_cast<int>(labels.size()) && i < static_cast<int>(rects.size()); i++) {
+        const ButtonRect &rect = rects[i];
+        if (rect.y + rect.height > getmaxy(stdscr)) {
             break;
         }
 
-        mvprintw(buttonY, startX, "+------------+");
-        mvprintw(buttonY + 1, startX, "|            |");
-        mvprintw(buttonY + 2, startX, "+------------+");
+        mvprintw(rect.y, rect.x, "+------------+");
+        mvprintw(rect.y + 1, rect.x, "|            |");
+        mvprintw(rect.y + 2, rect.x, "+------------+");
 
-        int labelX = startX + max(0, (buttonWidth - static_cast<int>(labels[i].size())) / 2);
-        mvprintw(buttonY + 1, labelX, "%s", labels[i].c_str());
+        int labelX = rect.x + max(0, (rect.width - static_cast<int>(labels[i].size())) / 2);
+        mvprintw(rect.y + 1, labelX, "%s", labels[i].c_str());
     }
 
     if (has_colors()) {
@@ -742,25 +867,10 @@ void showButton(){
 }
 
 TopButtonAction getTopButtonActionFromMouse(const MEVENT &event) {
-    const int buttonWidth = 14;
-    const int buttonHeight = 3;
-    const int buttonGap = 1;
-
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-    int startX = max(0, maxX - buttonWidth - 1);
-    int startY = 0;
-
-    if (event.x < startX || event.x >= startX + buttonWidth) {
-        return TopButtonAction::None;
-    }
-
-    for (int i = 0; i < 3; i++) {
-        int buttonY = startY + i * (buttonHeight + buttonGap);
-        if (event.y >= buttonY && event.y < buttonY + buttonHeight) {
-            if (i == 0) return TopButtonAction::Home;
-            if (i == 1) return TopButtonAction::Help;
-            return TopButtonAction::Quit;
+    for (const ButtonRect &rect : getTopButtonRects()) {
+        if (event.x >= rect.x - 1 && event.x < rect.x + rect.width + 1 &&
+            event.y >= rect.y - 1 && event.y < rect.y + rect.height + 1) {
+            return rect.action;
         }
     }
 
