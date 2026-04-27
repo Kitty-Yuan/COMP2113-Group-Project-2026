@@ -20,3 +20,10 @@ a	a
 d	s
 b	b
 o	o
+gg	hh
+8	i
+y	j
+sinf	sinf
+sd	sd
+asd	asd
+123	123

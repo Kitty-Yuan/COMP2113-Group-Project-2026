@@ -54,7 +54,10 @@ void show_ATT(int value, int maxVal, string type, int y, int x) {
         hp_bar += "|";
     }
 
+    // Print left border (no color)
     mvprintw(y, x, "|");
+    
+    // Print bar with color based on type
     if (type == "HP") {
         attron(COLOR_PAIR(3) | A_BOLD); 
     } else if (type == "ATK") {
@@ -71,8 +74,10 @@ void show_ATT(int value, int maxVal, string type, int y, int x) {
         attroff(COLOR_PAIR(4) | A_BOLD);
     }
 
+    // Print right border (no color) and attribute text
     mvprintw(y, x + 1 + BAR_LENGTH, "|");
-    mvprintw(y, x + 1 + BAR_LENGTH + 2, "%s: %d / %d", type == "HP" ? "HP" : "ATK", value, maxVal);
+    mvprintw(y, x + 1 + BAR_LENGTH + 2, "%s: %d / %d", 
+             type == "HP" ? "HP" : type == "ATK" ? "ATK" : "DEF", value, maxVal);
 }
 
 // ===== Monster assets =====
@@ -467,7 +472,6 @@ int runMonsterMenuDemo() {
     keypad(stdscr, TRUE);
 
     start_color();
-    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 
     user_interaction ui;
     ui.run();
@@ -597,15 +601,6 @@ void ncWait() {
 bool showTitle() {
     // Use a dedicated color pair for the title. If the terminal supports custom colors,
     // define a softer pink; otherwise fall back to magenta.
-    if (has_colors()) {
-        if (can_change_color() && COLORS > 16) {
-            const short kPinkColor = 10;
-            init_color(2, 1000, 500, 800); // bright pink
-            init_pair(2, kPinkColor, COLOR_BLACK);
-        } else {
-            init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
-        }
-    }
 
     while (true) {
         clear();

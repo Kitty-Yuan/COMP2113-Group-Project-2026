@@ -122,6 +122,10 @@ string promptInputLine(int y,
             for (char c : input) {
                 addch(maskInput ? '*' : c);
             }
+            
+            // Display hint
+            string hint = "Press ENTER to continue...";
+            mvprintw(y + 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
             refresh();
             continue;
         }
@@ -146,6 +150,10 @@ string promptInputLine(int y,
 
         input.push_back(static_cast<char>(ch));
         addch(maskInput ? '*' : ch);
+        
+        // Display hint
+        string hint = "Press ENTER to continue...";
+        mvprintw(y + 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
         refresh();
     }
 
@@ -178,7 +186,7 @@ bool authenticateUser(string &username) {
         string inputPassword = promptInputLine(
             startY + static_cast<int>(tips.size()) + 1,
             "Password: ",
-            true,
+            false,
             &tips,
             startY
         );
@@ -518,7 +526,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
             "1. Easy (9x9 map, enemy atk 5-10, boss atk 10-15)",
             "2. Normal (12x12 map, enemy atk 8-12, boss atk 12-18)",
             "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)",
-            "4. Hell (20x20 map, enemy atk 12-18, boss atk 18-25)",
+            "4. Hell (20x20 map, enemy atk 11-16, boss atk 15-25)",
             "Enter choice: 1 / 2 / 3 / 4"
         };
         int startY = getCenteredStartY(static_cast<int>(lines.size()));
@@ -665,9 +673,10 @@ void tutorial(Player &p) {
                 int choice = readKeyWithWindowGuard();
                 
                 int playerAttack=0;
+               int defendSuccess=0;
                 if (choice=='1') playerAttack=rand()%p.atk+1;
-                else if (choice=='2' && rand()%100<50) playerAttack=p.atk+rand()%5;
-                else if (choice=='3'){p.hp+=5;}
+                else if (choice=='2' && rand()%100<60) playerAttack=(int)(p.atk*(130+rand()%40)/100.0);
+                else if (choice=='3') defendSuccess=(rand()%100<40)?1:0;
                 
                 enemyHP-=playerAttack;
                 
@@ -684,7 +693,21 @@ void tutorial(Player &p) {
                 }
                 
                 int edmg=(rand()%(maxPower-minPower+1))+minPower;
-                if(choice=='3') edmg-=p.def;
+                if(choice=='3') {
+                    if(defendSuccess) {
+                        int counterDmg=(int)(p.atk*0.4+edmg*(0.4+rand()%20/100.0));
+                        enemyHP-=counterDmg;
+                        p.hp+=5;
+                        edmg=0;
+                        mvprintw(y++, 0, "Defend success! Counter: %d damage!", counterDmg);
+                        if(enemyHP<=0) {
+                            mvprintw(y++, 0, "Enemy defeated!");
+                            p.gold+=10; p.exp+=20; refresh(); napms(500); break;
+                        }
+                    } else {
+                        edmg=(int)(edmg*0.4);
+                    }
+                }
                 if(edmg<1) edmg=1;
                 p.hp-=edmg;
                 mvprintw(y++, 0, "Enemy dealt %d damage!", edmg);
@@ -731,16 +754,17 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         int choice = readKeyWithWindowGuard();
         
         int playerAttack = 0;
+        int defendSuccess = 0;
         if (choice == '1') playerAttack = rand() % p.atk + 1;
-        else if (choice == '2' && rand() % 100 < 50) playerAttack = p.atk + rand() % 5;
-        else if (choice == '3') { p.hp += 5; }
+        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(p.atk * (130 + rand() % 40) / 100.0);
+        else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
         enemyHP -= playerAttack;
         
         clear();
         y = getCenteredStartY(4);
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
-        else centerPrint(y++, "Attack missed!");
+        else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
 
         if (enemyHP <= 0) {
             centerPrint(y++, "Enemy defeated! +20 Gold, +50 EXP");
@@ -751,7 +775,24 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         }
 
         int dmg = (rand() % (enemyMax - enemyMin + 1)) + enemyMin;
-        if (choice == '3') dmg -= p.def;
+        if (choice == '3') {
+            if (defendSuccess) {
+                int counterDmg = (int)(p.atk * 0.4 + dmg * (0.4 + rand() % 20 / 100.0));
+                enemyHP -= counterDmg;
+                p.hp += 5;
+                dmg = 0;
+                centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
+                if (enemyHP <= 0) {
+                    centerPrint(y++, "Enemy defeated!");
+                    p.gold += 20; p.exp += 50; levelUp(p);
+                    refresh();
+                    ncWait();
+                    break;
+                }
+            } else {
+                dmg = (int)(dmg * 0.4);
+            }
+        }
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
         centerPrint(y++, "Enemy dealt " + to_string(dmg) + " damage!");
@@ -781,16 +822,17 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         int choice = readKeyWithWindowGuard();
         
         int playerAttack = 0;
+        int defendSuccess = 0;
         if (choice == '1') playerAttack = rand() % p.atk + 1;
-        else if (choice == '2' && rand() % 100 < 50) playerAttack = p.atk + rand() % 10;
-        else if (choice == '3') { p.hp += 10; }
+        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(p.atk * (130 + rand() % 40) / 100.0);
+        else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
         bossHP -= playerAttack;
         
         clear();
         y = getCenteredStartY(4);
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
-        else centerPrint(y++, "Attack missed!");
+        else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
 
         if (bossHP <= 0) {
             centerPrint(y++, "Boss defeated! +100 Gold, +200 EXP");
@@ -801,7 +843,24 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         }
 
         int dmg = (rand() % (bossMax - bossMin + 1)) + bossMin;
-        if (choice == '3') dmg -= p.def;
+        if (choice == '3') {
+            if (defendSuccess) {
+                int counterDmg = (int)(p.atk * 0.4 + dmg * (0.4 + rand() % 20 / 100.0));
+                bossHP -= counterDmg;
+                p.hp += 5;
+                dmg = 0;
+                centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
+                if (bossHP <= 0) {
+                    centerPrint(y++, "Boss defeated!");
+                    p.gold += 100; p.exp += 200; levelUp(p);
+                    refresh();
+                    ncWait();
+                    break;
+                }
+            } else {
+                dmg = (int)(dmg * 0.4);
+            }
+        }
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
         centerPrint(y++, "Boss dealt " + to_string(dmg) + " damage!");
@@ -953,8 +1012,12 @@ int main() {
     keypad(stdscr, TRUE);
     mousemask(ALL_MOUSE_EVENTS, nullptr);
     mouseinterval(150);
+    curs_set(0);  // Hide cursor
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, COLOR_BLACK);
 
     enforceWindowSizeGate();
 
