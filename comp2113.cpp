@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
@@ -282,7 +283,103 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &enemy
     return true;
 }
 
+// Helper function to check if a path exists using BFS
+bool hasPath(int sx, int sy, int ex, int ey) {
+    if (sx == ex && sy == ey) return true;
+    if (grid[sx][sy] == '#' || grid[ex][ey] == '#') return false;
+    
+    bool temp_visited[50][50];
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            temp_visited[i][j] = false;
+        }
+    }
+    
+    queue<pair<int,int>> q;
+    q.push({sx, sy});
+    temp_visited[sx][sy] = true;
+    
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+    
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        
+        if (x == ex && y == ey) return true;
+        
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            
+            if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && 
+                !temp_visited[nx][ny] && grid[nx][ny] != '#') {
+                temp_visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+    return false;
+}
+
+// Helper function to create a path between two points
+void createPath(int sx, int sy, int ex, int ey) {
+    if (hasPath(sx, sy, ex, ey)) return;
+    
+    bool temp_visited[50][50];
+    int parent_x[50][50], parent_y[50][50];
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            temp_visited[i][j] = false;
+            parent_x[i][j] = -1;
+            parent_y[i][j] = -1;
+        }
+    }
+    
+    queue<pair<int,int>> q;
+    q.push({sx, sy});
+    temp_visited[sx][sy] = true;
+    
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+    
+    bool found = false;
+    while (!q.empty() && !found) {
+        auto [x, y] = q.front();
+        q.pop();
+        
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            
+            if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && !temp_visited[nx][ny]) {
+                temp_visited[nx][ny] = true;
+                parent_x[nx][ny] = x;
+                parent_y[nx][ny] = y;
+                q.push({nx, ny});
+                
+                if (nx == ex && ny == ey) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (found) {
+        int x = ex, y = ey;
+        while (x != sx || y != sy) {
+            grid[x][y] = '.';
+            int px = parent_x[x][y];
+            int py = parent_y[x][y];
+            x = px;
+            y = py;
+        }
+    }
+}
+
 void initializeNewMap() {
+    // Generate random map with walls
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             grid[i][j] = (rand()%100 < 25 ? '#' : '.');
@@ -291,11 +388,40 @@ void initializeNewMap() {
         }
     }
 
+    // Place key locations
+    grid[px][py] = '.';
     grid[gx][gy] = 'G';
     grid[SIZE/2][SIZE/2] = 'B';
-    grid[rand()%SIZE][rand()%SIZE] = 'K';
-    grid[rand()%SIZE][rand()%SIZE] = 'T';
-    grid[rand()%SIZE][rand()%SIZE] = 'C';
+    
+    // Place collectible items randomly
+    int kx, ky, tx, ty, cx, cy;
+    do {
+        kx = rand() % SIZE;
+        ky = rand() % SIZE;
+    } while ((kx == px && ky == py) || (kx == gx && ky == gy) || (kx == SIZE/2 && ky == SIZE/2));
+    grid[kx][ky] = 'K';
+    
+    do {
+        tx = rand() % SIZE;
+        ty = rand() % SIZE;
+    } while ((tx == px && ty == py) || (tx == gx && ty == gy) || (tx == SIZE/2 && ty == SIZE/2) || 
+             (tx == kx && ty == ky));
+    grid[tx][ty] = 'T';
+    
+    do {
+        cx = rand() % SIZE;
+        cy = rand() % SIZE;
+    } while ((cx == px && cy == py) || (cx == gx && cy == gy) || (cx == SIZE/2 && cy == SIZE/2) || 
+             (cx == kx && cy == ky) || (cx == tx && cy == ty));
+    grid[cx][cy] = 'C';
+    
+    // Ensure paths exist between critical locations
+    createPath(px, py, kx, ky);      // P -> K
+    createPath(kx, ky, gx, gy);      // K -> G
+    createPath(px, py, tx, ty);      // P -> T
+    createPath(px, py, cx, cy);      // P -> C
+    createPath(px, py, SIZE/2, SIZE/2);  // P -> B
+    
     discovered[px][py] = true;
 }
 

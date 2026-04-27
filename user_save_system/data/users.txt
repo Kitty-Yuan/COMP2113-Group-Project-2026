@@ -19,3 +19,4 @@ i	l
 a	a
 d	s
 b	b
+o	o
