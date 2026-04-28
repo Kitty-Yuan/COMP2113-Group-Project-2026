@@ -1,29 +1,24 @@
 # 构建目录
 build/
-cmake-build-*/
 
-# CMake 生成的文件
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-CTestTestfile.cmake
-*.cmake
-!CMakeLists.txt
-
-# 编译产物
-/comp2113
+# 编译产物（.o 目标文件）
 *.o
 *.obj
+
+# 可执行文件
+comp2113
 *.exe
 *.out
 *.app
 *.dylib
 *.so
 *.dll
+
+# 库文件
 *.a
 *.lib
 
-# IDE 文件（根据你用的IDE选择）
+# IDE 文件
 .vscode/
 .idea/
 *.swp
@@ -34,5 +29,10 @@ CTestTestfile.cmake
 # 测试/临时文件
 Testing/
 *.log
-*.tmp*.save
-user_save_system/data/users.txt
+*.tmp
+
+# 用户系统数据（每个本地玩家各自独立）
+user_save_system/data/
+
+# 保留 Makefile
+!Makefile

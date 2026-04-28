@@ -2,10 +2,7 @@
 # Compiler and flags
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2
-
-# Linux/WSL ncurses (system installed)
-INCLUDES := -I/usr/include
-LDFLAGS := -L/usr/lib/x86_64-linux-gnu -lncurses
+LDFLAGS := -lncurses
 
 # Directories
 SRC_DIR := .
@@ -25,10 +22,10 @@ OBJECTS := $(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.cpp=.o)))
 EXECUTABLE := $(BUILD_DIR)/comp2113
 
 # Phony targets
-.PHONY: all clean help cmake cmake-build
+.PHONY: all clean help
 
-# Default target
-all: $(EXECUTABLE)
+# Default target - clean before building
+all: clean $(EXECUTABLE)
 
 # Build the executable
 $(EXECUTABLE): $(OBJECTS)
@@ -37,37 +34,27 @@ $(EXECUTABLE): $(OBJECTS)
 	@echo "Build complete! Run with: ./$(EXECUTABLE)"
 
 # Compile source files to object files
-$(BUILD_DIR)/comp2113.o: comp2113.cpp
-	@mkdir -p "$(BUILD_DIR)"
+$(BUILD_DIR)/comp2113.o: comp2113.cpp | $(BUILD_DIR)
 	@echo "Compiling comp2113.cpp..."
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -I$(UI_DIR) -I$(SAVE_DIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(UI_DIR) -I$(SAVE_DIR) -c $< -o $@
 
-$(BUILD_DIR)/ui_ux.o: ui/ui_ux.cpp ui/ui_ux.h
-	@mkdir -p "$(BUILD_DIR)"
+$(BUILD_DIR)/ui_ux.o: ui/ui_ux.cpp ui/ui_ux.h | $(BUILD_DIR)
 	@echo "Compiling ui/ui_ux.cpp..."
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/user_save_system.o: user_save_system/user_save_system.cpp user_save_system/user_save_system.h
-	@mkdir -p "$(BUILD_DIR)"
+$(BUILD_DIR)/user_save_system.o: user_save_system/user_save_system.cpp user_save_system/user_save_system.h | $(BUILD_DIR)
 	@echo "Compiling user_save_system/user_save_system.cpp..."
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Create build directory
+$(BUILD_DIR):
+	@mkdir -p $(BUILD_DIR)
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build directory..."
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/comp2113
 	@echo "Clean complete!"
-
-# CMake build (alternative method)
-cmake: 
-	@echo "Configuring with CMake..."
-	@cd $(BUILD_DIR) && cmake -G "MinGW Makefiles" ..
-	@echo "CMake configuration complete!"
-
-cmake-build: cmake
-	@echo "Building with CMake..."
-	@cd $(BUILD_DIR) && make
-	@echo "CMake build complete! Run with: ./$(BUILD_DIR)/comp2113"
 
 # Help
 help:
@@ -76,13 +63,11 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all          - Build the project using Makefile (default)"
-	@echo "  clean        - Remove build artifacts"
-	@echo "  cmake        - Configure project with CMake"
-	@echo "  cmake-build  - Configure and build with CMake"
-	@echo "  help         - Display this help message"
+	@echo "  all    - Build the project (default)"
+	@echo "  clean  - Remove build artifacts"
+	@echo "  help   - Display this help message"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make              # Build using Makefile"
-	@echo "  make cmake-build  # Build using CMake"
-	@echo "  make clean        # Clean build files"
+	@echo "  make         # Build the project"
+	@echo "  make clean   # Clean build files"
+	@echo "  ./build/comp2113  # Run the program"
