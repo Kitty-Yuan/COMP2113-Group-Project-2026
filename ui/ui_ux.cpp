@@ -576,7 +576,7 @@ void drawSpaceContinueHint() {
 }
 
 void ncWait() {
-    string hint = "Press ENTER to continue...";
+    const string hint = "Press ENTER to continue...";
 
     while (true) {
         enforceWindowSizeGate();
@@ -585,16 +585,31 @@ void ncWait() {
         getmaxyx(stdscr, maxY, maxX);
 
         int hintY = max(0, maxY - 2);
+        
+        // Clear only the hint line
         move(hintY, 0);
         clrtoeol();
-        mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+        
+        // Print the hint centered
+        int hintX = max(0, (maxX - static_cast<int>(hint.size())) / 2);
+        mvprintw(hintY, hintX, "%s", hint.c_str());
         refresh();
 
-        int ch = readKeyWithWindowGuard();
-        if (!shouldAdvanceFromWaitKey(ch)) {
+        // Read input directly without calling readKeyWithWindowGuard
+        // to avoid it clearing the screen or printing extra elements
+        timeout(120);
+        int ch = wgetch(stdscr);
+        timeout(-1);
+        
+        // Handle window resize by redrawn the hint
+        if (ch == KEY_RESIZE || ch == ERR) {
             continue;
         }
-        break;
+        
+        // Check if ENTER was pressed
+        if (shouldAdvanceFromWaitKey(ch)) {
+            break;
+        }
     }
 }
 
@@ -1026,7 +1041,7 @@ bool authenticateUser(string &username) {
             int hintY = max(0, maxY - 2);
             mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
             refresh();
-            napms(700);
+            ncWait();
             return true;
         }
 
