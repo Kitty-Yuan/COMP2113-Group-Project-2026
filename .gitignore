@@ -34,4 +34,5 @@ CTestTestfile.cmake
 # 测试/临时文件
 Testing/
 *.log
-*.tmp
+*.tmp*.save
+user_save_system/data/users.txt
