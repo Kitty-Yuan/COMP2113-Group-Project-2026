@@ -4,6 +4,8 @@
 #include <string>
 #include <ncurses.h>
 
+static const int KET_HOME_BUTTON = -2;
+
 struct Monster {
     std::string name;
     std::string appearance;

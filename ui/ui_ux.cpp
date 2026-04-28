@@ -554,6 +554,27 @@ int readKeyWithWindowGuard() {
             continue;
         }
 
+        if (ch == KEY_MOUSE){
+            MEVENT event;
+            if (getmouse(&event) == OK) {
+                mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
+                                    BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
+                if (event.bstate & clickMask) {
+                    TopButtonAction action = getTopButtonActionFromMouse(event);
+                    if (action == TopButtonAction::Home) {
+                        timeout(-1);
+                        return KET_HOME_BUTTON;
+                    } else if (action == TopButtonAction::Quit) {
+                        endwin();
+                        exit(0);
+                    } else if (action == TopButtonAction::Help) {
+                        showHelp();
+                        continue;
+                    }
+                }
+            }
+        }
+
         timeout(-1);
         return ch;
     }
@@ -645,13 +666,6 @@ bool showTitle() {
         const int manualX = buttonsStartX;
         const int quitX = buttonsStartX + buttonWidth + buttonGap;
 
-        mvprintw(buttonsTopY, manualX, "+------------+");
-        mvprintw(buttonsTopY + 1, manualX, "|   MANUAL   |");
-        mvprintw(buttonsTopY + 2, manualX, "+------------+");
-
-        mvprintw(buttonsTopY, quitX, "+------------+");
-        mvprintw(buttonsTopY + 1, quitX, "|    QUIT    |");
-        mvprintw(buttonsTopY + 2, quitX, "+------------+");
 
         drawSpaceContinueHint();
 
