@@ -24,8 +24,8 @@ EXECUTABLE := $(BUILD_DIR)/comp2113
 # Phony targets
 .PHONY: all clean help
 
-# Default target
-all: $(EXECUTABLE)
+# Default target - clean before building
+all: clean $(EXECUTABLE)
 
 # Build the executable
 $(EXECUTABLE): $(OBJECTS)

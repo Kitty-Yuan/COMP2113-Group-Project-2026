@@ -48,4 +48,12 @@ void enforceWindowSizeGate();
 int readKeyWithWindowGuard();
 void show_ATT(int value, int maxVal, std::string type, int y, int x);
 
+// User input and authentication functions
+std::string promptInputLine(int y,
+                            const std::string &label,
+                            bool maskInput,
+                            const std::vector<std::string> *contextLines = nullptr,
+                            int contextStartY = 0);
+bool authenticateUser(std::string &username);
+
 #endif

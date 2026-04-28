@@ -87,129 +87,6 @@ PostDeathAction promptPostDeathAction() {
     }
 }
 
-string promptInputLine(int y,
-                       const string &label,
-                       bool maskInput,
-                       const vector<string> *contextLines = nullptr,
-                       int contextStartY = 0) {
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-    int startX = max(0, (maxX - 50) / 2);
-
-    mvprintw(y, startX, "%s", label.c_str());
-    move(y, startX + static_cast<int>(label.size()));
-    refresh();
-
-    string input;
-    while (true) {
-        int ch = readKeyWithWindowGuard();
-        if (ch == KEY_RESIZE) {
-            getmaxyx(stdscr, maxY, maxX);
-            startX = max(0, (maxX - 50) / 2);
-
-            if (contextLines != nullptr) {
-                clear();
-                for (int i = 0; i < static_cast<int>(contextLines->size()); i++) {
-                    centerPrint(contextStartY + i, (*contextLines)[i]);
-                }
-            } else {
-                move(y, 0);
-                clrtoeol();
-            }
-
-            mvprintw(y, startX, "%s", label.c_str());
-            move(y, startX + static_cast<int>(label.size()));
-            for (char c : input) {
-                addch(maskInput ? '*' : c);
-            }
-            
-            // Display hint
-            string hint = "Press ENTER to continue...";
-            mvprintw(y + 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
-            refresh();
-            continue;
-        }
-
-        if (ch == '\n' || ch == KEY_ENTER) {
-            break;
-        }
-
-        if (ch == KEY_BACKSPACE || ch == 127 || ch == 8) {
-            if (!input.empty()) {
-                input.pop_back();
-                int currentX = startX + static_cast<int>(label.size()) + static_cast<int>(input.size());
-                mvaddch(y, currentX, ' ');
-                move(y, currentX);
-            }
-            continue;
-        }
-
-        if (!isprint(ch) || input.size() >= 32) {
-            continue;
-        }
-
-        input.push_back(static_cast<char>(ch));
-        addch(maskInput ? '*' : ch);
-        
-        // Display hint
-        string hint = "Press ENTER to continue...";
-        mvprintw(y + 2, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
-        refresh();
-    }
-
-    return input;
-}
-
-bool authenticateUser(string &username) {
-    for (int attempt = 0; attempt < 3; ++attempt) {
-        clear();
-        vector<string> tips = {
-            "===== USER LOGIN =====",
-            "Use only letters, digits, _ or - (max 32 chars).",
-            "Existing user: enter correct password to restore progress.",
-            "New user: account will be created automatically.",
-            ""
-        };
-        int startY = getCenteredStartY(static_cast<int>(tips.size()) + 4);
-        for (int i = 0; i < static_cast<int>(tips.size()); i++) {
-            centerPrint(startY + i, tips[i]);
-        }
-
-        string inputName = promptInputLine(
-            startY + static_cast<int>(tips.size()),
-            "Username: ",
-            false,
-            &tips,
-            startY
-        );
-
-        string inputPassword = promptInputLine(
-            startY + static_cast<int>(tips.size()) + 1,
-            "Password: ",
-            false,
-            &tips,
-            startY
-        );
-
-        user_save_system::AuthResult result = user_save_system::loginOrRegister(inputName, inputPassword);
-        clear();
-        centerPrint(getCenteredStartY(2), result.message);
-        if (result.authenticated) {
-            username = inputName;
-            centerPrint(getCenteredStartY(2) + 1, "Authentication success.");
-            refresh();
-            napms(700);
-            return true;
-        }
-
-        centerPrint(getCenteredStartY(2) + 1, "Press any key to retry.");
-        refresh();
-        ncWait();
-    }
-
-    return false;
-}
-
 user_save_system::SaveData buildSaveData(const Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
     user_save_system::SaveData data;
     data.valid = true;
@@ -650,6 +527,7 @@ void tutorial(Player &p) {
         if (demoMap[x][y_pos]=='K') {
             clear();
             centerPrint(getCenteredStartY(1), "You found the key!");
+            ncWait();
             hasKey=true; 
             demoMap[x][y_pos]='.';
             refresh();
@@ -962,6 +840,7 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
     if (grid[px][py] == 'K') { 
         clear();
         centerPrint(getCenteredStartY(1), "You found the key!");
+        ncWait();
         p.hasKey = true; 
         grid[px][py] = '.';
         refresh();

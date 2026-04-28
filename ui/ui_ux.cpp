@@ -14,6 +14,7 @@ Merged from: monsters.cpp, scene.cpp, user_interaction.cpp
 #include <vector>
 
 #include "ui_ux.h"
+#include "../user_save_system/user_save_system.h"
 
 using namespace std;
 
@@ -458,7 +459,7 @@ int runSideScrollDemo() {
 
     clear();
     mvprintw(10, 20, "Game Over!");
-    mvprintw(12, 20, "Press any key to exit...");
+    mvprintw(12, 20, "Press ENTER to continue...");
     refresh();
     getch();
     return 0;
@@ -559,13 +560,13 @@ int readKeyWithWindowGuard() {
 }
 
 bool shouldAdvanceFromWaitKey(int ch) {
-    // Accept only Space for a concise, explicit continue action.
+    // Accept only ENTER for a concise, explicit continue action.
     if (ch == ERR || ch == KEY_RESIZE || ch == KEY_MOUSE) return false;
-    return ch == ' ';
+    return ch == '\n' || ch == KEY_ENTER;
 }
 
 void drawSpaceContinueHint() {
-    const string hint = "Press SPACE to continue...";
+    const string hint = "Press ENTER to continue...";
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
     int hintY = max(0, maxY - 2);
@@ -575,7 +576,7 @@ void drawSpaceContinueHint() {
 }
 
 void ncWait() {
-    string hint = "Press SPACE to continue...";
+    string hint = "Press ENTER to continue...";
 
     while (true) {
         enforceWindowSizeGate();
@@ -654,7 +655,7 @@ bool showTitle() {
 
         drawSpaceContinueHint();
 
-        const string hint = "Click MANUAL / QUIT, or press SPACE to start";
+        const string hint = "Click MANUAL / QUIT, or press ENTER to start";
         mvprintw(min(maxY - 4, buttonsTopY + buttonHeight + 1),
                  max(0, (maxX - static_cast<int>(hint.size())) / 2),
                  "%s",
@@ -871,4 +872,171 @@ TopButtonAction getTopButtonActionFromMouse(const MEVENT &event) {
     }
 
     return TopButtonAction::None;
+}
+
+string promptInputLine(int y,
+                       const string &label,
+                       bool maskInput,
+                       const vector<string> *contextLines,
+                       int contextStartY) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    int startX = max(0, (maxX - 50) / 2);
+
+    string input;
+    while (true) {
+        // Clear and redraw the input line
+        move(y, 0);
+        clrtoeol();
+        
+        // Display label + input content
+        mvprintw(y, startX, "%s", label.c_str());
+        
+        // Display input content (masked or plain)
+        string displayContent;
+        for (char c : input) {
+            displayContent += maskInput ? '*' : c;
+        }
+        mvprintw(y, startX + static_cast<int>(label.size()), "%s", displayContent.c_str());
+        
+        // Display hint at bottom
+        string hint = "Press ENTER to continue...";
+        int hintY = max(0, maxY - 2);
+        move(hintY, 0);
+        clrtoeol();
+        mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+        
+        // Move cursor after the input
+        move(y, startX + static_cast<int>(label.size()) + static_cast<int>(displayContent.size()));
+        refresh();
+        
+        int ch = readKeyWithWindowGuard();
+        if (ch == KEY_RESIZE) {
+            getmaxyx(stdscr, maxY, maxX);
+            startX = max(0, (maxX - 50) / 2);
+
+            if (contextLines != nullptr) {
+                clear();
+                for (int i = 0; i < static_cast<int>(contextLines->size()); i++) {
+                    centerPrint(contextStartY + i, (*contextLines)[i]);
+                }
+            }
+            continue;
+        }
+
+        if (ch == '\n' || ch == KEY_ENTER) {
+            break;
+        }
+
+        if (ch == KEY_BACKSPACE || ch == 127 || ch == 8) {
+            if (!input.empty()) {
+                input.pop_back();
+            }
+            continue;
+        }
+
+        if (!isprint(ch) || input.size() >= 32) {
+            continue;
+        }
+
+        input.push_back(static_cast<char>(ch));
+    }
+
+    return input;
+}
+
+bool authenticateUser(string &username) {
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        clear();
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        
+        vector<string> tips = {
+            "===== USER LOGIN =====",
+            "Use only letters, digits, _ or - (max 32 chars).",
+            "Existing user: enter correct password to restore progress.",
+            "New user: account will be created automatically.",
+            ""
+        };
+        int startY = getCenteredStartY(static_cast<int>(tips.size()) + 4);
+        for (int i = 0; i < static_cast<int>(tips.size()); i++) {
+            centerPrint(startY + i, tips[i]);
+        }
+
+        // Input username with validation
+        string inputName;
+        bool validUsername = false;
+        while (!validUsername) {
+            inputName = promptInputLine(
+                startY + static_cast<int>(tips.size()),
+                "Username: ",
+                false,
+                &tips,
+                startY
+            );
+            
+            // Validate username: only letters, digits, _, -
+            bool isValid = true;
+            for (char c : inputName) {
+                if (!isalnum(c) && c != '_' && c != '-') {
+                    isValid = false;
+                    break;
+                }
+                // Check if it's a non-ASCII character
+                if (static_cast<unsigned char>(c) > 127) {
+                    isValid = false;
+                    break;
+                }
+            }
+            
+            if (!isValid && !inputName.empty()) {
+                // Show error and reset
+                clear();
+                for (int i = 0; i < static_cast<int>(tips.size()); i++) {
+                    centerPrint(startY + i, tips[i]);
+                }
+                centerPrint(startY + static_cast<int>(tips.size()) + 2, "Invalid input! Use only letters, digits, _ or -");
+                
+                string hint = "Press ENTER to continue...";
+                int hintY = max(0, maxY - 2);
+                mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+                refresh();
+                ncWait();
+                continue;
+            }
+            validUsername = true;
+        }
+
+        string inputPassword = promptInputLine(
+            startY + static_cast<int>(tips.size()) + 1,
+            "Password: ",
+            false,
+            &tips,
+            startY
+        );
+
+        user_save_system::AuthResult result = user_save_system::loginOrRegister(inputName, inputPassword);
+        clear();
+        centerPrint(getCenteredStartY(2), result.message);
+        if (result.authenticated) {
+            username = inputName;
+            centerPrint(getCenteredStartY(2) + 1, "Authentication success.");
+            
+            string hint = "Press ENTER to continue...";
+            int hintY = max(0, maxY - 2);
+            mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+            refresh();
+            napms(700);
+            return true;
+        }
+
+        centerPrint(getCenteredStartY(2) + 1, "Press ENTER to continue...");
+        string hint = "Press ENTER to continue...";
+        int hintY = max(0, maxY - 2);
+        mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+        refresh();
+        ncWait();
+    }
+
+    return false;
 }
