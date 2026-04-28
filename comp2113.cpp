@@ -401,8 +401,8 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         vector<string> lines = {
             "Choose difficulty (1-4):",
             "1. Easy (9x9 map, enemy ATK 5-10, boss atk 10-15)",
-            "2. Normal (12x12 map, enemy ATK 8-12, boss atk 12-18)",
-            "3. Hard (15x15 map, enemy ATK 10-15, boss AT 15-22)",
+            "2. Normal (12x12 map, enemy ATK 8-12, boss ATK 12-18)",
+            "3. Hard (15x15 map, enemy ATK 10-15, boss ATK 15-22)",
             "4. Hell (20x20 map, enemy ATK 11-16, boss ATK 15-25)",
             "Enter choice: 1 / 2 / 3 / 4"
         };
