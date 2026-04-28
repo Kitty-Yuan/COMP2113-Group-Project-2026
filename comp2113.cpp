@@ -401,7 +401,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         clear();
         vector<string> lines = {
             "Choose difficulty (1-4):",
-            "1. Easy (9x9 map, enemy ATK 5-10, boss atk 10-15)",
+            "1. Easy (9x9 map, enemy ATK 5-10, boss ATK 10-15)",
             "2. Normal (12x12 map, enemy ATK 8-12, boss ATK 12-18)",
             "3. Hard (15x15 map, enemy ATK 10-15, boss ATK 15-22)",
             "4. Hell (20x20 map, enemy ATK 11-16, boss ATK 15-25)",
@@ -417,6 +417,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         if (ch >= '1' && ch <= '4') {
             diff = ch - '0';
         }
+
     }
     
     if (diff == 1) { SIZE = 9; enemyMin=5; enemyMax=10; bossMin=10; bossMax=15; }
@@ -459,7 +460,7 @@ void tutorial(Player &p) {
         {'P','.','#','.','.'},
         {'.','#','K','.','.'},
         {'.','.','B','#','.'},
-        {'#','.','.','.','.'},
+        {'#','.','#','.','.'},
         {'.','.','#','.','G'}
     };
 
@@ -631,7 +632,33 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
-        int choice = readKeyWithWindowGuard();
+        int choice;
+        bool valid = false;
+
+        while (!valid) {
+            clear();
+
+            int y = getCenteredStartY(4);
+            centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Enemy HP: " + to_string(enemyHP));
+            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+            refresh();
+
+            choice = readKeyWithWindowGuard();
+
+            if (choice == '1' || choice == '2' || choice == '3') {
+                valid = true;
+            } else {
+                clear();
+                y = getCenteredStartY(2);
+                centerPrint(y++, "Invalid input!");
+                centerPrint(y++, "Please press 1 / 2 / 3");
+                centerPrint(y++, "1) Normal  2) Strong  3) Defend");
+                centerPrint(y++, "Press the correct key to continue...");
+                centerPrint(y++, "OR click MANUAL for help");
+                refresh();
+                napms(600);
+            }
+        }
         
         int playerAttack = 0;
         int defendSuccess = 0;
@@ -749,13 +776,103 @@ void bossFight(Player &p, int bossMin, int bossMax) {
     }
 }
 
+// ===== Shop System =====
+void shop(Player &p) {
+    clear();
+    int startY = getCenteredStartY(6);
+    centerPrint(startY++, "=== MERCHANT ===");
+    centerPrint(startY++, "Welcome! What would you like to buy?");
+    centerPrint(startY++, "1. Small Potion (Heal 15 HP) - 30 gold");
+    centerPrint(startY++, "2. Large Potion (Heal 40 HP) - 70 gold");
+    centerPrint(startY++, "3. Attack Boost (Permanent +3 ATK) - 50 gold");
+    centerPrint(startY++, "4. Defense Boost (Permanent +2 DEF) - 40 gold");
+    centerPrint(startY++, "5. Leave");
+    refresh();
+
+    while (true) {
+        int choice = readKeyWithWindowGuard();
+        if (choice == '1') {
+            if (p.gold >= 30) {
+                p.gold -= 30;
+                p.hp += 15;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Small Potion. +15 HP.");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);   // 重新显示商店
+                return;
+            }
+        } else if (choice == '2') {
+            if (p.gold >= 70) {
+                p.gold -= 70;
+                p.hp += 40;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Large Potion. +40 HP.");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '3') {
+            if (p.gold >= 50) {
+                p.gold -= 50;
+                p.atk += 3;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought an Attack Boost. ATK +3!");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '4') {
+            if (p.gold >= 40) {
+                p.gold -= 40;
+                p.def += 2;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Defense Boost. DEF +2!");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '5') {
+            break;
+        }
+    }
+    clear();
+}
+
+
 // ===== Event System =====
 void event(Player &p, int enemyMin, int enemyMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
     if (r < 40) fight(p, enemyMin, enemyMax);       // Enemy 40%
     else if (r < 60) {
-        clear();
-        centerPrint(getCenteredStartY(1), "You met a merchant! (Shop not implemented)");
+        shop(p);
     }
     else if (r < 75) {
         clear();
@@ -936,8 +1053,19 @@ int main() {
     }
 
     if (!loadedFromSave) {
-        tutorial(p);
+
         chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+        clear();
+        centerPrint(5, "Press T for Tutorial, any other key to skip");
+        refresh();
+
+        int ch = getch();
+
+        if (ch == 'T' || ch == 't') {
+            Player temp = p;
+            tutorial(temp);
+        }
+
         initializeNewMap();
     }
 
