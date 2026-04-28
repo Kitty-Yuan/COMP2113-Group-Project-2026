@@ -482,6 +482,101 @@ void levelUp(Player &p) {
         napms(1000); // Wait 1 second
     }
 }
+
+//Tutorial Catch Princess
+void tutorialMinigame(Player &p) {
+    const int N = 10;
+    char grid[N][N];
+
+    // ===== initialize the map =====
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (i == 0 || j == 0 || i == N-1 || j == N-1)
+                grid[i][j] = '#';
+            else
+                grid[i][j] = '.';
+        }
+    }
+
+    int px = 1, py = 1;
+    int ex = N/2, ey = N/2;
+
+    int steps = 0;
+
+    while (true) {
+        clear();
+
+        int startY = getCenteredStartY(N + 5);
+
+        centerPrint(startY++, "Catch the enemy!");
+        centerPrint(startY++, "It moves every 2 steps...");
+        centerPrint(startY++, "---------------------");
+
+        // ===== draw the map =====
+        for (int i = 0; i < N; i++) {
+            string row;
+            for (int j = 0; j < N; j++) {
+                if (i == px && j == py) row += 'P';
+                else if (i == ex && j == ey) row += 'E';
+                else row += grid[i][j];
+                row += ' ';
+            }
+            centerPrint(startY++, row);
+        }
+
+        centerPrint(startY++, "Move: W/A/S/D");
+        refresh();
+
+        // ===== input =====
+        int key = readKeyWithWindowGuard();
+        char m = normalizeMoveKey(key);
+
+        int nx = px, ny = py;
+        if (m == 'w') nx--;
+        else if (m == 's') nx++;
+        else if (m == 'a') ny--;
+        else if (m == 'd') ny++;
+
+        if (grid[nx][ny] == '#') continue;
+
+        px = nx;
+        py = ny;
+        steps++;
+
+        // ===== 🎯 catch the enemy =====
+        if (px == ex && py == ey) {
+            clear();
+            centerPrint(getCenteredStartY(2), "You caught the enemy!");
+            centerPrint(getCenteredStartY(2)+1, "Victory!");
+            refresh();
+            ncWait();
+            return;
+        }
+
+        // ===== 👾 movement=====
+        if (steps % 2 == 0) {
+            int dx[] = {-1, 1, 0, 0};
+            int dy[] = {0, 0, -1, 1};
+
+            int tries = 0;
+
+            while (tries < 10) {
+                int dir = rand() % 4;
+                int nx_e = ex + dx[dir];
+                int ny_e = ey + dy[dir];
+
+                if (grid[nx_e][ny_e] != '#') {
+                    ex = nx_e;
+                    ey = ny_e;
+                    break;
+                }
+                tries++;
+            }
+        }
+    }
+}
+
+
 // ===== Tutorial =====
 void tutorial(Player &p) {
     clear();
@@ -688,26 +783,27 @@ void tutorial(Player &p) {
 
             clear();
 
-            if (step < 3) {
+            if (step < 3 || !hasKey) {
                 centerPrint(getCenteredStartY(1),
-                    "Follow the tutorial! Fight B and get K first.");
-                ncWait();
-                continue;
-            }
-
-            if (!hasKey) {
-                centerPrint(getCenteredStartY(1),
-                    "You need the key!");
+                    "Finish the tutorial steps first!");
                 ncWait();
                 continue;
             }
 
             centerPrint(getCenteredStartY(1),
+                "You found the exit...");
+            refresh();
+            napms(800);
+
+            // 🎮 进入小游戏
+            tutorialMinigame(p);
+
+            // 🎯 完成
+            centerPrint(getCenteredStartY(1),
                 "Tutorial Complete!");
             refresh();
             ncWait();
-            introScreen();
-            step = 4;
+
             break;
         }
     }
