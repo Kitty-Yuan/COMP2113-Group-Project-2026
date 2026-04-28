@@ -774,13 +774,103 @@ void bossFight(Player &p, int bossMin, int bossMax) {
     }
 }
 
+// ===== Shop System =====
+void shop(Player &p) {
+    clear();
+    int startY = getCenteredStartY(6);
+    centerPrint(startY++, "=== MERCHANT ===");
+    centerPrint(startY++, "Welcome! What would you like to buy?");
+    centerPrint(startY++, "1. Small Potion (Heal 15 HP) - 30 gold");
+    centerPrint(startY++, "2. Large Potion (Heal 40 HP) - 70 gold");
+    centerPrint(startY++, "3. Attack Boost (Permanent +3 ATK) - 50 gold");
+    centerPrint(startY++, "4. Defense Boost (Permanent +2 DEF) - 40 gold");
+    centerPrint(startY++, "5. Leave");
+    refresh();
+
+    while (true) {
+        int choice = readKeyWithWindowGuard();
+        if (choice == '1') {
+            if (p.gold >= 30) {
+                p.gold -= 30;
+                p.hp += 15;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Small Potion. +15 HP.");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);   // 重新显示商店
+                return;
+            }
+        } else if (choice == '2') {
+            if (p.gold >= 70) {
+                p.gold -= 70;
+                p.hp += 40;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Large Potion. +40 HP.");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '3') {
+            if (p.gold >= 50) {
+                p.gold -= 50;
+                p.atk += 3;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought an Attack Boost. ATK +3!");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '4') {
+            if (p.gold >= 40) {
+                p.gold -= 40;
+                p.def += 2;
+                clear();
+                centerPrint(getCenteredStartY(1), "You bought a Defense Boost. DEF +2!");
+                refresh();
+                ncWait();
+                break;
+            } else {
+                clear();
+                centerPrint(getCenteredStartY(1), "Not enough gold!");
+                refresh();
+                ncWait();
+                shop(p);
+                return;
+            }
+        } else if (choice == '5') {
+            break;
+        }
+    }
+    clear();
+}
+
+
 // ===== Event System =====
 void event(Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
     int r = rand() % 100;
     if (r < 40) fight(p, enemyMin, enemyMax);       // Enemy 40%
     else if (r < 60) {
-        clear();
-        centerPrint(getCenteredStartY(1), "You met a merchant! (Shop not implemented)");
+        shop(p);
     }
     else if (r < 75) {
         clear();
