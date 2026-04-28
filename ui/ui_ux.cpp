@@ -81,6 +81,109 @@ void show_ATT(int value, int maxVal, string type, int y, int x) {
              type == "HP" ? "HP" : type == "ATK" ? "ATK" : "DEF", value, maxVal);
 }
 
+// ===== Player Stats Display Panel =====
+void displayPlayerStats(const PlayerStats &stats) {
+    int startX = 2;
+    int startY = 1;
+    const int BAR_LENGTH = 10;
+    const int PANEL_WIDTH = 50;
+    
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    // Check if there's enough space
+    if (startX + PANEL_WIDTH > maxX || startY + 10 > maxY) {
+        return;
+    }
+    
+    // Draw top border
+    mvprintw(startY, startX, "+-- PLAYER STATS ");
+    for (int i = startX + 17; i < startX + PANEL_WIDTH - 1; i++) {
+        mvaddch(startY, i, '-');
+    }
+    mvaddch(startY, startX + PANEL_WIDTH - 1, '+');
+    
+    int y = startY + 1;
+    
+    // HP bar (with color)
+    mvprintw(y, startX, "|");
+    attron(COLOR_PAIR(3) | A_BOLD);  // Green for HP
+    int hp_filled = (int)((double)stats.hp / stats.maxHP * BAR_LENGTH);
+    for (int i = 0; i < BAR_LENGTH; i++) {
+        if (i < hp_filled) mvaddch(y, startX + 1 + i, '#');
+        else mvaddch(y, startX + 1 + i, '.');
+    }
+    attroff(COLOR_PAIR(3) | A_BOLD);
+    mvprintw(y, startX + 1 + BAR_LENGTH + 1, "| HP  : %3d/%3d", stats.hp, stats.maxHP);
+    y++;
+    
+    // ATK bar (with color)
+    mvprintw(y, startX, "|");
+    attron(COLOR_PAIR(2) | A_BOLD);  // Red for ATK
+    int atk_filled = (int)((double)stats.atk / 50.0 * BAR_LENGTH);  // Assuming max ATK is 50
+    for (int i = 0; i < BAR_LENGTH; i++) {
+        if (i < atk_filled) mvaddch(y, startX + 1 + i, '#');
+        else mvaddch(y, startX + 1 + i, '.');
+    }
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    mvprintw(y, startX + 1 + BAR_LENGTH + 1, "| ATK : %3d", stats.atk);
+    y++;
+    
+    // DEF bar (with color)
+    mvprintw(y, startX, "|");
+    attron(COLOR_PAIR(4) | A_BOLD);  // Blue for DEF
+    int def_filled = (int)((double)stats.def / 30.0 * BAR_LENGTH);  // Assuming max DEF is 30
+    for (int i = 0; i < BAR_LENGTH; i++) {
+        if (i < def_filled) mvaddch(y, startX + 1 + i, '#');
+        else mvaddch(y, startX + 1 + i, '.');
+    }
+    attroff(COLOR_PAIR(4) | A_BOLD);
+    mvprintw(y, startX + 1 + BAR_LENGTH + 1, "| DEF : %3d", stats.def);
+    y++;
+    
+    // Middle separator
+    mvprintw(y, startX, "+");
+    for (int i = startX + 1; i < startX + PANEL_WIDTH - 1; i++) {
+        mvaddch(y, i, '-');
+    }
+    mvaddch(y, startX + PANEL_WIDTH - 1, '+');
+    y++;
+    
+    // GOLD
+    mvprintw(y, startX, "| GOLD : %4d", stats.gold);
+    mvprintw(y, startX + PANEL_WIDTH - 1, "|");
+    y++;
+    
+    // EXP with bar
+    mvprintw(y, startX, "| ");
+    attron(COLOR_PAIR(1) | A_BOLD);  // Yellow for EXP
+    int exp_filled = (int)((double)stats.exp / 100.0 * (BAR_LENGTH - 2));
+    for (int i = 0; i < BAR_LENGTH - 2; i++) {
+        if (i < exp_filled) mvaddch(y, startX + 2 + i, '#');
+        else mvaddch(y, startX + 2 + i, '.');
+    }
+    attroff(COLOR_PAIR(1) | A_BOLD);
+    mvprintw(y, startX + BAR_LENGTH, "| EXP: %3d/100", stats.exp);
+    y++;
+    
+    // LEVEL
+    mvprintw(y, startX, "| LEVEL: %2d", stats.level);
+    mvprintw(y, startX + PANEL_WIDTH - 1, "|");
+    y++;
+    
+    // KEY
+    mvprintw(y, startX, "| KEY  : %s", stats.hasKey ? "YES" : "NO ");
+    mvprintw(y, startX + PANEL_WIDTH - 1, "|");
+    y++;
+    
+    // Bottom border
+    mvprintw(y, startX, "+");
+    for (int i = startX + 1; i < startX + PANEL_WIDTH - 1; i++) {
+        mvaddch(y, i, '-');
+    }
+    mvaddch(y, startX + PANEL_WIDTH - 1, '+');
+}
+
 // ===== Monster assets =====
 Monster ghost = {
     "Ghost",
@@ -684,7 +787,7 @@ bool showTitle() {
 
         drawSpaceContinueHint();
 
-        const string hint = "Click MANUAL / QUIT, or press ENTER to start";
+        const string hint = "Press ENTER to start";
         mvprintw(min(maxY - 4, buttonsTopY + buttonHeight + 1),
                  max(0, (maxX - static_cast<int>(hint.size())) / 2),
                  "%s",

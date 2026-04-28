@@ -400,10 +400,10 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         clear();
         vector<string> lines = {
             "Choose difficulty (1-4):",
-            "1. Easy (9x9 map, enemy atk 5-10, boss atk 10-15)",
-            "2. Normal (12x12 map, enemy atk 8-12, boss atk 12-18)",
-            "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)",
-            "4. Hell (20x20 map, enemy atk 11-16, boss atk 15-25)",
+            "1. Easy (9x9 map, enemy ATK 5-10, boss atk 10-15)",
+            "2. Normal (12x12 map, enemy ATK 8-12, boss atk 12-18)",
+            "3. Hard (15x15 map, enemy ATK 10-15, boss AT 15-22)",
+            "4. Hell (20x20 map, enemy ATK 11-16, boss ATK 15-25)",
             "Enter choice: 1 / 2 / 3 / 4"
         };
         int startY = getCenteredStartY(static_cast<int>(lines.size()));
@@ -948,15 +948,18 @@ int main() {
         // Display map
         displayMap();
         
-        // Display stats
-        string stats = "HP=" + to_string(p.hp) +
-                       " ATK=" + to_string(p.atk) +
-                       " DEF=" + to_string(p.def) +
-                       " GOLD=" + to_string(p.gold) +
-                       " EXP=" + to_string(p.exp) +
-                       " LV=" + to_string(p.level) +
-                       " KEY=" + (p.hasKey ? string("Y") : string("N"));
-        centerPrint(cursorY++, stats);
+        // Display player stats panel in top-left
+        PlayerStats statsPanel = {
+            p.hp, 100,
+            p.atk,
+            p.def,
+            p.gold,
+            p.exp,
+            p.level,
+            p.hasKey
+        };
+        displayPlayerStats(statsPanel);
+        
         showButton();
         
         refresh();

@@ -50,6 +50,18 @@ void enforceWindowSizeGate();
 int readKeyWithWindowGuard();
 void show_ATT(int value, int maxVal, std::string type, int y, int x);
 
+// Player stats display
+struct PlayerStats {
+    int hp, maxHP;
+    int atk;
+    int def;
+    int gold;
+    int exp;
+    int level;
+    bool hasKey;
+};
+void displayPlayerStats(const PlayerStats &stats);
+
 // User input and authentication functions
 std::string promptInputLine(int y,
                             const std::string &label,
