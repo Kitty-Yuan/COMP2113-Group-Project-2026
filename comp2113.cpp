@@ -448,7 +448,6 @@ void levelUp(Player &p) {
         napms(1000); // Wait 1 second
     }
 }
-
 // ===== Tutorial =====
 void tutorial(Player &p) {
     clear();
@@ -465,25 +464,42 @@ void tutorial(Player &p) {
     };
 
     bool hasKey = false;
-    int x=0, y_pos=0;
+    int x = 0, y_pos = 0;
+    int step = 0;
 
     while (true) {
         clear();
+
         int y = 0;
-        int mapWidth = 10;
-        int blockHeight = 10;
-        int startY = getCenteredStartY(blockHeight + 3);
-        [[maybe_unused]] int maxY;
-        int maxX;
+        int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
-        int startX = max(0, (maxX - mapWidth) / 2);
-        
-        // Print map
-        centerPrint(startY + y++, "Tutorial Map:");
-        for (int i=0;i<5;i++) {
+
+        int startY = getCenteredStartY(12);
+        int startX = max(0, (maxX - 10) / 2);
+
+        // ======================
+        // 🎯 STEP HINT SYSTEM
+        // ======================
+        if (step == 0)
+            centerPrint(startY + y++, "Step 1: Move with W/A/S/D");
+
+        else if (step == 1)
+            centerPrint(startY + y++, "Step 2: Go fight enemy (B)");
+
+        else if (step == 2)
+            centerPrint(startY + y++, "Step 3: Go get the key (K)");
+
+        else if (step == 3)
+            centerPrint(startY + y++, "Step 4: Reach the exit (G)");
+        centerPrint(startY + y++, "--------------------------");
+
+        // ======================
+        // MAP
+        // ======================
+        for (int i = 0; i < 5; i++) {
             string row;
-            for (int j=0;j<5;j++) {
-                if (i==x && j==y_pos) row += 'P';
+            for (int j = 0; j < 5; j++) {
+                if (i == x && j == y_pos) row += 'P';
                 else row += demoMap[i][j];
                 row += ' ';
             }
@@ -491,128 +507,177 @@ void tutorial(Player &p) {
             y++;
         }
 
-        // Show stats
+        // ======================
+        // STATS
+        // ======================
         string stats = "HP=" + to_string(p.hp) +
                        " ATK=" + to_string(p.atk) +
                        " DEF=" + to_string(p.def) +
                        " GOLD=" + to_string(p.gold) +
                        " EXP=" + to_string(p.exp) +
                        " LV=" + to_string(p.level) +
-                       " KEY=" + (hasKey ? string("Y") : string("N"));
-        centerPrint(startY + y++, stats);
-        
+                       " KEY=" + (hasKey ? "Y" : "N");
 
-        show_ATT(p.hp, 100, "HP", 5, 5);
-        show_ATT(p.atk, 50, "ATK", 7, 5);
-        show_ATT(p.def, 30, "DEF", 9, 5);
-        refresh();  
-        
-        // Input move
-        centerPrint(startY + y++, "Move (W/A/S/D or Arrow Keys):");
+        centerPrint(startY + y++, stats);
+
+        centerPrint(startY + y++, "Move: W/A/S/D | Battle: 1/2/3");
+
         refresh();
-        
+
+        // ======================
+        // INPUT
+        // ======================
         int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
-        if (m == '\0') {
+        if (m == '\0') continue;
+
+        int nx = x, ny = y_pos;
+        if (m == 'w') nx--;
+        else if (m == 's') nx++;
+        else if (m == 'a') ny--;
+        else if (m == 'd') ny++;
+
+        if (nx < 0 || nx >= 5 || ny < 0 || ny >= 5 || demoMap[nx][ny] == '#')
             continue;
+
+        x = nx;
+        y_pos = ny;
+
+        if (step == 0) {
+            step = 1;
         }
 
-        int nx=x, ny=y_pos;
-        if (m=='w') nx--; else if (m=='s') nx++;
-        else if (m=='a') ny--; else if (m=='d') ny++;
-        
-        if (nx<0||nx>=5||ny<0||ny>=5||demoMap[nx][ny]=='#') {
-            continue;
-        }
-
-        x=nx; y_pos=ny;
-
-        if (demoMap[x][y_pos]=='K') {
+        // ======================
+        // KEY
+        // ======================
+        if (demoMap[x][y_pos] == 'K') {
             clear();
-            centerPrint(getCenteredStartY(1), "You found the key!");
+            centerPrint(getCenteredStartY(1), "You found the Key!");
             ncWait();
-            hasKey=true; 
-            demoMap[x][y_pos]='.';
-            refresh();
-            napms(500);
+
+            hasKey = true;
+            demoMap[x][y_pos] = '.';
+            if (step <= 2) step = 3;  
+
+            napms(300);
         }
-        else if (demoMap[x][y_pos]=='B') {
+        
+       // ======================
+        // BATTLE
+        // ======================
+       else if (demoMap[x][y_pos] == 'B') {
+            demoMap[x][y_pos] = '.';
+
             clear();
             centerPrint(getCenteredStartY(1), "Enemy encountered!");
             refresh();
             napms(500);
-            
-            int enemyHP=20;
-            int minPower=5,maxPower=7;
-            while (enemyHP>0 && p.hp>0) {
+
+            int enemyHP = 20;
+            int minPower = 5, maxPower = 7;
+
+            while (enemyHP > 0 && p.hp > 0) {
                 clear();
-                y = 0;
-                mvprintw(y++, 0, "BATTLE - Your HP: %d | Enemy HP: %d", p.hp, enemyHP);
-                mvprintw(y++, 0, "Choose: 1) Normal  2) Strong  3) Defend");
+
+                int y2 = 0;
+                centerPrint(y2++, "HP: " + to_string(p.hp) + " | Enemy: " + to_string(enemyHP));
+                centerPrint(y2++, "1: Normal  2: Strong  3: Defend");
+                centerPrint(y2++, "Press key to act");
+
                 refresh();
-                
-                int choice = readKeyWithWindowGuard();
-                
-                int playerAttack=0;
-               int defendSuccess=0;
-                if (choice=='1') playerAttack=rand()%p.atk+1;
-                else if (choice=='2' && rand()%100<60) playerAttack=(int)(p.atk*(130+rand()%40)/100.0);
-                else if (choice=='3') defendSuccess=(rand()%100<40)?1:0;
-                
-                enemyHP-=playerAttack;
-                
-                clear();
-                y = 0;
-                if(playerAttack>0) mvprintw(y++, 0, "You dealt %d damage!", playerAttack);
-                if(enemyHP<=0){
-                    mvprintw(y++, 0, "Enemy defeated!");
-                    p.gold+=10; 
-                    p.exp+=20; 
+
+                int choice;
+                while (true) {
+                    choice = readKeyWithWindowGuard();
+                    if (choice == '1' || choice == '2' || choice == '3') break;
+
+                    centerPrint(y2, "Invalid! Use 1/2/3");
                     refresh();
-                    napms(500);
+                }
+
+                int dmg = 0;
+                int defend = 0;
+
+                if (choice == '1') dmg = rand() % p.atk + 1;
+                else if (choice == '2' && rand() % 100 < 60)
+                    dmg = p.atk * (130 + rand() % 40) / 100;
+                else if (choice == '3')
+                    defend = (rand() % 100 < 40);
+
+                enemyHP -= dmg;
+
+                clear();
+                y2 = 0;
+
+                if (dmg > 0)
+                    centerPrint(y2++, "You dealt " + to_string(dmg));
+
+                if (enemyHP <= 0) {
+                    centerPrint(y2++, "Enemy defeated!");
+                    p.gold += 10;
+                    p.exp += 20;
+
+                    if (step <= 1) step = 2;
+
+                    ncWait();
                     break;
                 }
-                
-                int edmg=(rand()%(maxPower-minPower+1))+minPower;
-                if(choice=='3') {
-                    if(defendSuccess) {
-                        int counterDmg=(int)(p.atk*0.4+edmg*(0.4+rand()%20/100.0));
-                        enemyHP-=counterDmg;
-                        p.hp+=5;
-                        edmg=0;
-                        mvprintw(y++, 0, "Defend success! Counter: %d damage!", counterDmg);
-                        if(enemyHP<=0) {
-                            mvprintw(y++, 0, "Enemy defeated!");
-                            p.gold+=10; p.exp+=20; refresh(); napms(500); break;
-                        }
+
+                int edmg = rand() % (maxPower - minPower + 1) + minPower;
+
+                if (choice == '3') {
+                    if (defend) {
+                        int counter = p.atk * 0.4 + edmg * 0.5;
+                        enemyHP -= counter;
+                        p.hp += 5;
+                        edmg = 0;
+                        centerPrint(y2++, "Counter: " + to_string(counter));
                     } else {
-                        edmg=(int)(edmg*0.4);
+                        edmg *= 0.4;
                     }
                 }
-                if(edmg<1) edmg=1;
-                p.hp-=edmg;
-                mvprintw(y++, 0, "Enemy dealt %d damage!", edmg);
+
+                if (edmg < 1) edmg = 1;
+
+                p.hp -= edmg;
+                centerPrint(y2++, "Enemy dealt " + to_string(edmg));
+
                 refresh();
                 napms(500);
             }
-            demoMap[x][y_pos]='.';
         }
-        else if (demoMap[x][y_pos]=='G') {
+
+        // ======================
+        // EXIT
+        // ======================
+        else if (demoMap[x][y_pos] == 'G') {
+
             clear();
-            if (!hasKey) {
-                centerPrint(getCenteredStartY(1), "You have not found the key yet! Cannot rescue princess.");
-                refresh();
-                napms(500);
-                continue;
-            } else {
-                centerPrint(getCenteredStartY(1), "You rescued the princess! Tutorial complete!");
-                refresh();
+
+            if (step < 3) {
+                centerPrint(getCenteredStartY(1),
+                    "Follow the tutorial! Fight B and get K first.");
                 ncWait();
-                break;
+                continue;
             }
+
+            if (!hasKey) {
+                centerPrint(getCenteredStartY(1),
+                    "You need the key!");
+                ncWait();
+                continue;
+            }
+
+            centerPrint(getCenteredStartY(1),
+                "Tutorial Complete!");
+            ncWait();
+
+            step = 4;
+            break;
         }
     }
-}
+}    
+        
 
 // ===== Battle System =====
 void fight(Player &p, int enemyMin, int enemyMax) {
