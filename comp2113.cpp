@@ -459,7 +459,7 @@ void tutorial(Player &p) {
         {'P','.','#','.','.'},
         {'.','#','K','.','.'},
         {'.','.','B','#','.'},
-        {'#','.','.','.','.'},
+        {'#','.','#','.','.'},
         {'.','.','#','.','G'}
     };
 
@@ -630,7 +630,33 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
-        int choice = readKeyWithWindowGuard();
+        int choice;
+        bool valid = false;
+
+        while (!valid) {
+            clear();
+
+            int y = getCenteredStartY(4);
+            centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Enemy HP: " + to_string(enemyHP));
+            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+            refresh();
+
+            choice = readKeyWithWindowGuard();
+
+            if (choice == '1' || choice == '2' || choice == '3') {
+                valid = true;
+            } else {
+                clear();
+                y = getCenteredStartY(2);
+                centerPrint(y++, "Invalid input!");
+                centerPrint(y++, "Please press 1 / 2 / 3");
+                centerPrint(y++, "1) Normal  2) Strong  3) Defend");
+                centerPrint(y++, "Press the correct key to continue...");
+                centerPrint(y++, "OR click MANUAL for help");
+                refresh();
+                napms(600);
+            }
+        }
         
         int playerAttack = 0;
         int defendSuccess = 0;
