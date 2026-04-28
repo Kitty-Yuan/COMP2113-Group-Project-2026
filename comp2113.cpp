@@ -970,7 +970,8 @@ int main() {
         int ch = getch();
 
         if (ch == 'T' || ch == 't') {
-            tutorial(p);
+            Player temp = p;
+            tutorial(temp);
         }
 
         initializeNewMap();
