@@ -433,6 +433,40 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
     ncWait();
 }
 
+//Intro Screen
+void introScreen() {
+    clear();
+
+    int y = getCenteredStartY(10);
+
+    centerPrint(y++, "==================================");
+    centerPrint(y++, "      YOUR ADVENTURE BEGINS      ");
+    centerPrint(y++, "==================================");
+    y++;
+
+    centerPrint(y++, "Follow what you learned:");
+    centerPrint(y++, "- Move with WASD");
+    centerPrint(y++, "- Fight enemies");
+    centerPrint(y++, "- Find the key");
+    y++;
+
+    centerPrint(y++, "Random events may occur:");
+    centerPrint(y++, "- Shop");
+    centerPrint(y++, "- Mysterious stranger");
+    centerPrint(y++, "- Unexpected encounters");
+    y++;
+
+    centerPrint(y++, "Press ENTER to start your journey...");
+
+    refresh();
+
+    while (true) {
+        int ch = readKeyWithWindowGuard();
+        if (ch == '\n' || ch == KEY_ENTER) break;
+    }
+}
+
+
 // ===== Level Up =====
 void levelUp(Player &p) {
     int y = 0;
@@ -670,14 +704,15 @@ void tutorial(Player &p) {
 
             centerPrint(getCenteredStartY(1),
                 "Tutorial Complete!");
+            refresh();
             ncWait();
-
+            introScreen();
             step = 4;
             break;
         }
     }
 }    
-        
+
 
 // ===== Battle System =====
 void fight(Player &p, int enemyMin, int enemyMax) {
