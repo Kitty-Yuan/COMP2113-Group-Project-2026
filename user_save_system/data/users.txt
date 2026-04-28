@@ -20,3 +20,4 @@ a	a
 d	s
 b	b
 o	o
+djdi	dij

@@ -2,7 +2,10 @@
 # Compiler and flags
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2
-LDFLAGS := -lncurses
+
+# Linux/WSL ncurses (system installed)
+INCLUDES := -I/usr/include
+LDFLAGS := -L/usr/lib/x86_64-linux-gnu -lncurses
 
 # Directories
 SRC_DIR := .
@@ -35,24 +38,24 @@ $(EXECUTABLE): $(OBJECTS)
 
 # Compile source files to object files
 $(BUILD_DIR)/comp2113.o: comp2113.cpp
-	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
+	@mkdir -p "$(BUILD_DIR)"
 	@echo "Compiling comp2113.cpp..."
-	$(CXX) $(CXXFLAGS) -I$(UI_DIR) -I$(SAVE_DIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -I$(UI_DIR) -I$(SAVE_DIR) -c $< -o $@
 
 $(BUILD_DIR)/ui_ux.o: ui/ui_ux.cpp ui/ui_ux.h
-	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
+	@mkdir -p "$(BUILD_DIR)"
 	@echo "Compiling ui/ui_ux.cpp..."
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILD_DIR)/user_save_system.o: user_save_system/user_save_system.cpp user_save_system/user_save_system.h
-	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
+	@mkdir -p "$(BUILD_DIR)"
 	@echo "Compiling user_save_system/user_save_system.cpp..."
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build directory..."
-	@rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/comp2113 $(BUILD_DIR)/comp2113.exe
+	@rm -rf $(BUILD_DIR)
 	@echo "Clean complete!"
 
 # CMake build (alternative method)
