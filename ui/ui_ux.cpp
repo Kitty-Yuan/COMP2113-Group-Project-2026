@@ -97,7 +97,7 @@ void displayPlayerStats(const PlayerStats &stats) {
     }
     
     // Draw top border
-    mvprintw(startY, startX, "+-- PLAYER STATS ");
+    mvprintw(startY, startX, "+-- PLAYER STATISTICS -----------------------------+");
     for (int i = startX + 17; i < startX + PANEL_WIDTH - 1; i++) {
         mvaddch(startY, i, '-');
     }
@@ -106,7 +106,6 @@ void displayPlayerStats(const PlayerStats &stats) {
     int y = startY + 1;
     int bar_start = startX + 1;
     int bar_end = bar_start + BAR_LENGTH;
-    int text_start = bar_end + 2;
     
     // HP bar (with color)
     mvprintw(y, startX, "|");
@@ -146,24 +145,7 @@ void displayPlayerStats(const PlayerStats &stats) {
     mvprintw(y, bar_end, "| DEF : %3d", stats.def);
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
-    
-    // Middle separator
-    mvprintw(y, startX, "+");
-    for (int i = startX + 1; i < startX + PANEL_WIDTH - 1; i++) {
-        mvaddch(y, i, '-');
-    }
-    mvaddch(y, startX + PANEL_WIDTH - 1, '+');
-    y++;
-    
-    // GOLD - with empty bar space for alignment
-    mvprintw(y, startX, "|");
-    for (int i = 0; i < BAR_LENGTH; i++) {
-        mvaddch(y, bar_start + i, ' ');
-    }
-    mvprintw(y, bar_end, "| GOLD: %4d", stats.gold);
-    mvprintw(y, startX + PANEL_WIDTH - 1, "|");
-    y++;
-    
+
     // EXP with bar
     mvprintw(y, startX, "|");
     attron(COLOR_PAIR(1) | A_BOLD);  // Yellow for EXP
@@ -177,21 +159,30 @@ void displayPlayerStats(const PlayerStats &stats) {
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
     
+    // Middle separator
+    mvprintw(y, startX, "+");
+    for (int i = startX + 1; i < startX + PANEL_WIDTH - 1; i++) {
+        mvaddch(y, i, '-');
+    }
+    mvaddch(y, startX + PANEL_WIDTH - 1, '+');
+    y++;
+    
+    // GOLD - with empty bar space for alignment
+    mvprintw(y, startX, "|");
+    mvprintw(y, startX + 1, "GOLD$:%d", stats.gold);
+    mvprintw(y, startX + PANEL_WIDTH - 1, "|");
+    y++;
+    
+    
     // LEVEL - with empty bar space for alignment
     mvprintw(y, startX, "|");
-    for (int i = 0; i < BAR_LENGTH; i++) {
-        mvaddch(y, bar_start + i, ' ');
-    }
-    mvprintw(y, bar_end, "| LEVEL: %2d", stats.level);
+    mvprintw(y, startX + 1, "EXP LEVEL: %2d", stats.level);
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
     
     // KEY - with empty bar space for alignment
     mvprintw(y, startX, "|");
-    for (int i = 0; i < BAR_LENGTH; i++) {
-        mvaddch(y, bar_start + i, ' ');
-    }
-    mvprintw(y, bar_end, "| KEY  : %s", stats.hasKey ? "HAS KEY" : "NOT FOUND");
+    mvprintw(y, startX + 1, "KEY: %s", stats.hasKey ? "HAS KEY" : "NOT FOUND");
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
     
@@ -430,7 +421,7 @@ public:
         }
 
         clouds.erase(
-            remove_if(clouds.begin(), clouds.end(), [this](const Cloud &c) { return c.x + c.width < 0; }),
+            remove_if(clouds.begin(), clouds.end(), [](const Cloud &c) { return c.x + c.width < 0; }),
             clouds.end()
         );
 
@@ -604,7 +595,8 @@ int runMonsterMenuDemo() {
 }
 
 int getCenteredX(const string &text) {
-    int maxY, maxX;
+    [[maybe_unused]] int maxY;
+    int maxX;
     getmaxyx(stdscr, maxY, maxX);
     return max(0, (maxX - static_cast<int>(text.size())) / 2);
 }
@@ -724,7 +716,8 @@ void ncWait() {
     while (true) {
         enforceWindowSizeGate();
 
-        int maxY, maxX;
+        [[maybe_unused]] int maxY;
+        int maxX;
         getmaxyx(stdscr, maxY, maxX);
 
         int hintY = max(0, maxY - 2);
@@ -973,7 +966,8 @@ vector<ButtonRect> getTopButtonRects() {
     const int buttonHeight = 3;
     const int buttonGap = 1;
 
-    int maxY, maxX;
+    [[maybe_unused]] int maxY;
+    int maxX;
     getmaxyx(stdscr, maxY, maxX);
     int startX = max(0, maxX - buttonWidth - 1);
     int startY = 0;

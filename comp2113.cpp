@@ -338,7 +338,8 @@ void princessRoomMinigame(Player &p, bool isTrial) {
         int mapWidth = roomSize * 2;
         int blockHeight = roomSize + 4;
         int startY = getCenteredStartY(blockHeight);
-        int maxY, maxX;
+        [[maybe_unused]] int maxY;
+        int maxX;
         getmaxyx(stdscr, maxY, maxX);
         int startX = max(0, (maxX - mapWidth) / 2);
         string title = "PRINCESS CHASE - Steps Left: " + to_string(maxSteps - stepsUsed);
@@ -471,7 +472,8 @@ void tutorial(Player &p) {
         int mapWidth = 10;
         int blockHeight = 10;
         int startY = getCenteredStartY(blockHeight + 3);
-        int maxY, maxX;
+        [[maybe_unused]] int maxY;
+        int maxX;
         getmaxyx(stdscr, maxY, maxX);
         int startX = max(0, (maxX - mapWidth) / 2);
         
@@ -748,7 +750,7 @@ void bossFight(Player &p, int bossMin, int bossMax) {
 }
 
 // ===== Event System =====
-void event(Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
+void event(Player &p, int enemyMin, int enemyMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
     if (r < 40) fight(p, enemyMin, enemyMax);       // Enemy 40%
     else if (r < 60) {
