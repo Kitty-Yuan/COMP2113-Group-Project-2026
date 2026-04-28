@@ -399,7 +399,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
     while (diff < 1 || diff > 4) {
         clear();
         vector<string> lines = {
-            "Choose difficulty (1-4):",
+            "Choose difficulty (0-4):",
             "1. Easy (9x9 map, enemy atk 5-10, boss atk 10-15)",
             "2. Normal (12x12 map, enemy atk 8-12, boss atk 12-18)",
             "3. Hard (15x15 map, enemy atk 10-15, boss atk 15-22)",
@@ -416,6 +416,7 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
         if (ch >= '1' && ch <= '4') {
             diff = ch - '0';
         }
+
     }
     
     if (diff == 1) { SIZE = 9; enemyMin=5; enemyMax=10; bossMin=10; bossMax=15; }
@@ -934,8 +935,18 @@ int main() {
     }
 
     if (!loadedFromSave) {
-        tutorial(p);
+
         chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+        clear();
+        centerPrint(5, "Press T for Tutorial, any other key to skip");
+        refresh();
+
+        int ch = getch();
+
+        if (ch == 'T' || ch == 't') {
+            tutorial(p);
+        }
+
         initializeNewMap();
     }
 
