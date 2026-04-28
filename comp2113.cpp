@@ -456,8 +456,8 @@ void tutorial(Player &p) {
     ncWait();
 
     char demoMap[5][5] = {
-        {'P','.','#','.','.'},
-        {'.','#','K','.','.'},
+        {'P','.','#','.','K'},
+        {'.','#','.','.','.'},
         {'.','.','B','#','.'},
         {'#','.','#','.','.'},
         {'.','.','#','.','G'}
@@ -945,8 +945,7 @@ void event(Player &p, int enemyMin, int enemyMax, [[maybe_unused]] int bossMin, 
         p.hp += 10;
     }
     else {
-        clear();
-        centerPrint(getCenteredStartY(1), "Quiet area. Nothing happens.");
+        return;
     }
     refresh();
     ncWait();
