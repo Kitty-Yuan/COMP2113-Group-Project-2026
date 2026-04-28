@@ -31,5 +31,8 @@ Testing/
 *.log
 *.tmp
 
+# 用户系统数据（每个本地玩家各自独立）
+user_save_system/data/
+
 # 保留 Makefile
 !Makefile
