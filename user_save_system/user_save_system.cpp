@@ -178,7 +178,7 @@ bool saveProgress(const std::string& username, const SaveData& data) {
     fout << "SIZE " << data.size << "\n";
     fout << "POS " << data.px << ' ' << data.py << "\n";
     fout << "GOAL " << data.gx << ' ' << data.gy << "\n";
-    fout << "ENEMY " << data.enemyMin << ' ' << data.enemyMax << "\n";
+    fout << "MONSTER " << data.monsterMin << ' ' << data.monsterMax << "\n";
     fout << "BOSS " << data.bossMin << ' ' << data.bossMax << "\n";
     fout << "PLAYER " << data.hp << ' ' << data.atk << ' ' << data.def << ' '
          << data.gold << ' ' << data.exp << ' ' << data.level << ' ' << (data.hasKey ? 1 : 0) << "\n";
@@ -222,8 +222,8 @@ bool loadProgress(const std::string& username, SaveData& outData) {
     if (!readExpectedTag(fin, "GOAL")) return false;
     fin >> outData.gx >> outData.gy;
 
-    if (!readExpectedTag(fin, "ENEMY")) return false;
-    fin >> outData.enemyMin >> outData.enemyMax;
+    if (!readExpectedTag(fin, "MONSTER")) return false;
+    fin >> outData.monsterMin >> outData.monsterMax;
 
     if (!readExpectedTag(fin, "BOSS")) return false;
     fin >> outData.bossMin >> outData.bossMax;

@@ -87,7 +87,7 @@ PostDeathAction promptPostDeathAction() {
     }
 }
 
-user_save_system::SaveData buildSaveData(const Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
+user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax) {
     user_save_system::SaveData data;
     data.valid = true;
     data.size = SIZE;
@@ -95,8 +95,8 @@ user_save_system::SaveData buildSaveData(const Player &p, int enemyMin, int enem
     data.py = py;
     data.gx = gx;
     data.gy = gy;
-    data.enemyMin = enemyMin;
-    data.enemyMax = enemyMax;
+    data.monsterMin = monsterMin;
+    data.monsterMax = monsterMax;
     data.bossMin = bossMin;
     data.bossMax = bossMax;
 
@@ -121,7 +121,7 @@ user_save_system::SaveData buildSaveData(const Player &p, int enemyMin, int enem
     return data;
 }
 
-bool applySaveData(const user_save_system::SaveData &data, Player &p, int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) {
+bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monsterMin, int &monsterMax, int &bossMin, int &bossMax) {
     if (!data.valid || data.size <= 0 || data.size > 50) {
         return false;
     }
@@ -132,8 +132,8 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &enemy
     gx = data.gx;
     gy = data.gy;
 
-    enemyMin = data.enemyMin;
-    enemyMax = data.enemyMax;
+    monsterMin = data.monsterMin;
+    monsterMax = data.monsterMax;
     bossMin = data.bossMin;
     bossMax = data.bossMax;
 
@@ -394,17 +394,17 @@ void princessRoomMinigame(Player &p, bool isTrial) {
 }
 
 // ===== Difficulty =====
-void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) {
+void chooseDifficulty(int &monsterMin, int &monsterMax, int &bossMin, int &bossMax) {
     int diff = 0;
     
     while (diff < 1 || diff > 4) {
         clear();
         vector<string> lines = {
             "Choose difficulty (1-4):",
-            "1. Easy (9x9 map, enemy ATK 5-10, boss ATK 10-15)",
-            "2. Normal (12x12 map, enemy ATK 8-12, boss ATK 12-18)",
-            "3. Hard (15x15 map, enemy ATK 10-15, boss ATK 15-22)",
-            "4. Hell (20x20 map, enemy ATK 11-16, boss ATK 15-25)",
+            "1. Easy (9x9 map, monster ATK 5-10, boss ATK 10-15)",
+            "2. Normal (12x12 map, monster ATK 8-12, boss ATK 12-18)",
+            "3. Hard (15x15 map, monster ATK 10-15, boss ATK 15-22)",
+            "4. Hell (20x20 map, monster ATK 11-16, boss ATK 15-25)",
             "Enter choice: 1 / 2 / 3 / 4"
         };
         int startY = getCenteredStartY(static_cast<int>(lines.size()));
@@ -420,10 +420,10 @@ void chooseDifficulty(int &enemyMin, int &enemyMax, int &bossMin, int &bossMax) 
 
     }
     
-    if (diff == 1) { SIZE = 9; enemyMin=5; enemyMax=10; bossMin=10; bossMax=15; }
-    else if (diff == 2) { SIZE = 12; enemyMin=8; enemyMax=12; bossMin=12; bossMax=18; }
-    else if (diff == 3) { SIZE = 15; enemyMin=10; enemyMax=15; bossMin=15; bossMax=22; }
-    else { SIZE = 20; enemyMin=12; enemyMax=18; bossMin=18; bossMax=25; }
+    if (diff == 1) { SIZE = 9; monsterMin=5; monsterMax=10; bossMin=10; bossMax=15; }
+    else if (diff == 2) { SIZE = 12; monsterMin=8; monsterMax=12; bossMin=12; bossMax=18; }
+    else if (diff == 3) { SIZE = 15; monsterMin=10; monsterMax=15; bossMin=15; bossMax=22; }
+    else { SIZE = 20; monsterMin=12; monsterMax=18; bossMin=18; bossMax=25; }
 
     gx = SIZE - 1; gy = SIZE - 1;
     clear();
@@ -538,16 +538,16 @@ void tutorial(Player &p) {
         }
         else if (demoMap[x][y_pos]=='B') {
             clear();
-            centerPrint(getCenteredStartY(1), "Enemy encountered!");
+            centerPrint(getCenteredStartY(1), "monster encountered!");
             refresh();
             napms(500);
             
-            int enemyHP=20;
+            int monsterHP=20;
             int minPower=5,maxPower=7;
-            while (enemyHP>0 && p.hp>0) {
+            while (monsterHP>0 && p.hp>0) {
                 clear();
                 y = 0;
-                mvprintw(y++, 0, "BATTLE - Your HP: %d | Enemy HP: %d", p.hp, enemyHP);
+                mvprintw(y++, 0, "BATTLE - Your HP: %d | Monster HP: %d", p.hp, monsterHP);
                 mvprintw(y++, 0, "Choose: 1) Normal  2) Strong  3) Defend");
                 refresh();
                 
@@ -559,13 +559,13 @@ void tutorial(Player &p) {
                 else if (choice=='2' && rand()%100<60) playerAttack=(int)(p.atk*(130+rand()%40)/100.0);
                 else if (choice=='3') defendSuccess=(rand()%100<40)?1:0;
                 
-                enemyHP-=playerAttack;
+                monsterHP-=playerAttack;
                 
                 clear();
                 y = 0;
                 if(playerAttack>0) mvprintw(y++, 0, "You dealt %d damage!", playerAttack);
-                if(enemyHP<=0){
-                    mvprintw(y++, 0, "Enemy defeated!");
+                if(monsterHP<=0){
+                    mvprintw(y++, 0, "monster defeated!");
                     p.gold+=10; 
                     p.exp+=20; 
                     refresh();
@@ -577,12 +577,12 @@ void tutorial(Player &p) {
                 if(choice=='3') {
                     if(defendSuccess) {
                         int counterDmg=(int)(p.atk*0.4+edmg*(0.4+rand()%20/100.0));
-                        enemyHP-=counterDmg;
+                        monsterHP-=counterDmg;
                         p.hp+=5;
                         edmg=0;
                         mvprintw(y++, 0, "Defend success! Counter: %d damage!", counterDmg);
-                        if(enemyHP<=0) {
-                            mvprintw(y++, 0, "Enemy defeated!");
+                        if(monsterHP<=0) {
+                            mvprintw(y++, 0, "monster defeated!");
                             p.gold+=10; p.exp+=20; refresh(); napms(500); break;
                         }
                     } else {
@@ -591,7 +591,7 @@ void tutorial(Player &p) {
                 }
                 if(edmg<1) edmg=1;
                 p.hp-=edmg;
-                mvprintw(y++, 0, "Enemy dealt %d damage!", edmg);
+                mvprintw(y++, 0, "monster dealt %d damage!", edmg);
                 refresh();
                 napms(500);
             }
@@ -615,21 +615,74 @@ void tutorial(Player &p) {
 }
 
 // ===== Battle System =====
-void fight(Player &p, int enemyMin, int enemyMax) {
-    int y = getCenteredStartY(4);
+void fight(Player &p, int monsterMin, int monsterMax) {
     clear();
-    centerPrint(y++, "You encountered an enemy!");
-    centerPrint(y++, "Enemy attack range: " + to_string(enemyMin) + " - " + to_string(enemyMax));
+    
+    // Display player stats panel
+    PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+    displayPlayerStats(statsPanel);
+    
+    int monsterIndex = rand() % monsters.size();
+    Monster m = monsters[monsterIndex];
+    
+    // Special ability states
+    int turnsReduceATK = 0;           // Remaining turns with 50% ATK reduction (Ghost attack1)
+    bool ghostRedForm = false;        // Ghost is in red form (attack2)
+    
+    int y = getCenteredStartY(3);
+    centerPrint(y++, "You encountered: " + m.name + "!");
+    centerPrint(y++, "Monster attack range: " + to_string(monsterMin) + " - " + to_string(monsterMax));
     refresh();
     napms(1000);
     
-    int enemyHP = 30 + rand() % 20;
+    int monsterHP = 30 + rand() % 20;
 
-    while (enemyHP > 0 && p.hp > 0) {
+    while (monsterHP > 0 && p.hp > 0) {
         clear();
-        y = getCenteredStartY(4);
-        centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Enemy HP: " + to_string(enemyHP));
-        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+        
+        // Display player stats panel
+        PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+        displayPlayerStats(statsPanel);
+        
+        // Display monster appearance on right side
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        int monsterX = maxX - 30;
+        if (monsterX > 50) {
+            mvprintw(2, monsterX, "%s", m.name.c_str());
+            
+            // Special display for Ghost with red form
+            string currentAppearance = m.appearance1;
+            if (ghostRedForm && m.name == "Ghost") {
+                attron(COLOR_PAIR(2) | A_BOLD);  // Red color
+            }
+            
+            istringstream iss(currentAppearance);
+            string line;
+            int lineY = 3;
+            while (getline(iss, line) && lineY < maxY - 5) {
+                mvprintw(lineY++, monsterX, "%s", line.c_str());
+            }
+            
+            if (ghostRedForm && m.name == "Ghost") {
+                attroff(COLOR_PAIR(2) | A_BOLD);
+            }
+        }
+        
+        y = 10;
+        mvprintw(y++, 2, "BATTLE - %s HP: %d", m.name.c_str(), monsterHP);
+        if (turnsReduceATK > 0) {
+            attron(COLOR_PAIR(2) | A_BOLD);
+            mvprintw(y++, 2, "** Your ATK is reduced 50%% for %d more turn(s) **", turnsReduceATK);
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        } else if (ghostRedForm && m.name == "Ghost") {
+            attron(COLOR_PAIR(2) | A_BOLD);
+            mvprintw(y++, 2, "** Your ATK is reduced 80%% this turn **");
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        } else {
+            y++;
+        }
+        mvprintw(y++, 2, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
         int choice;
@@ -637,10 +690,39 @@ void fight(Player &p, int enemyMin, int enemyMax) {
 
         while (!valid) {
             clear();
-
-            int y = getCenteredStartY(4);
-            centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Enemy HP: " + to_string(enemyHP));
-            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+            
+            // Display player stats panel
+            displayPlayerStats(statsPanel);
+            
+            // Display monster appearance on right side
+            mvprintw(2, monsterX, "%s", m.name.c_str());
+            if (ghostRedForm && m.name == "Ghost") {
+                attron(COLOR_PAIR(2) | A_BOLD);
+            }
+            istringstream iss(m.appearance1);
+            string line;
+            int lineY = 3;
+            while (getline(iss, line) && lineY < maxY - 5) {
+                mvprintw(lineY++, monsterX, "%s", line.c_str());
+            }
+            if (ghostRedForm && m.name == "Ghost") {
+                attroff(COLOR_PAIR(2) | A_BOLD);
+            }
+            
+            y = 10;
+            mvprintw(y++, 2, "BATTLE - %s HP: %d", m.name.c_str(), monsterHP);
+            if (turnsReduceATK > 0) {
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(y++, 2, "** Your ATK is reduced 50%% for %d more turn(s) **", turnsReduceATK);
+                attroff(COLOR_PAIR(2) | A_BOLD);
+            } else if (ghostRedForm && m.name == "Ghost") {
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(y++, 2, "** Your ATK is reduced 80%% this turn **");
+                attroff(COLOR_PAIR(2) | A_BOLD);
+            } else {
+                y++;
+            }
+            mvprintw(y++, 2, "Choose: 1) Normal  2) Strong  3) Defend");
             refresh();
 
             choice = readKeyWithWindowGuard();
@@ -649,48 +731,136 @@ void fight(Player &p, int enemyMin, int enemyMax) {
                 valid = true;
             } else {
                 clear();
-                y = getCenteredStartY(2);
-                centerPrint(y++, "Invalid input!");
-                centerPrint(y++, "Please press 1 / 2 / 3");
-                centerPrint(y++, "1) Normal  2) Strong  3) Defend");
-                centerPrint(y++, "Press the correct key to continue...");
-                centerPrint(y++, "OR click MANUAL for help");
+                
+                // Display player stats panel
+                displayPlayerStats(statsPanel);
+                
+                // Display monster appearance on right side
+                mvprintw(2, monsterX, "%s", m.name.c_str());
+                if (ghostRedForm && m.name == "Ghost") {
+                    attron(COLOR_PAIR(2) | A_BOLD);
+                }
+                istringstream iss2(m.appearance1);
+                lineY = 3;
+                while (getline(iss2, line) && lineY < maxY - 5) {
+                    mvprintw(lineY++, monsterX, "%s", line.c_str());
+                }
+                if (ghostRedForm && m.name == "Ghost") {
+                    attroff(COLOR_PAIR(2) | A_BOLD);
+                }
+                
+                y = 10;
+                mvprintw(y++, 2, "Invalid input!");
+                mvprintw(y++, 2, "Please press 1 / 2 / 3");
+                mvprintw(y++, 2, "1) Normal  2) Strong  3) Defend");
+                mvprintw(y++, 2, "OR click MANUAL for help");
                 refresh();
                 napms(600);
             }
         }
         
+        // Calculate player attack with debuff effects
         int playerAttack = 0;
         int defendSuccess = 0;
-        if (choice == '1') playerAttack = rand() % p.atk + 1;
-        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(p.atk * (130 + rand() % 40) / 100.0);
+        int atkBuff = p.atk;
+        
+        // Apply ATK reduction if active
+        if (turnsReduceATK > 0) {
+            atkBuff = (int)(p.atk * 0.5);  // 50% reduction
+        } else if (ghostRedForm && m.name == "Ghost") {
+            atkBuff = (int)(p.atk * 0.2);  // 80% reduction -> 20% remains
+        }
+        
+        if (choice == '1') playerAttack = rand() % atkBuff + 1;
+        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(atkBuff * (130 + rand() % 40) / 100.0);
         else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
-        enemyHP -= playerAttack;
+        monsterHP -= playerAttack;
         
-        clear();
-        y = getCenteredStartY(4);
-        if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
-        else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
+        // Clear ATK reduction for this turn after applying
+        ghostRedForm = false;
 
-        if (enemyHP <= 0) {
-            centerPrint(y++, "Enemy defeated! +20 Gold, +50 EXP");
+        clear();
+        
+        // Display player stats panel
+        statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+        displayPlayerStats(statsPanel);
+        
+        // Display monster appearance on right side
+        mvprintw(2, monsterX, "%s", m.name.c_str());
+        istringstream iss3(m.appearance1);
+        string line;
+        int lineY = 3;
+        while (getline(iss3, line) && lineY < maxY - 5) {
+            mvprintw(lineY++, monsterX, "%s", line.c_str());
+        }
+        
+        y = 10;
+        if (playerAttack > 0) mvprintw(y++, 2, "You dealt %d damage!", playerAttack);
+        else if (choice == '1' || choice == '2') mvprintw(y++, 2, "Attack missed!");
+
+        if (monsterHP <= 0) {
+            mvprintw(y++, 2, "monster defeated! +20 Gold, +50 EXP");
             p.gold += 20; p.exp += 50; levelUp(p);
             refresh();
             ncWait();
             break;
         }
 
-        int dmg = (rand() % (enemyMax - enemyMin + 1)) + enemyMin;
+        // Decrease remaining turns of ATK reduction
+        if (turnsReduceATK > 0) {
+            turnsReduceATK--;
+        }
+
+        int dmg = (rand() % (monsterMax - monsterMin + 1)) + monsterMin;
+        
+        // 100% trigger special ability, with 30% chance to trigger both
+        bool useAttack1 = false, useAttack2 = false;
+        int bothChance = rand() % 100;
+        
+        if (bothChance < 30) {
+            // 30% chance: trigger both attacks
+            useAttack1 = true;
+            useAttack2 = true;
+        } else {
+            // 70% chance: trigger one randomly
+            useAttack1 = (rand() % 2 == 0);
+            useAttack2 = !useAttack1;
+        }
+        
+        string specialMsg = "";
+        
+        // Handle Ghost special attack 1: reduce ATK for 2 turns
+        if (useAttack1 && m.name == "Ghost") {
+            turnsReduceATK = 2;
+            specialMsg += "Ghost uses Incorporeal Form! Your ATK will be reduced 50%% for 2 turns! ";
+        } else if (useAttack1) {
+            dmg = (int)(dmg * 1.3);  // 30% bonus
+            specialMsg += m.name + " uses " + m.specialattack1 + "! ";
+        }
+        
+        // Handle Ghost special attack 2: reduce ATK 80% and turn red
+        if (useAttack2 && m.name == "Ghost") {
+            ghostRedForm = true;
+            specialMsg += "Ghost uses Haunting Presence! Your ATK is reduced 80%% this turn and Ghost turns RED! ";
+            dmg = (int)(dmg * 1.2);  // 20% bonus
+        } else if (useAttack2) {
+            dmg = (int)(dmg * 1.2);  // 20% bonus
+            specialMsg += m.name + " uses " + m.specialattack2 + "! ";
+        }
+        
         if (choice == '3') {
             if (defendSuccess) {
                 int counterDmg = (int)(p.atk * 0.4 + dmg * (0.4 + rand() % 20 / 100.0));
-                enemyHP -= counterDmg;
+                monsterHP -= counterDmg;
                 p.hp += 5;
                 dmg = 0;
-                centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
-                if (enemyHP <= 0) {
-                    centerPrint(y++, "Enemy defeated!");
+                specialMsg = "";
+                turnsReduceATK = 0;  // Clear debuff on successful defend
+                ghostRedForm = false;
+                mvprintw(y++, 2, "Defend successful! Counter attack: %d damage!", counterDmg);
+                if (monsterHP <= 0) {
+                    mvprintw(y++, 2, "monster defeated!");
                     p.gold += 20; p.exp += 50; levelUp(p);
                     refresh();
                     ncWait();
@@ -702,7 +872,14 @@ void fight(Player &p, int enemyMin, int enemyMax) {
         }
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
-        centerPrint(y++, "Enemy dealt " + to_string(dmg) + " damage!");
+        
+        // Display special ability messages
+        if (!specialMsg.empty()) {
+            attron(COLOR_PAIR(2) | A_BOLD);
+            mvprintw(y++, 2, "%s", specialMsg.c_str());
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        }
+        mvprintw(y++, 2, "%s dealt %d damage!", m.name.c_str(), dmg);
         refresh();
         napms(800);
     }
@@ -721,8 +898,13 @@ void bossFight(Player &p, int bossMin, int bossMax) {
 
     while (bossHP > 0 && p.hp > 0) {
         clear();
-        y = getCenteredStartY(4);
-        centerPrint(y++, "BOSS BATTLE - Your HP: " + to_string(p.hp) + " | Boss HP: " + to_string(bossHP));
+        
+        // Display player stats panel
+        PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+        displayPlayerStats(statsPanel);
+        
+        y = getCenteredStartY(3);
+        centerPrint(y++, "BOSS BATTLE - Boss HP: " + to_string(bossHP));
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
@@ -737,6 +919,11 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         bossHP -= playerAttack;
         
         clear();
+        
+        // Display player stats panel
+        statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+        displayPlayerStats(statsPanel);
+        
         y = getCenteredStartY(4);
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
@@ -779,6 +966,11 @@ void bossFight(Player &p, int bossMin, int bossMax) {
 // ===== Shop System =====
 void shop(Player &p) {
     clear();
+    
+    // Display player stats panel
+    PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+    displayPlayerStats(statsPanel);
+    
     int startY = getCenteredStartY(6);
     centerPrint(startY++, "=== MERCHANT ===");
     centerPrint(startY++, "Welcome! What would you like to buy?");
@@ -796,16 +988,26 @@ void shop(Player &p) {
                 p.gold -= 30;
                 p.hp += 15;
                 clear();
+                
+                // Display updated stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "You bought a Small Potion. +15 HP.");
                 refresh();
                 ncWait();
                 break;
             } else {
                 clear();
+                
+                // Display stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "Not enough gold!");
                 refresh();
                 ncWait();
-                shop(p);   // 重新显示商店
+                shop(p);
                 return;
             }
         } else if (choice == '2') {
@@ -813,12 +1015,22 @@ void shop(Player &p) {
                 p.gold -= 70;
                 p.hp += 40;
                 clear();
+                
+                // Display updated stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "You bought a Large Potion. +40 HP.");
                 refresh();
                 ncWait();
                 break;
             } else {
                 clear();
+                
+                // Display stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "Not enough gold!");
                 refresh();
                 ncWait();
@@ -830,12 +1042,22 @@ void shop(Player &p) {
                 p.gold -= 50;
                 p.atk += 3;
                 clear();
+                
+                // Display updated stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "You bought an Attack Boost. ATK +3!");
                 refresh();
                 ncWait();
                 break;
             } else {
                 clear();
+                
+                // Display stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "Not enough gold!");
                 refresh();
                 ncWait();
@@ -847,12 +1069,22 @@ void shop(Player &p) {
                 p.gold -= 40;
                 p.def += 2;
                 clear();
+                
+                // Display updated stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "You bought a Defense Boost. DEF +2!");
                 refresh();
                 ncWait();
                 break;
             } else {
                 clear();
+                
+                // Display stats
+                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                
                 centerPrint(getCenteredStartY(1), "Not enough gold!");
                 refresh();
                 ncWait();
@@ -868,9 +1100,9 @@ void shop(Player &p) {
 
 
 // ===== Event System =====
-void event(Player &p, int enemyMin, int enemyMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
+void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
-    if (r < 40) fight(p, enemyMin, enemyMax);       // Enemy 40%
+    if (r < 40) fight(p, monsterMin, monsterMax);       // Monster 40%
     else if (r < 60) {
         shop(p);
     }
@@ -937,7 +1169,7 @@ void displayMap() {
 }
 
 // ===== Movement =====
-void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int bossMax) {
+void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax) {
     int nx = px, ny = py;
     if (m == 'w') nx--;
     else if (m == 's') nx++;
@@ -997,7 +1229,7 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
         }
         return;
     }
-    if (grid[px][py] == '.') event(p, enemyMin, enemyMax, bossMin, bossMax);
+    if (grid[px][py] == '.') event(p, monsterMin, monsterMax, bossMin, bossMax);
 }
 
 // ===== Main =====
@@ -1037,11 +1269,11 @@ int main() {
         return 0;
     }
 
-    int enemyMin, enemyMax, bossMin, bossMax;
+    int monsterMin, monsterMax, bossMin, bossMax;
     bool loadedFromSave = false;
     user_save_system::SaveData loadedData;
     if (user_save_system::hasSave(username) && user_save_system::loadProgress(username, loadedData)) {
-        loadedFromSave = applySaveData(loadedData, p, enemyMin, enemyMax, bossMin, bossMax);
+        loadedFromSave = applySaveData(loadedData, p, monsterMin, monsterMax, bossMin, bossMax);
         clear();
         if (loadedFromSave) {
             centerPrint(getCenteredStartY(1), "Save found. Progress restored.");
@@ -1054,7 +1286,7 @@ int main() {
 
     if (!loadedFromSave) {
 
-        chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+        chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
         clear();
         centerPrint(5, "Press T for Tutorial, any other key to skip");
         refresh();
@@ -1069,7 +1301,7 @@ int main() {
         initializeNewMap();
     }
 
-    user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
 
     while (true) {
         clear();
@@ -1107,9 +1339,9 @@ int main() {
                 break;
             }
             showIntro();
-            chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+            chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
             initializeNewMap();
-            user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
             continue;
         }
         if (px == gx && py == gy && p.hasKey) { 
@@ -1146,9 +1378,9 @@ int main() {
                         break;
                     }
                     showIntro();
-                    chooseDifficulty(enemyMin, enemyMax, bossMin, bossMax);
+                    chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
                     initializeNewMap();
-                    user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+                    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
                     continue;
                 }
                 if (action == TopButtonAction::Quit) {
@@ -1160,8 +1392,8 @@ int main() {
 
         char m = normalizeMoveKey(key);
         if (m != '\0') {
-            movePlayer(m, p, enemyMin, enemyMax, bossMin, bossMax);
-            user_save_system::saveProgress(username, buildSaveData(p, enemyMin, enemyMax, bossMin, bossMax));
+            movePlayer(m, p, monsterMin, monsterMax, bossMin, bossMax);
+            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
         }
     }
 

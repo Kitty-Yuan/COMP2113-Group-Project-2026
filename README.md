@@ -36,7 +36,7 @@ But beware — the maze is filled with **traps, random events, and hidden danger
   * Normal Attack
   * Power Attack (probability-based)
   * Defend (reduces damage + heal)
-* Enemy and Boss with scalable difficulty
+* monster and Boss with scalable difficulty
 
 ### 📈 Progression System
 
@@ -49,7 +49,7 @@ But beware — the maze is filled with **traps, random events, and hidden danger
 
 ### 🎲 Random Event System
 
-* Enemy encounters
+* monster encounters
 * Merchant encounters (expandable)
 * Helpful NPC (healing)
 * Empty zones
@@ -71,7 +71,7 @@ main.cpp
 Key components:
 
 * `Player struct` → stores player stats
-* `fight()` → enemy combat logic
+* `fight()` → monster combat logic
 * `bossFight()` → boss battle system
 * `event()` → random event generator
 * `movePlayer()` → movement + interaction
@@ -120,7 +120,7 @@ g++ comp2113.cpp -o game
 HP=100 ATK=8 DEF=5 GOLD=10 EXP=0 LV=1 KEY=N
 Move (WASD): d
 👉 Entering new area...
-⚔️ You encountered an enemy!
+⚔️ You encountered an monster!
 ```
 
 ---
@@ -129,7 +129,7 @@ Move (WASD): d
 
 * 🛒 Fully implemented shop system
 * 🧥 Equipment system (weapons & armor)
-* 👾 Multiple enemy types with AI behaviors
+* 👾 Multiple monster types with AI behaviors
 * 🎨 Colored terminal UI
 * 💾 Save / load system
 * 🗺️ Smarter maze generation (guaranteed solvability)

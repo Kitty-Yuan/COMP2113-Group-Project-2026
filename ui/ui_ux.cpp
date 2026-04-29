@@ -97,8 +97,9 @@ void displayPlayerStats(const PlayerStats &stats) {
     }
     
     // Draw top border
-    mvprintw(startY, startX, "+-- PLAYER STATISTICS -----------------------------+");
-    for (int i = startX + 17; i < startX + PANEL_WIDTH - 1; i++) {
+    mvprintw(startY, startX, "+");
+    mvprintw(startY, startX + 1, "-- PLAYER STATISTICS ");
+    for (int i = startX + 21; i < startX + PANEL_WIDTH - 1; i++) {
         mvaddch(startY, i, '-');
     }
     mvaddch(startY, startX + PANEL_WIDTH - 1, '+');
@@ -169,14 +170,14 @@ void displayPlayerStats(const PlayerStats &stats) {
     
     // GOLD - with empty bar space for alignment
     mvprintw(y, startX, "|");
-    mvprintw(y, startX + 1, "GOLD$:%d", stats.gold);
+    mvprintw(y, startX + 1, "GOLD$: %d", stats.gold);
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
     
     
     // LEVEL - with empty bar space for alignment
     mvprintw(y, startX, "|");
-    mvprintw(y, startX + 1, "EXP LEVEL: %2d", stats.level);
+    mvprintw(y, startX + 1, "EXP LEVEL: %d", stats.level);
     mvprintw(y, startX + PANEL_WIDTH - 1, "|");
     y++;
     
@@ -203,13 +204,19 @@ Monster ghost = {
 |        |
 ~` ~` ~ `~
 )",
-    "Ethereal Strike: Deals damage that ignores armor.",
-    "Incorporeal Form: Reduces physical damage taken by 50%.",
-    "Haunting Presence: Chance to frighten enemies, reducing their attack power."
+        R"(
+    ~` ~` ~ `~
+    ~` ~` ~ `~
+    ~` ~` ~ `~
+    )",
+
+    "Incorporeal Form: Reduces damage taken by 50%.",
+    "Haunting Presence: Chance to frighten enemies, reducing their attack power.",
+    "Hehehe, I'm the ghost. Don't be scared of me! I can turn into a mist to avoid physical attacks, and I can also haunt my enemies to make them less effective in battle. If you see me floating around, watch out for my spooky presence!"
 };
 
-Monster mushroom = {
-    "Mushroom",
+Monster chestnut = {
+    "chestnut",
     R"(
    .--OO--.
  /--_    _--\
@@ -217,9 +224,17 @@ Monster mushroom = {
     |    |
     (____)
 )",
-    "Spore Burst: Releases spores that damage and poison enemies.",
+    R"(
+   .--OO--.
+ /--_    _--\
+(___@____@___)
+    |    |
+    (____)
+)",
+
+    "Spore Burst: Randomly releases spores that damage and poison enemies.",
     "Fungal Shield: Creates a temporary shield that absorbs damage.",
-    "Regeneration: Heals over time when not taking damage."
+    "Hi, I'm a chestnut monster! I can release poisonous spores to damage my enemies, and I can also create a shield made of fungus to protect myself from attacks. Be careful when you encounter me, as my spores can cause ongoing damage and my shield can make me harder to defeat!"
 };
 
 Monster owl = {
@@ -230,9 +245,17 @@ Monster owl = {
 () ::: ()
   VV VV
 )",
-    "Silent Flight: Allows the owl to move without making noise, avoiding detection.",
-    "Keen Vision: Increases accuracy and critical hit chance.",
-    "Night Hunter: Gains increased damage and evasion during nighttime."
+
+            R"(
+      /\ /\
+    ((@ v @))
+    () ::: ()
+    VV VV
+    )",
+
+    "fireBlow: owl will get angry when player is attacking it, and it will blow fire to player randomly, dealing 10% damage",
+    "nightVision: this is a magic owl. It has the ability to call for night to come during one night. Owl can see player in the dark, so it will not miss player even in dark environment. However, player will have 20% chance to dodge owl's attack in the dark",
+    "This mysterious owl is known for its silent flight and piercing gaze. It can unleash a fiery breath attack that ignites the target, causing damage over time. The owl's night vision allows it to track players even in complete darkness, making it a formidable foe in shadowy environments. However, players have a chance to dodge its attacks when in the dark, adding an element of strategy to encounters with this elusive creature."
 };
 
 Monster blob = {
@@ -243,9 +266,16 @@ Monster blob = {
    (      )
    `------`
 )",
-    "Acidic Touch: Deals damage over time and reduces enemy armor.",
-    "Amorphous Body: Can squeeze through tight spaces and is immune to being grappled.",
-    "Split: When reduced to low health, splits into two smaller blobs with half health."
+        R"(
+    .----.
+   ( @  @ )
+   (      )
+   `------`
+)",
+
+    "eatMoney",
+    "Split: When reduced to low health, splits into two smaller blobs with half health.",
+    "This cute monster is called Blob. It has a gelatinous body and a big appetite for gold coins. It can consume gold to heal itself, making it a tricky opponent in battle. When Blob's health drops below a certain threshold, it splits into two smaller blobs, each with half of the original health. This ability allows Blob to prolong fights and overwhelm opponents with numbers."
 };
 
 string player = R"(
@@ -488,7 +518,7 @@ private:
 
 public:
     user_interaction() : selected(0), quit_flag(false) {
-        monsters_list = {&ghost, &mushroom, &owl};
+        monsters_list = {&ghost, &chestnut, &owl};
     }
 
     void display_menu() {
@@ -509,7 +539,7 @@ public:
             }
 
             int pattern_y = y + 1;
-            istringstream iss(monsters_list[i]->appearance);
+            istringstream iss(monsters_list[i]->appearance1);
             string line;
             while (getline(iss, line) && pattern_y < max_y - 8) {
                 if (i == static_cast<size_t>(selected)) {
@@ -527,9 +557,8 @@ public:
 
         if (static_cast<size_t>(selected) < monsters_list.size()) {
             Monster *m = monsters_list[selected];
-            mvprintw(max_y - 6, 0, "Attack:  %s", m->attack.c_str());
-            mvprintw(max_y - 5, 0, "Defense: %s", m->defense.c_str());
-            mvprintw(max_y - 4, 0, "Special: %s", m->special_ability.c_str());
+            mvprintw(max_y - 6, 0, "Attack:  %s", m->specialattack1.c_str());
+            mvprintw(max_y - 4, 0, "Special: %s", m->specialattack2.c_str());
         }
 
         mvprintw(max_y - 2, 0, "Use UP/DOWN to select, ENTER to choose, Q to quit");
@@ -1184,4 +1213,148 @@ bool authenticateUser(string &username) {
     }
 
     return false;
+}
+
+void fireEffect(int startX, int startY, int duration) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    // Fire animation frames
+    vector<string> fireFrames = {
+        "^",
+        "^v",
+        "^v^",
+        "~^v^~",
+        "~^v^~*",
+        "^v*v^"
+    };
+    
+    // Fire spread pattern - expands from owl position
+    int totalFrames = 8;
+    int frameDelay = duration / totalFrames;
+    
+    for (int frame = 0; frame < totalFrames; frame++) {
+        // Clear previous animation
+        refresh();
+        
+        // Draw expanding fire effect
+        attron(COLOR_PAIR(2) | A_BOLD);  // Red color for fire
+        
+        // Main fire stream moving right
+        int fireX = startX + frame * 2;
+        if (fireX < maxX) {
+            mvprintw(startY, fireX, "~~^^vv^^~~");
+        }
+        
+        // Expansion upward
+        if (frame > 0 && startY - 1 >= 0) {
+            mvprintw(startY - 1, startX + frame, "^~^");
+        }
+        
+        // Expansion downward
+        if (frame > 0 && startY + 1 < maxY) {
+            mvprintw(startY + 1, startX + frame, "v~v");
+        }
+        
+        // Secondary fire sparks
+        if (frame > 1 && fireX + 3 < maxX) {
+            mvprintw(startY, fireX + 3, "*");
+            if (startY - 2 >= 0) {
+                mvprintw(startY - 2, fireX + 2, "*");
+            }
+            if (startY + 2 < maxY) {
+                mvprintw(startY + 2, fireX + 2, "*");
+            }
+        }
+        
+        attroff(COLOR_PAIR(2) | A_BOLD);
+        
+        refresh();
+        napms(frameDelay);
+    }
+    
+    // Fade out effect
+    for (int fade = 0; fade < 3; fade++) {
+        // Clear the fire
+        for (int i = -2; i <= 2; i++) {
+            if (startY + i >= 0 && startY + i < maxY) {
+                mvprintw(startY + i, startX, "%s", string(maxX - startX, ' ').c_str());
+            }
+        }
+        refresh();
+        napms(100);
+    }
+}
+
+// Global monsters vector
+std::vector<Monster> monsters = {ghost, chestnut, owl, blob};
+
+Monster* getRandomMonster() {
+    int randomIndex = rand() % monsters.size();
+    return &monsters[randomIndex];
+}
+
+void displayMonsterEncounter(int &y) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    // Get a random monster
+    Monster* encounterMonster = getRandomMonster();
+    
+    // Display encounter message
+    centerPrint(y++, "You encountered an monster!");
+    y++;
+    
+    // Display monster name
+    mvprintw(y++, 2, "Monster: %s", encounterMonster->name.c_str());
+    y++;
+    
+    // Display monster appearance
+    istringstream iss(encounterMonster->appearance1);
+    string line;
+    while (getline(iss, line) && y < maxY - 10) {
+        mvprintw(y++, 4, "%s", line.c_str());
+    }
+    y++;
+    
+    // Display monster introduction with color
+    if (has_colors()) {
+        attron(COLOR_PAIR(1) | A_BOLD);
+    }
+    
+    // Wrap introduction text
+    string intro = encounterMonster->Introduction;
+    int introWidth = maxX - 6;
+    int introX = 3;
+    
+    while (!intro.empty() && y < maxY - 5) {
+        int wrapLen = min(static_cast<int>(intro.length()), introWidth);
+        
+        // Find the last space within wrapLen
+        int breakPoint = wrapLen;
+        if (intro.length() > static_cast<size_t>(wrapLen)) {
+            breakPoint = intro.rfind(' ', wrapLen);
+            if (breakPoint == static_cast<int>(string::npos)) {
+                breakPoint = wrapLen;
+            }
+        }
+        
+        mvprintw(y++, introX, "%s", intro.substr(0, breakPoint).c_str());
+        
+        // Skip leading spaces on next line
+        if (breakPoint < static_cast<int>(intro.length()) && intro[breakPoint] == ' ') {
+            breakPoint++;
+        }
+        intro = intro.substr(breakPoint);
+    }
+    
+    if (has_colors()) {
+        attroff(COLOR_PAIR(1) | A_BOLD);
+    }
+    
+    y++;
+    
+    // Display special attacks
+    mvprintw(y++, 2, "Attack 1: %s", encounterMonster->specialattack1.c_str());
+    mvprintw(y++, 2, "Attack 2: %s", encounterMonster->specialattack2.c_str());
 }

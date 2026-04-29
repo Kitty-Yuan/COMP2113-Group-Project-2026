@@ -21,8 +21,8 @@ struct SaveData {
     int gx = 0;
     int gy = 0;
 
-    int enemyMin = 0;
-    int enemyMax = 0;
+    int monsterMin = 0;
+    int monsterMax = 0;
     int bossMin = 0;
     int bossMax = 0;
 

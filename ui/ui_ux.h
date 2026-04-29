@@ -8,14 +8,15 @@ static const int KET_HOME_BUTTON = -2;
 
 struct Monster {
     std::string name;
-    std::string appearance;
-    std::string attack;
-    std::string defense;
-    std::string special_ability;
+    std::string appearance1;
+    std::string appearance2;
+    std::string specialattack1;
+    std::string specialattack2;
+    std::string Introduction;
 };
 
 extern Monster ghost;
-extern Monster mushroom;
+extern Monster chestnut;
 extern Monster owl;
 extern Monster blob;
 
@@ -69,5 +70,14 @@ std::string promptInputLine(int y,
                             const std::vector<std::string> *contextLines = nullptr,
                             int contextStartY = 0);
 bool authenticateUser(std::string &username);
+
+// Monster encounter function
+Monster* getRandomMonster();
+void displayMonsterEncounter(int &y);
+
+// Fire effect animation
+void fireEffect(int startX, int startY, int duration = 1500);
+
+extern std::vector<Monster> monsters;
 
 #endif
