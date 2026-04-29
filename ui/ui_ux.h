@@ -78,6 +78,9 @@ void displayMonsterEncounter(int &y);
 // Fire effect animation
 void fireEffect(int startX, int startY, int duration = 1500);
 
+// Mushroom drawing function
+void drawMushroom(int startY, int startX, int colorPair, char pattern);
+
 extern std::vector<Monster> monsters;
 
 #endif

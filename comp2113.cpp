@@ -469,7 +469,6 @@ void introScreen() {
 
 // ===== Level Up =====
 void levelUp(Player &p) {
-    int y = 0;
     while (p.exp >= 100) {
         p.exp -= 100;
         p.level++;
@@ -477,7 +476,8 @@ void levelUp(Player &p) {
         p.atk += 5;
         p.def += 3;
         clear();
-        mvprintw(y++, 0, "Level Up! Lv %d HP+20 ATK+5 DEF+3", p.level);
+        string levelUpMsg = "Level Up! Lv " + to_string(p.level) + " HP+20 ATK+5 DEF+3";
+        centerPrint(getCenteredStartY(1), levelUpMsg);
         refresh();
         napms(1000); // Wait 1 second
     }
@@ -817,6 +817,60 @@ void tutorial(Player &p) {
 }    
 
 
+// ===== Special Ability Display =====
+void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
+    clear();
+    
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    // Draw a decorative border
+    attron(COLOR_PAIR(2) | A_BOLD);
+    for (int x = 5; x < maxX - 5; x++) {
+        mvaddch(5, x, '=');
+        mvaddch(maxY - 5, x, '=');
+    }
+    for (int y = 5; y < maxY - 5; y++) {
+        mvaddch(y, 5, '|');
+        mvaddch(y, maxX - 6, '|');
+    }
+    mvaddch(5, 5, '+');
+    mvaddch(5, maxX - 6, '+');
+    mvaddch(maxY - 5, 5, '+');
+    mvaddch(maxY - 5, maxX - 6, '+');
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    
+    // Display monster name in top center
+    int monsterNameY = 7;
+    int monsterNameX = (maxX - static_cast<int>(m.name.length())) / 2;
+    attron(COLOR_PAIR(2) | A_BOLD);
+    mvprintw(monsterNameY, monsterNameX, "%s", m.name.c_str());
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    
+    // Display monster appearance
+    int appearanceStartY = monsterNameY + 2;
+    int appearanceStartX = (maxX - 30) / 2;
+    istringstream iss(m.appearance1);
+    string line;
+    int lineY = appearanceStartY;
+    while (getline(iss, line) && lineY < maxY - 10) {
+        mvprintw(lineY++, appearanceStartX, "%s", line.c_str());
+    }
+    
+    // Display ability message in big font style
+    int msgStartY = maxY - 8;
+    attron(COLOR_PAIR(3) | A_BOLD);
+    mvprintw(msgStartY, (maxX - static_cast<int>(abilityMsg.length())) / 2, "%s", abilityMsg.c_str());
+    attroff(COLOR_PAIR(3) | A_BOLD);
+    
+    // Display wait hint
+    string hint = "Press ENTER to continue...";
+    mvprintw(maxY - 2, (maxX - static_cast<int>(hint.length())) / 2, "%s", hint.c_str());
+    
+    refresh();
+    ncWait();
+}
+
 // ===== Battle System =====
 void fight(Player &p, int monsterMin, int monsterMax) {
     clear();
@@ -831,6 +885,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     // Special ability states
     int turnsReduceATK = 0;           // Remaining turns with 50% ATK reduction (Ghost attack1)
     bool ghostRedForm = false;        // Ghost is in red form (attack2)
+    
+    // Special ability trigger mechanism
+    int specialAbilityTriggered = -1; // -1: not active, 0+: ability is active
+    int specialAbilityDuration = 0;    // How many rounds the ability lasts
+    int playerAttacksSinceAbility = 0; // Minimum 1 player attack before ability ends
     
     int y = getCenteredStartY(3);
     centerPrint(y++, "You encountered: " + m.name + "!");
@@ -878,7 +937,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
         if (turnsReduceATK > 0) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, "** Your ATK is reduced 50%% for " + to_string(turnsReduceATK) + " more turn(s) **");
+            centerPrint(y++, "** Your ATK is reduced 50% for " + to_string(turnsReduceATK) + " more turn(s) **");
             attroff(COLOR_PAIR(2) | A_BOLD);
         } else if (ghostRedForm && m.name == "Ghost") {
             attron(COLOR_PAIR(2) | A_BOLD);
@@ -886,6 +945,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             attroff(COLOR_PAIR(2) | A_BOLD);
         } else {
             y++;
+        }
+        if (specialAbilityTriggered >= 0) {
+            attron(COLOR_PAIR(2) | A_BOLD);
+            centerPrint(y++, "** " + m.name + "'s special ability is active! **");
+            attroff(COLOR_PAIR(2) | A_BOLD);
         }
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
@@ -918,7 +982,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
             if (turnsReduceATK > 0) {
                 attron(COLOR_PAIR(2) | A_BOLD);
-                centerPrint(y++, "** Your ATK is reduced 50%% for " + to_string(turnsReduceATK) + " more turn(s) **");
+                centerPrint(y++, "** Your ATK is reduced 50% for " + to_string(turnsReduceATK) + " more turn(s) **");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             } else if (ghostRedForm && m.name == "Ghost") {
                 attron(COLOR_PAIR(2) | A_BOLD);
@@ -926,6 +990,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 attroff(COLOR_PAIR(2) | A_BOLD);
             } else {
                 y++;
+            }
+            if (specialAbilityTriggered >= 0) {
+                attron(COLOR_PAIR(2) | A_BOLD);
+                centerPrint(y++, "** " + m.name + "'s special ability is active! **");
+                attroff(COLOR_PAIR(2) | A_BOLD);
             }
             centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
             refresh();
@@ -935,32 +1004,68 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             if (choice == '1' || choice == '2' || choice == '3') {
                 valid = true;
             } else {
-                clear();
-                
-                // Display player stats panel
-                displayPlayerStats(statsPanel);
-                
-                // Display monster appearance in center
-                if (ghostRedForm && m.name == "Ghost") {
-                    attron(COLOR_PAIR(2) | A_BOLD);
+                // Invalid input - show error and wait for button click or key press
+                bool inputResolved = false;
+                while (!inputResolved) {
+                    clear();
+                    
+                    // Display player stats panel
+                    displayPlayerStats(statsPanel);
+                    
+                    // Display monster appearance in center
+                    if (ghostRedForm && m.name == "Ghost") {
+                        attron(COLOR_PAIR(2) | A_BOLD);
+                    }
+                    istringstream iss2(m.appearance1);
+                    lineY = monsterStartY + 1;
+                    while (getline(iss2, line) && lineY < maxY - 5) {
+                        mvprintw(lineY++, monsterX, "%s", line.c_str());
+                    }
+                    if (ghostRedForm && m.name == "Ghost") {
+                        attroff(COLOR_PAIR(2) | A_BOLD);
+                    }
+                    
+                    // Display error message and battle info above monster
+                    y = monsterStartY - 3;
+                    centerPrint(y++, "Invalid input!");
+                    centerPrint(y++, "Please press 1 / 2 / 3");
+                    if (specialAbilityTriggered >= 0) {
+                        attron(COLOR_PAIR(2) | A_BOLD);
+                        centerPrint(y++, "** " + m.name + "'s special ability is active! **");
+                        attroff(COLOR_PAIR(2) | A_BOLD);
+                    }
+                    centerPrint(y++, "1) Normal  2) Strong  3) Defend");
+                    
+                    showButton();
+                    refresh();
+                    
+                    // Wait for input and handle button clicks or key presses
+                    int input = readKeyWithWindowGuard();
+                    
+                    if (input == KEY_MOUSE) {
+                        MEVENT event;
+                        if (getmouse(&event) == OK && isPrimaryMouseClick(event)) {
+                            TopButtonAction action = getTopButtonActionFromMouse(event);
+                            if (action == TopButtonAction::Help) {
+                                showHelp();
+                                continue;  // Show invalid prompt again
+                            } else if (action == TopButtonAction::Home) {
+                                // User wants to go home - exit battle
+                                p.hp = 0;  // Set HP to 0 to trigger game over in main loop
+                                inputResolved = true;
+                                continue;
+                            } else if (action == TopButtonAction::Quit) {
+                                // User wants to quit - exit battle
+                                p.hp = 0;  // Set HP to 0 to trigger game over in main loop
+                                inputResolved = true;
+                                continue;
+                            }
+                        }
+                    }
+                    
+                    // Any other input or click just exits the invalid prompt and returns to battle menu
+                    inputResolved = true;
                 }
-                istringstream iss2(m.appearance1);
-                lineY = monsterStartY + 1;
-                while (getline(iss2, line) && lineY < maxY - 5) {
-                    mvprintw(lineY++, monsterX, "%s", line.c_str());
-                }
-                if (ghostRedForm && m.name == "Ghost") {
-                    attroff(COLOR_PAIR(2) | A_BOLD);
-                }
-                
-                // Display error message and battle info above monster
-                y = monsterStartY - 3;
-                centerPrint(y++, "Invalid input!");
-                centerPrint(y++, "Please press 1 / 2 / 3");
-                centerPrint(y++, "1) Normal  2) Strong  3) Defend");
-                centerPrint(y++, "OR click MANUAL for help");
-                refresh();
-                napms(600);
             }
         }
         
@@ -1016,6 +1121,38 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         
         // Clear ATK reduction for this turn after applying
         ghostRedForm = false;
+        
+        // Count player attacks for ability duration
+        playerAttacksSinceAbility++;
+        
+        // ===== Check for special ability trigger =====
+        if (specialAbilityTriggered < 0 && rand() % 100 < 25) {  // 25% chance to trigger
+            specialAbilityDuration = 2 + rand() % 3;  // Duration: 2-4 rounds
+            playerAttacksSinceAbility = 0;
+            specialAbilityTriggered = 0;  // Mark ability as active
+            
+            // Display special ability effect
+            string abilityMsg;
+            if (m.name == "Ghost") {
+                abilityMsg = "GHOST USES: " + m.specialattack1;
+            } else if (m.name == "chestnut") {
+                abilityMsg = "CHESTNUT USES: " + m.specialattack1;
+            } else if (m.name == "Owl") {
+                abilityMsg = "OWL USES: " + m.specialattack1;
+            } else if (m.name == "Blob") {
+                abilityMsg = "BLOB USES: " + m.specialattack1;
+            }
+            
+            displaySpecialAbilityEffect(m, abilityMsg);
+        }
+        
+        // Check if ability duration has expired
+        if (specialAbilityTriggered >= 0) {
+            specialAbilityDuration--;
+            if (specialAbilityDuration <= 0 && playerAttacksSinceAbility > 0) {
+                specialAbilityTriggered = -1;  // Ability ends
+            }
+        }
 
         clear();
         
@@ -1034,6 +1171,13 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         y = monsterStartY - 3;
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
+        
+        // Display active special ability status
+        if (specialAbilityTriggered >= 0) {
+            attron(COLOR_PAIR(2) | A_BOLD);
+            centerPrint(y++, m.name + "'s special ability is active!");
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        }
 
         if (monsterHP <= 0) {
             centerPrint(y++, "monster defeated! +20 Gold, +50 EXP");
@@ -1050,39 +1194,18 @@ void fight(Player &p, int monsterMin, int monsterMax) {
 
         int dmg = (rand() % (monsterMax - monsterMin + 1)) + monsterMin;
         
-        // 100% trigger special ability, with 30% chance to trigger both
-        bool useAttack1 = false, useAttack2 = false;
-        int bothChance = rand() % 100;
-        
-        if (bothChance < 30) {
-            // 30% chance: trigger both attacks
-            useAttack1 = true;
-            useAttack2 = true;
-        } else {
-            // 70% chance: trigger one randomly
-            useAttack1 = (rand() % 2 == 0);
-            useAttack2 = !useAttack1;
-        }
-        
-        string specialMsg = "";
-        
-        // Handle Ghost special attack 1: reduce ATK for 2 turns
-        if (useAttack1 && m.name == "Ghost") {
-            turnsReduceATK = 2;
-            specialMsg += "Ghost uses Incorporeal Form! Your ATK will be reduced 50%% for 2 turns! ";
-        } else if (useAttack1) {
-            dmg = (int)(dmg * 1.3);  // 30% bonus
-            specialMsg += m.name + " uses " + m.specialattack1 + "! ";
-        }
-        
-        // Handle Ghost special attack 2: reduce ATK 80% and turn red
-        if (useAttack2 && m.name == "Ghost") {
-            ghostRedForm = true;
-            specialMsg += "Ghost uses Haunting Presence! Your ATK is reduced 80%% this turn and Ghost turns RED! ";
-            dmg = (int)(dmg * 1.2);  // 20% bonus
-        } else if (useAttack2) {
-            dmg = (int)(dmg * 1.2);  // 20% bonus
-            specialMsg += m.name + " uses " + m.specialattack2 + "! ";
+        // Apply ability effect if active
+        if (specialAbilityTriggered >= 0) {
+            // Different abilities have different effects
+            if (m.name == "Ghost") {
+                dmg = (int)(dmg * 1.5);  // Ghost's ability increases damage
+            } else if (m.name == "chestnut") {
+                dmg = (int)(dmg * 1.3);  // Chestnut's ability increases damage
+            } else if (m.name == "Owl") {
+                dmg = (int)(dmg * 1.4);  // Owl's ability increases damage
+            } else if (m.name == "Blob") {
+                dmg = (int)(dmg * 1.2);  // Blob's ability slightly increases damage
+            }
         }
         
         if (choice == '3') {
@@ -1091,9 +1214,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 monsterHP -= counterDmg;
                 p.hp += 5;
                 dmg = 0;
-                specialMsg = "";
-                turnsReduceATK = 0;  // Clear debuff on successful defend
-                ghostRedForm = false;
                 centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
                 if (monsterHP <= 0) {
                     centerPrint(y++, "monster defeated!");
@@ -1109,15 +1229,9 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
         
-        // Display special ability messages
-        if (!specialMsg.empty()) {
-            attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, specialMsg);
-            attroff(COLOR_PAIR(2) | A_BOLD);
-        }
         centerPrint(y++, m.name + " dealt " + to_string(dmg) + " damage!");
         refresh();
-        napms(800);
+        ncWait();
     }
 }
 
@@ -1220,7 +1334,7 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         p.hp -= dmg;
         centerPrint(y++, "Boss dealt " + to_string(dmg) + " damage!");
         refresh();
-        napms(800);
+        ncWait();
     }
 }
 
