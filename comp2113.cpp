@@ -1150,6 +1150,8 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
 
     px = nx; py = ny;
     discovered[px][py] = true;
+    bool firstVisit = !visited[px][py];
+    visited[px][py] = true;
 
     if (grid[px][py] == 'K') { 
         clear();
@@ -1192,7 +1194,11 @@ void movePlayer(char m, Player &p, int enemyMin, int enemyMax, int bossMin, int 
         }
         return;
     }
-    if (grid[px][py] == '.') event(p, enemyMin, enemyMax, bossMin, bossMax);
+    if (grid[px][py] == '.') {
+        if (firstVisit) {
+            event(p, enemyMin, enemyMax, bossMin, bossMax);
+        } 
+    }
 }
 
 // ===== Main =====
