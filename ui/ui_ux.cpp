@@ -909,10 +909,11 @@ void drawPrincess(int startY, int startX) {
             char colorKey = line[i];
             i++; 
             int colorPair = 1; 
+            // 在 drawPrincess 内部：
             switch (colorKey) {
-                case 'W': colorPair = 1; break; 
-                case 'Y': colorPair = 2; break; 
-                case 'R': colorPair = 3; break; 
+                case 'W': colorPair = 1; break;
+                case 'Y': colorPair = 2; break;
+                case 'R': colorPair = 3; break;
                 default:  colorPair = 1; break;
             }
             
