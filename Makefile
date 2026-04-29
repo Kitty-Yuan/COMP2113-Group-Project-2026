@@ -1,7 +1,7 @@
 # Makefile for KnightMazeRPG
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -D_XOPEN_SOURCE_EXTENDED
 LDFLAGS := -lncursesw
 
 # Directories
