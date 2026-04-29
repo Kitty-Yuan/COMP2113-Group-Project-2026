@@ -1021,23 +1021,6 @@ void showIntro() {
     getch();
 }
 
-int main() {
-    setlocale(LC_ALL, ""); 
-    initscr();
-    start_color();
-    noecho();
-    curs_set(0);
-
-    // Color Setup
-    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(3, COLOR_RED, COLOR_BLACK);
-
-    showIntro();
-
-    endwin();
-    return 0;
-}
 void showHelp() {
     vector<string> lines = {
         "===== HELP =====",
