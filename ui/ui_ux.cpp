@@ -992,33 +992,44 @@ void showIntro() {
 
         if (p == 3) napms(800); 
 
-        // Wait for page turn
-        if (p < (int)pages.size() - 1) {
+        // Final page logic: show prompt immediately without clearing
+        if (p == (int)pages.size() - 1) {
+            attron(A_BOLD | COLOR_PAIR(2));
+            mvprintw(LINES - 2, (COLS - 26) / 2, "Press any key to start...");
+            attroff(A_BOLD | COLOR_PAIR(2));
+            refresh();
             nodelay(stdscr, FALSE);
-            while (true) {
-                int ch = getch();
-                if (ch == 's' || ch == 'S') { skipped = true; break; }
-                if (ch == ' ') break; 
-            }
-            if (skipped) break;
+            getch();
+            return; // Successfully finished
         }
+
+        // Wait for page turn
+        nodelay(stdscr, FALSE);
+        while (true) {
+            int ch = getch();
+            if (ch == 's' || ch == 'S') { skipped = true; break; }
+            if (ch == ' ') break; 
+        }
+        if (skipped) break;
     }
 
     // --- Outro / Skip Logic ---
-    clear();
-    nodelay(stdscr, FALSE);
-    int princessX = COLS - 30;
-    drawPrincess(2, princessX);
-
     if (skipped) {
-        vector<string> skipLines = {"HEY! HEY!!", "", "Zero patience for my masterpiece? Fine... youngsters.", "", "I'll skip the history lesson, but you'll need this.", "", "(You received a Super Mushroom! Attack power +10!)", "", "Now go! Save the Princess! Press any key."};
-        typeParagraph(skipLines, (LINES - (int)skipLines.size()) / 2, 30, false);
-    } else {
-        mvprintw(LINES / 2, (COLS - 42) / 2, "You are a true listener. Now, GO SAVE THEM!");
-        mvprintw(LINES / 2 + 2, (COLS - 26) / 2, "Press any key to start...");
+        clear();
+        nodelay(stdscr, FALSE);
+        int princessX = COLS - 30;
+        drawPrincess(2, princessX);
+
+        vector<string> skipLines = {
+            "HEY! HEY!!", "", 
+            "Zero patience for my masterpiece? Fine...", "", 
+            "I'll skip the history lesson, but you'll need this.", "", 
+            "(You received a Super Mushroom! Attack power +10!)", "", 
+            "Now go! Save the Princess! Press any key."
+        };
+        typeParagraph(skipLines, (LINES - (int)skipLines.size()) / 2, 25, false);
+        getch();
     }
-    refresh();
-    getch();
 }
 
 void showHelp() {
