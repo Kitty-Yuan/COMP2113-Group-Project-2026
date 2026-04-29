@@ -433,6 +433,40 @@ void chooseDifficulty(int &monsterMin, int &monsterMax, int &bossMin, int &bossM
     ncWait();
 }
 
+//Intro Screen
+void introScreen() {
+    clear();
+
+    int y = getCenteredStartY(10);
+
+    centerPrint(y++, "==================================");
+    centerPrint(y++, "      YOUR ADVENTURE BEGINS      ");
+    centerPrint(y++, "==================================");
+    y++;
+
+    centerPrint(y++, "Follow what you learned:");
+    centerPrint(y++, "- Move with WASD");
+    centerPrint(y++, "- Fight enemies");
+    centerPrint(y++, "- Find the key");
+    y++;
+
+    centerPrint(y++, "Random events may occur:");
+    centerPrint(y++, "- Shop");
+    centerPrint(y++, "- Mysterious stranger");
+    centerPrint(y++, "- Unexpected encounters");
+    y++;
+
+    centerPrint(y++, "Press ENTER to start your journey...");
+
+    refresh();
+
+    while (true) {
+        int ch = readKeyWithWindowGuard();
+        if (ch == '\n' || ch == KEY_ENTER) break;
+    }
+}
+
+
 // ===== Level Up =====
 void levelUp(Player &p) {
     int y = 0;
@@ -449,6 +483,100 @@ void levelUp(Player &p) {
     }
 }
 
+//Tutorial Catch Princess
+void tutorialMinigame(Player &p) {
+    const int N = 10;
+    char grid[N][N];
+
+    // ===== initialize the map =====
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (i == 0 || j == 0 || i == N-1 || j == N-1)
+                grid[i][j] = '#';
+            else
+                grid[i][j] = '.';
+        }
+    }
+
+    int px = 1, py = 1;
+    int ex = N/2, ey = N/2;
+
+    int steps = 0;
+
+    while (true) {
+        clear();
+
+        int startY = getCenteredStartY(N + 5);
+
+        centerPrint(startY++, "Catch the enemy!");
+        centerPrint(startY++, "It moves every 2 steps...");
+        centerPrint(startY++, "---------------------");
+
+        // ===== draw the map =====
+        for (int i = 0; i < N; i++) {
+            string row;
+            for (int j = 0; j < N; j++) {
+                if (i == px && j == py) row += 'P';
+                else if (i == ex && j == ey) row += 'E';
+                else row += grid[i][j];
+                row += ' ';
+            }
+            centerPrint(startY++, row);
+        }
+
+        centerPrint(startY++, "Move: W/A/S/D");
+        refresh();
+
+        // ===== input =====
+        int key = readKeyWithWindowGuard();
+        char m = normalizeMoveKey(key);
+
+        int nx = px, ny = py;
+        if (m == 'w') nx--;
+        else if (m == 's') nx++;
+        else if (m == 'a') ny--;
+        else if (m == 'd') ny++;
+
+        if (grid[nx][ny] == '#') continue;
+
+        px = nx;
+        py = ny;
+        steps++;
+
+        // ===== 🎯 catch the enemy =====
+        if (px == ex && py == ey) {
+            clear();
+            centerPrint(getCenteredStartY(2), "You caught the enemy!");
+            centerPrint(getCenteredStartY(2)+1, "Victory!");
+            refresh();
+            ncWait();
+            return;
+        }
+
+        // ===== 👾 movement=====
+        if (steps % 2 == 0) {
+            int dx[] = {-1, 1, 0, 0};
+            int dy[] = {0, 0, -1, 1};
+
+            int tries = 0;
+
+            while (tries < 10) {
+                int dir = rand() % 4;
+                int nx_e = ex + dx[dir];
+                int ny_e = ey + dy[dir];
+
+                if (grid[nx_e][ny_e] != '#') {
+                    ex = nx_e;
+                    ey = ny_e;
+                    break;
+                }
+                tries++;
+            }
+        }
+    }
+}
+
+
 // ===== Tutorial =====
 void tutorial(Player &p) {
     clear();
@@ -457,33 +585,50 @@ void tutorial(Player &p) {
     ncWait();
 
     char demoMap[5][5] = {
-        {'P','.','#','.','.'},
-        {'.','#','K','.','.'},
+        {'P','.','#','.','K'},
+        {'.','#','.','.','.'},
         {'.','.','B','#','.'},
         {'#','.','#','.','.'},
         {'.','.','#','.','G'}
     };
 
     bool hasKey = false;
-    int x=0, y_pos=0;
+    int x = 0, y_pos = 0;
+    int step = 0;
 
     while (true) {
         clear();
+
         int y = 0;
-        int mapWidth = 10;
-        int blockHeight = 10;
-        int startY = getCenteredStartY(blockHeight + 3);
-        [[maybe_unused]] int maxY;
-        int maxX;
+        int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
-        int startX = max(0, (maxX - mapWidth) / 2);
-        
-        // Print map
-        centerPrint(startY + y++, "Tutorial Map:");
-        for (int i=0;i<5;i++) {
+
+        int startY = getCenteredStartY(12);
+        int startX = max(0, (maxX - 10) / 2);
+
+        // ======================
+        // 🎯 STEP HINT SYSTEM
+        // ======================
+        if (step == 0)
+            centerPrint(startY + y++, "Step 1: Move with W/A/S/D");
+
+        else if (step == 1)
+            centerPrint(startY + y++, "Step 2: Go fight enemy (B)");
+
+        else if (step == 2)
+            centerPrint(startY + y++, "Step 3: Go get the key (K)");
+
+        else if (step == 3)
+            centerPrint(startY + y++, "Step 4: Reach the exit (G)");
+        centerPrint(startY + y++, "--------------------------");
+
+        // ======================
+        // MAP
+        // ======================
+        for (int i = 0; i < 5; i++) {
             string row;
-            for (int j=0;j<5;j++) {
-                if (i==x && j==y_pos) row += 'P';
+            for (int j = 0; j < 5; j++) {
+                if (i == x && j == y_pos) row += 'P';
                 else row += demoMap[i][j];
                 row += ' ';
             }
@@ -491,52 +636,67 @@ void tutorial(Player &p) {
             y++;
         }
 
-        // Show stats
+        // ======================
+        // STATS
+        // ======================
         string stats = "HP=" + to_string(p.hp) +
                        " ATK=" + to_string(p.atk) +
                        " DEF=" + to_string(p.def) +
                        " GOLD=" + to_string(p.gold) +
                        " EXP=" + to_string(p.exp) +
                        " LV=" + to_string(p.level) +
-                       " KEY=" + (hasKey ? string("Y") : string("N"));
-        centerPrint(startY + y++, stats);
-        
+                       " KEY=" + (hasKey ? "Y" : "N");
 
-        show_ATT(p.hp, 100, "HP", 5, 5);
-        show_ATT(p.atk, 50, "ATK", 7, 5);
-        show_ATT(p.def, 30, "DEF", 9, 5);
-        refresh();  
-        
-        // Input move
-        centerPrint(startY + y++, "Move (W/A/S/D or Arrow Keys):");
+        centerPrint(startY + y++, stats);
+
+        centerPrint(startY + y++, "Move: W/A/S/D | Battle: 1/2/3");
+
         refresh();
-        
+
+        // ======================
+        // INPUT
+        // ======================
         int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
-        if (m == '\0') {
+        if (m == '\0') continue;
+
+        int nx = x, ny = y_pos;
+        if (m == 'w') nx--;
+        else if (m == 's') nx++;
+        else if (m == 'a') ny--;
+        else if (m == 'd') ny++;
+
+        if (nx < 0 || nx >= 5 || ny < 0 || ny >= 5 || demoMap[nx][ny] == '#')
             continue;
+
+        x = nx;
+        y_pos = ny;
+
+        if (step == 0) {
+            step = 1;
         }
 
-        int nx=x, ny=y_pos;
-        if (m=='w') nx--; else if (m=='s') nx++;
-        else if (m=='a') ny--; else if (m=='d') ny++;
-        
-        if (nx<0||nx>=5||ny<0||ny>=5||demoMap[nx][ny]=='#') {
-            continue;
-        }
-
-        x=nx; y_pos=ny;
-
-        if (demoMap[x][y_pos]=='K') {
+        // ======================
+        // KEY
+        // ======================
+        if (demoMap[x][y_pos] == 'K') {
             clear();
-            centerPrint(getCenteredStartY(1), "You found the key!");
+            centerPrint(getCenteredStartY(1), "You found the Key!");
             ncWait();
-            hasKey=true; 
-            demoMap[x][y_pos]='.';
-            refresh();
-            napms(500);
+
+            hasKey = true;
+            demoMap[x][y_pos] = '.';
+            if (step <= 2) step = 3;  
+
+            napms(300);
         }
-        else if (demoMap[x][y_pos]=='B') {
+        
+       // ======================
+        // BATTLE
+        // ======================
+       else if (demoMap[x][y_pos] == 'B') {
+            demoMap[x][y_pos] = '.';
+
             clear();
             centerPrint(getCenteredStartY(1), "monster encountered!");
             refresh();
@@ -567,7 +727,7 @@ void tutorial(Player &p) {
                 if(monsterHP<=0){
                     mvprintw(y++, 0, "monster defeated!");
                     p.gold+=10; 
-                    p.exp+=20; 
+                    p.exp+=20;
                     refresh();
                     napms(500);
                     break;
@@ -597,22 +757,40 @@ void tutorial(Player &p) {
             }
             demoMap[x][y_pos]='.';
         }
-        else if (demoMap[x][y_pos]=='G') {
+
+        // ======================
+        // EXIT
+        // ======================
+        else if (demoMap[x][y_pos] == 'G') {
+
             clear();
-            if (!hasKey) {
-                centerPrint(getCenteredStartY(1), "You have not found the key yet! Cannot rescue princess.");
-                refresh();
-                napms(500);
-                continue;
-            } else {
-                centerPrint(getCenteredStartY(1), "You rescued the princess! Tutorial complete!");
-                refresh();
+
+            if (step < 3 || !hasKey) {
+                centerPrint(getCenteredStartY(1),
+                    "Finish the tutorial steps first!");
                 ncWait();
-                break;
+                continue;
             }
+
+            centerPrint(getCenteredStartY(1),
+                "You found the exit...");
+            refresh();
+            napms(800);
+
+            // 🎮 进入小游戏
+            tutorialMinigame(p);
+
+            // 🎯 完成
+            centerPrint(getCenteredStartY(1),
+                "Tutorial Complete!");
+            refresh();
+            ncWait();
+
+            break;
         }
     }
-}
+}    
+
 
 // ===== Battle System =====
 void fight(Player &p, int monsterMin, int monsterMax) {
@@ -1112,8 +1290,7 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
         p.hp += 10;
     }
     else {
-        clear();
-        centerPrint(getCenteredStartY(1), "Quiet area. Nothing happens.");
+        return;
     }
     refresh();
     ncWait();
@@ -1187,6 +1364,7 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
 
     px = nx; py = ny;
     discovered[px][py] = true;
+    visited[px][py] = true;
 
     if (grid[px][py] == 'K') { 
         clear();
