@@ -967,12 +967,12 @@ bool typeParagraph(const vector<string>& paragraph, int startY, int delay_ms, bo
 
 void showIntro() {
     vector<vector<string>> pages = {
-        {"A hundred years ago, in the Mushroom Kingdom...", "", "Oh wait—speaking of the Mushroom Kingdom a hundred years ago,", "", "did you know there was an incredibly delicious fruit in the forests?"},
+        {"A hundred years ago, in the Mushroom Kingdom...", "", "Oh wait, speaking of the Mushroom Kingdom a hundred years ago,", "", "did you know there was an incredibly delicious fruit in the forests?"},
         {"Judging by your young face, I'm guessing you've never heard of it.", "", "Let me think... it was sweet, succulent, and absolutely divine...", "", "Its flavor was like a perfect marriage between mangosteen and grapes...", "", "Speaking of grapes, do you know that Toad botanist in the east?"},
         {"His grapes are always as shiny as tiny jewels. We love his raisins,", "", "especially when they're baked into Princess Peach's signature bread...", "", "We love it so much that every fresh batch gets snatched up in no time..."},
         {"...", "", "Wait."},
         {"And you actually listened to me ramble through all of that?", "", "No Toad has ever had that kind of patience! ^-^", "", "(You received a special raisin bread! Attack power +5!)"},
-        {"Listen, Mario—Princess Peach is in grave danger!", "", "That despicable Bowser captured Toadsworth to threaten her.", "", "Peach had her magic sealed, and now she's trapped", "", "in the deepest room of Bowser's castle!!", "", "(You received a Super Mushroom! Attack power +10!)", "", "GO SAVE THE PRINCESS! SAVE THE WORLD!!!"}
+        {"Listen Mario, Princess Peach is in grave danger!", "", "That despicable Bowser captured Toadsworth to threaten her.", "", "Peach had her magic sealed, and now she's trapped", "", "in the deepest room of Bowser's castle!!", "", "(You received a Super Mushroom! Attack power +10!)", "", "GO SAVE THE PRINCESS! SAVE THE WORLD!!!"}
     };
 
     bool skipped = false;
