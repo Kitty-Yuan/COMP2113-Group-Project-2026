@@ -716,7 +716,31 @@ void tutorial(Player &p) {
                 int playerAttack=0;
                int defendSuccess=0;
                 if (choice=='1') playerAttack=rand()%p.atk+1;
-                else if (choice=='2' && rand()%100<60) playerAttack=(int)(p.atk*(130+rand()%40)/100.0);
+                else if (choice=='2') {
+                    if (p.hp <= 3) {
+                        clear();
+                        centerPrint(getCenteredStartY(1), "Not enough HP! (need at least 3 HP)");
+                        refresh();
+                        ncWait();
+                        continue;
+                    }
+                    clear();
+                    centerPrint(getCenteredStartY(1), "This will cost 3 HP. Continue? (Y/N)");
+                    refresh();
+                    int confirm = readKeyWithWindowGuard();
+                    if (confirm != 'Y' && confirm != 'y') {
+                        continue;
+                    }
+                    p.hp -= 3;
+                    if (rand() % 100 < 75) {
+                        double mult = 1.3 + (rand() % 40) / 100.0;
+                        playerAttack = (int)(p.atk * mult);
+                        if (playerAttack < 1) playerAttack = 1;
+                    } else {
+                        playerAttack = 0;
+                    }
+                } 
+                    
                 else if (choice=='3') defendSuccess=(rand()%100<40)?1:0;
                 
                 monsterHP-=playerAttack;
@@ -950,7 +974,39 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         }
         
         if (choice == '1') playerAttack = rand() % atkBuff + 1;
-        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(atkBuff * (130 + rand() % 40) / 100.0);
+        else if (choice == '2') {
+            if (p.hp <= 3) {
+                clear();
+                // Display player stats and monster status (consistent with original battle UI)
+                PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                // Display monster appearance etc. (omitted, keep consistent with original code)
+                centerPrint(getCenteredStartY(3), "Not enough HP! (need at least 3 HP)");
+                refresh();
+                ncWait();
+                continue; // Return to battle menu
+            }
+            // Ask for confirmation
+            clear();
+            displayPlayerStats(statsPanel);
+            // Redraw monster UI (omitted, keep original style)
+            centerPrint(getCenteredStartY(2), "This will cost 3 HP. Continue? (Y/N)");
+            refresh();
+            int confirm = readKeyWithWindowGuard();
+            if (confirm != 'Y' && confirm != 'y') {
+                continue; // Cancel, return to battle menu
+            }
+            // Deduct HP
+            p.hp -= 3;
+            // Attack determination
+            if (rand() % 100 < 75) {
+                double mult = 1.3 + (rand() % 40) / 100.0; // 1.30 ~ 1.69
+                playerAttack = (int)(atkBuff * mult);
+                if (playerAttack < 1) playerAttack = 1;
+            } else {
+                playerAttack = 0;
+            }
+        }        
         else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
         monsterHP -= playerAttack;
@@ -1091,8 +1147,33 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         int playerAttack = 0;
         int defendSuccess = 0;
         if (choice == '1') playerAttack = rand() % p.atk + 1;
-        else if (choice == '2' && rand() % 100 < 60) playerAttack = (int)(p.atk * (130 + rand() % 40) / 100.0);
-        else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
+        else if (choice == '2') {
+            if (p.hp <= 3) {
+                clear();
+                PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+                displayPlayerStats(statsPanel);
+                centerPrint(getCenteredStartY(3), "Not enough HP! (need at least 3 HP)");
+                refresh();
+                ncWait();
+                continue;
+            }
+            clear();
+            displayPlayerStats(statsPanel);
+            centerPrint(getCenteredStartY(2), "This will cost 3 HP. Continue? (Y/N)");
+            refresh();
+            int confirm = readKeyWithWindowGuard();
+            if (confirm != 'Y' && confirm != 'y') {
+                continue;
+            }
+            p.hp -= 3;
+            if (rand() % 100 < 75) {
+                double mult = 1.3 + (rand() % 40) / 100.0;
+                playerAttack = (int)(p.atk * mult); // Boss战没有debuff，直接用p.atk
+                if (playerAttack < 1) playerAttack = 1;
+            } else {
+                playerAttack = 0;
+            }
+        }        else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
         bossHP -= playerAttack;
         
