@@ -854,7 +854,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         int monsterStartY = max(5, (maxY - 12) / 2);  // Center vertically
         
         // Display monster name and appearance at center
-        mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+        //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
         
         // Special display for Ghost with red form
         string currentAppearance = m.appearance1;
@@ -900,7 +900,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             displayPlayerStats(statsPanel);
             
             // Display monster appearance in center
-            mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+            //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
             if (ghostRedForm && m.name == "Ghost") {
                 attron(COLOR_PAIR(2) | A_BOLD);
             }
@@ -1024,7 +1024,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         displayPlayerStats(statsPanel);
         
         // Display monster appearance in center
-        mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+        //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
         istringstream iss3(m.appearance1);
         while (getline(iss3, line) && lineY < maxY - 5) {
             mvprintw(lineY++, monsterX, "%s", line.c_str());
