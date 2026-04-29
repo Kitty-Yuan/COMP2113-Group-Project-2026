@@ -1350,6 +1350,33 @@ bool authenticateUser(string &username) {
     return false;
 }
 
+void drawMushroom(int startY, int startX, int colorPair, char pattern) {
+    vector<string> mushroom = {
+        "   ___.........___   ",
+        " .\"               \". ",
+        ":     P       P     : ", 
+        ":  P      P       P  : ",
+        " `.._______________..' ",
+        "     :         :       ",
+        "     `.........'       "
+    };
+    for (int i = 0; i < (int)mushroom.size(); i++) {
+        string line = mushroom[i];
+        if (i < 5) attron(COLOR_PAIR(colorPair) | A_BOLD);
+        else attron(COLOR_PAIR(1)); 
+        for (int j = 0; j < (int)line.length(); j++) {
+            if (line[j] == 'P') {
+                mvaddch(startY + i, startX + j, pattern);
+            } else {
+                mvaddch(startY + i, startX + j, line[j]);
+            }
+        }
+
+        attroff(COLOR_PAIR(colorPair) | A_BOLD);
+        attroff(COLOR_PAIR(1));
+    }
+}
+
 void fireEffect(int startX, int startY, int duration) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);

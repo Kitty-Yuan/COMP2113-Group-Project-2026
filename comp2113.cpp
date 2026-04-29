@@ -1363,18 +1363,48 @@ void shop(Player &p) {
 // ===== Event System =====
 void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
-    if (r < 40) fight(p, monsterMin, monsterMax);       // Monster 40%
+    
+    if (r < 40) {
+        fight(p, monsterMin, monsterMax);
+    } 
     else if (r < 60) {
         shop(p);
-    }
+    } 
     else if (r < 75) {
         clear();
-        centerPrint(getCenteredStartY(1), "You met an old man. He heals you +10HP.");
-        p.hp += 10;
+        int mushroomRoll = rand() % 100;
+        int startY = getCenteredStartY(7);
+        int startX = getCenteredX(" :     P       P     : "); 
+
+        if (mushroomRoll < 40) {
+            // Normal Mushroom: White, HP +15
+            drawMushroom(startY, startX, 1, '-');
+            centerPrint(startY + 8, "You found a Normal Mushroom! HP +15.");
+            p.hp += 15;
+        } 
+        else if (mushroomRoll < 50) {
+            // Herbal Mushroom: Green, HP +40
+            drawMushroom(startY, startX, 4, 'O');
+            centerPrint(startY + 8, "You found a Herbal Mushroom! HP +40.");
+            p.hp += 40;
+        } 
+        else if (mushroomRoll < 75) {
+            // Attack Mushroom: Red, ATK +3
+            drawMushroom(startY, startX, 3, 'X');
+            centerPrint(startY + 8, "You found an Attack Mushroom! ATK +3.");
+            p.atk += 3;
+        } 
+        else {
+            // Defense Mushroom: Blue, DEF +2
+            drawMushroom(startY, startX, 5, 'U');
+            centerPrint(startY + 8, "You found a Defense Mushroom! DEF +2.");
+            p.def += 2;
+        }
     }
     else {
         return;
     }
+
     refresh();
     ncWait();
 }
@@ -1516,6 +1546,7 @@ int main() {
     init_pair(2, COLOR_YELLOW, COLOR_BLACK);
     init_pair(3, COLOR_RED,    COLOR_BLACK);
     init_pair(4, COLOR_GREEN,  COLOR_BLACK);
+    init_pair(5, COLOR_BLUE,   COLOR_BLACK);
     enforceWindowSizeGate();
 
     srand(time(0));
