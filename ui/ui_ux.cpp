@@ -885,11 +885,11 @@ const vector<string> PRINCESS_UI = {
     " Y⢸Y⢻W⣇W⠘  W⠃W⣸Y⡟Y⡇",
     "Y⢤Y⠜Y⠘W⣚W⣒W⡤W⢤W⣒W⣓Y⠃Y⠣Y⡤",
     "Y⢠Y⠃Y⣞Y⡀R⡏R⣬R⣡R⢹Y⢀Y⣳Y⠘Y⡅",
-    "Y⠈W⢢W⠋W⣱R⠷R⣈R⣁R⠾W⣎W⠙W⡔⠁",
+    "Y⠈W⢢W⠋W⣱R⠷R⣈R⣁R⠾W⣎W⠙W⡔W⠁",
     "W⡖W⣁W⠞W⠁R⢀R⠜R⠣R⡀W⠈W⠳W⣈W⢲",
-    "W⠉W⡽R⠒R⠊R⠁    R⠈R⠑R⠒W⢫W⠉",
-    "R⣰R⠁          R⠈R⢇",
-    "R⢀R⠇           R⠸R⡀",
+    "W⠉W⡽R⠒R⠊R⠁  R⠈R⠑R⠒W⢫W⠉",
+    "R⣰R⠁        R⠈R⢇",
+    "R⢀R⠇         R⠸R⡀",
     "R⠘R⠢R⠤R⠤R⠤R⢄R⣀R⣀R⡀R⠤R⠤R⠤R⠔R⠃"
 };
 
