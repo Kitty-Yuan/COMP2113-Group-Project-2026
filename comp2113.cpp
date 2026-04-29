@@ -1340,140 +1340,95 @@ void bossFight(Player &p, int bossMin, int bossMax) {
 
 // ===== Shop System =====
 void shop(Player &p) {
-    clear();
-    
-    // Display player stats panel
-    PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-    displayPlayerStats(statsPanel);
-    
-    int startY = getCenteredStartY(6);
-    centerPrint(startY++, "=== MERCHANT ===");
-    centerPrint(startY++, "Welcome! What would you like to buy?");
-    centerPrint(startY++, "1. Small Potion (Heal 15 HP) - 30 gold");
-    centerPrint(startY++, "2. Large Potion (Heal 40 HP) - 70 gold");
-    centerPrint(startY++, "3. Attack Boost (Permanent +3 ATK) - 50 gold");
-    centerPrint(startY++, "4. Defense Boost (Permanent +2 DEF) - 40 gold");
-    centerPrint(startY++, "5. Leave");
-    refresh();
+    bool shopping = true;
+    while (shopping) {
+        clear();
 
-    while (true) {
+        PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+        displayPlayerStats(statsPanel);
+
+        attron(COLOR_PAIR(2) | A_BOLD); 
+        centerPrint(1, "=== MUSHROOM BOUTIQUE ===");
+        centerPrint(2, "What do you want to buy?");
+        attroff(COLOR_PAIR(2) | A_BOLD);
+
+        int midX = COLS / 2;
+        int leftCol = midX - 25;
+        int rightCol = midX + 5;
+        int row1 = 4;
+        int row2 = 14;
+
+        drawMushroom(row1, leftCol, 1, '-');
+        mvprintw(row1 + 7, leftCol + 1, "1. Normal Mushroom (30G)");
+        mvprintw(row1 + 8, leftCol + 4, "[Heal 15 HP]");
+
+        drawMushroom(row1, rightCol, 4, 'O');
+        mvprintw(row1 + 7, rightCol + 1, "2. Herbal Mushroom (70G)");
+        mvprintw(row1 + 8, rightCol + 4, "[Heal 40 HP]");
+
+        drawMushroom(row2, leftCol, 3, 'X');
+        mvprintw(row2 + 7, leftCol + 1, "3. Attack Mushroom (50G)");
+        mvprintw(row2 + 8, leftCol + 4, "[Perm +3 ATK]");
+
+        drawMushroom(row2, rightCol, 5, 'U');
+        mvprintw(row2 + 7, rightCol + 1, "4. Defense Mushroom (40G)");
+        mvprintw(row2 + 8, rightCol + 4, "[Perm +2 DEF]");
+
+        attron(A_REVERSE);
+        mvprintw(LINES - 2, (COLS - 10) / 2, " 5. Leave ");
+        attroff(A_REVERSE);
+        
+        refresh();
+
         int choice = readKeyWithWindowGuard();
+        string msg = "";
+
+        // Logic: Purchase Handling
         if (choice == '1') {
-            if (p.gold >= 30) {
-                p.gold -= 30;
-                p.hp += 15;
-                clear();
-                
-                // Display updated stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "You bought a Small Potion. +15 HP.");
-                refresh();
-                ncWait();
-                break;
-            } else {
-                clear();
-                
-                // Display stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "Not enough gold!");
-                refresh();
-                ncWait();
-                shop(p);
-                return;
-            }
-        } else if (choice == '2') {
-            if (p.gold >= 70) {
-                p.gold -= 70;
-                p.hp += 40;
-                clear();
-                
-                // Display updated stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "You bought a Large Potion. +40 HP.");
-                refresh();
-                ncWait();
-                break;
-            } else {
-                clear();
-                
-                // Display stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "Not enough gold!");
-                refresh();
-                ncWait();
-                shop(p);
-                return;
-            }
-        } else if (choice == '3') {
-            if (p.gold >= 50) {
-                p.gold -= 50;
-                p.atk += 3;
-                clear();
-                
-                // Display updated stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "You bought an Attack Boost. ATK +3!");
-                refresh();
-                ncWait();
-                break;
-            } else {
-                clear();
-                
-                // Display stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "Not enough gold!");
-                refresh();
-                ncWait();
-                shop(p);
-                return;
-            }
-        } else if (choice == '4') {
-            if (p.gold >= 40) {
-                p.gold -= 40;
-                p.def += 2;
-                clear();
-                
-                // Display updated stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "You bought a Defense Boost. DEF +2!");
-                refresh();
-                ncWait();
-                break;
-            } else {
-                clear();
-                
-                // Display stats
-                statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-                displayPlayerStats(statsPanel);
-                
-                centerPrint(getCenteredStartY(1), "Not enough gold!");
-                refresh();
-                ncWait();
-                shop(p);
-                return;
-            }
-        } else if (choice == '5') {
-            break;
+            if (p.gold >= 30) { 
+                p.gold -= 30; 
+                p.hp = (p.hp + 15 > 100) ? 100 : p.hp + 15; 
+                msg = "Bought Normal Mushroom!"; 
+            } else msg = "Not enough gold!";
+        } 
+        else if (choice == '2') {
+            if (p.gold >= 70) { 
+                p.gold -= 70; 
+                p.hp = (p.hp + 40 > 100) ? 100 : p.hp + 40; 
+                msg = "Bought Herbal Mushroom!"; 
+            } else msg = "Not enough gold!";
+        } 
+        else if (choice == '3') {
+            if (p.gold >= 50) { 
+                p.gold -= 50; 
+                p.atk += 3; 
+                msg = "ATK Increased by 3!"; 
+            } else msg = "Not enough gold!";
+        } 
+        else if (choice == '4') {
+            if (p.gold >= 40) { 
+                p.gold -= 40; 
+                p.def += 2; 
+                msg = "DEF Increased by 2!"; 
+            } else msg = "Not enough gold!";
+        } 
+        else if (choice == '5') {
+            shopping = false;
+        }
+
+        // Logic: Feedback Message
+        if (!msg.empty()) {
+            clear();
+            displayPlayerStats({p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey});
+            attron(COLOR_PAIR(2) | A_BOLD);
+            centerPrint(getCenteredStartY(1), msg.c_str());
+            attroff(COLOR_PAIR(2) | A_BOLD);
+            refresh();
+            ncWait();
         }
     }
     clear();
 }
-
-
 // ===== Event System =====
 void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
