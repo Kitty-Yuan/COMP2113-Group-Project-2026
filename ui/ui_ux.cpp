@@ -980,10 +980,9 @@ void showIntro() {
     for (int p = 0; p < (int)pages.size(); p++) {
         clear();
         
-        // Static UI hints
-        attron(A_DIM);
-        mvprintw(LINES - 1, (COLS - 36) / 2, "[ Space: Next Page | S: Skip Story ]");
-        attroff(A_DIM);
+        attron(COLOR_PAIR(2) | A_BOLD); 
+        mvprintw(LINES - 3, (COLS - 36) / 2, "[ Space: Next Page | S: Skip Story ]");
+        attroff(COLOR_PAIR(2) | A_BOLD);
 
         int startY = (LINES - (int)pages[p].size()) / 2;
         if (typeParagraph(pages[p], startY, 30, true)) { 
@@ -993,7 +992,6 @@ void showIntro() {
 
         if (p == 3) napms(800); 
 
-        // Final page logic: show prompt immediately without clearing
         if (p == (int)pages.size() - 1) {
             attron(A_BOLD | COLOR_PAIR(2));
             mvprintw(LINES - 2, (COLS - 26) / 2, "Press any key to start...");
@@ -1001,10 +999,9 @@ void showIntro() {
             refresh();
             nodelay(stdscr, FALSE);
             getch();
-            return; // Successfully finished
+            return;
         }
 
-        // Wait for page turn
         nodelay(stdscr, FALSE);
         while (true) {
             int ch = getch();
@@ -1013,8 +1010,7 @@ void showIntro() {
         }
         if (skipped) break;
     }
-
-    // --- Outro / Skip Logic ---
+//skip logic
     if (skipped) {
         clear();
         nodelay(stdscr, FALSE);
