@@ -869,113 +869,132 @@ bool showTitle() {
     }
 }   
 
-// Functions help type the paragraph
+#include <iostream>
+#include <vector>
+#include <string>
+#include <ncurses.h>
+#include <locale.h>
+
+using namespace std;
+
+// --- Princess Asset ---
+const vector<string> PRINCESS_UI = {
+    "    Y⡖Y⠞Y⠳Y⢲",
+    "  Y⣠Y⠊Y⠉Y⠉Y⠉Y⠉Y⠑Y⣄",
+    " Y⡖Y⠃Y⢀Y⡼Y⢆Y⡤Y⠧Y⡀Y⠘Y⢲",
+    " Y⢸Y⢻W⣇W⠘  W⠃W⣸Y⡟Y⡇",
+    "Y⢤Y⠜Y⠘W⣚W⣒W⡤W⢤W⣒W⣓Y⠃Y⠣Y⡤",
+    "Y⢠Y⠃Y⣞Y⡀R⡏R⣬R⣡R⢹Y⢀Y⣳Y⠘Y⡅",
+    "Y⠈W⢢W⠋W⣱R⠷R⣈R⣁R⠾W⣎W⠙W⡔⠁",
+    "W⡖W⣁W⠞W⠁R⢀R⠜R⠣R⡀W⠈W⠳W⣈W⢲",
+    "W⠉W⡽R⠒R⠊R⠁    R⠈R⠑R⠒W⢫W⠉",
+    "R⣰R⠁          R⠈R⢇",
+    "R⢀R⠇           R⠸R⡀",
+    "R⠘R⠢R⠤R⠤R⠤R⢄R⣀R⣀R⡀R⠤R⠤R⠤R⠔R⠃"
+};
+
+// --- Rendering Functions ---
+
+void drawPrincess(int startY, int startX) {
+    for (int y = 0; y < (int)PRINCESS_UI.size(); ++y) {
+        const string& line = PRINCESS_UI[y];
+        move(startY + y, startX);
+        int i = 0;
+        while (i < (int)line.length()) {
+            if (line[i] == ' ') {
+                addch(' ');
+                i++;
+                continue;
+            }
+            char colorKey = line[i];
+            i++; 
+            int colorPair = 1; 
+            switch (colorKey) {
+                case 'W': colorPair = 1; break; 
+                case 'Y': colorPair = 2; break; 
+                case 'R': colorPair = 3; break; 
+                default:  colorPair = 1; break;
+            }
+            
+            // Handle UTF-8 Multi-byte characters (Braille)
+            int charLen = 1;
+            unsigned char c = (unsigned char)line[i];
+            if (c >= 0xf0) charLen = 4;
+            else if (c >= 0xe0) charLen = 3;
+            else if (c >= 0xc0) charLen = 2;
+            
+            string actualChar = line.substr(i, charLen);
+            i += charLen;
+            
+            attron(COLOR_PAIR(colorPair));
+            printw("%s", actualChar.c_str());
+            attroff(COLOR_PAIR(colorPair));
+        }
+    }
+}
+
 bool typeParagraph(const vector<string>& paragraph, int startY, int delay_ms, bool canInterrupt) {
+    // Calculate UI positioning for the Princess (Top Right)
+    int princessX = COLS - 30;
+    int princessY = 2;
+
     for (int i = 0; i < (int)paragraph.size(); i++) {
         string text = paragraph[i];
-        if (text.empty()) continue; 
-
         int x = (COLS - (int)text.length()) / 2;
         if (x < 0) x = 0;
 
-        // Highlight HEY! HEY!! in Red if applicable
         bool isHeyHey = (text == "HEY! HEY!!");
-        if (isHeyHey) attron(COLOR_PAIR(1) | A_BOLD);
+        if (isHeyHey) attron(COLOR_PAIR(3) | A_BOLD);
 
         for (int j = 0; j < (int)text.length(); j++) {
+            // Keep the Princess on screen during every frame of typing
+            drawPrincess(princessY, princessX);
+
             mvaddch(startY + i, x + j, text[j]);
             refresh();
 
             if (canInterrupt) {
+                nodelay(stdscr, TRUE);
                 int ch = getch();
                 if (ch == 's' || ch == 'S') return true; 
             }
             napms(delay_ms); 
         }
-
-        if (isHeyHey) attroff(COLOR_PAIR(1) | A_BOLD);
+        if (isHeyHey) attroff(COLOR_PAIR(3) | A_BOLD);
     }
     return false;
 }
+
 void showIntro() {
     vector<vector<string>> pages = {
-        {
-            "A hundred years ago, in the Mushroom Kingdom...",
-            "",
-            "Oh wait—speaking of the Mushroom Kingdom a hundred years ago,",
-            "",
-            "did you know there was an incredibly delicious fruit in the forests?"
-        },
-        {
-            "Judging by your young face, I'm guessing you've never heard of it.",
-            "",
-            "Let me think... it was sweet, succulent, and absolutely divine...",
-            "",
-            "Its flavor was like a perfect marriage between mangosteen and grapes...",
-            "",
-            "Speaking of grapes, do you know that Toad botanist in the east?"
-        },
-        {
-            "His grapes are always as shiny as tiny jewels. We love his raisins,",
-            "",
-            "especially when they're baked into Princess Peach's signature bread...",
-            "",
-            "We love it so much that every fresh batch gets snatched up in no time..."
-        },
-        {
-            "...",
-            "",
-            "Wait."
-        },
-        {
-            "And you actually listened to me ramble through all of that?",
-            "",
-            "No Toad has ever had that kind of patience! ^-^",
-            "",
-            "(You received a special raisin bread! Attack power +5!)"
-        },
-        {
-            "Listen, Mario—Princess Peach is in grave danger!",
-            "",
-            "That despicable Bowser captured Toadsworth to threaten her.",
-            "",
-            "Peach had her magic sealed, and now she's trapped",
-            "",
-            "in the deepest room of Bowser's castle!!",
-            "",
-            "(You received a Super Mushroom! Attack power +10!)",
-            "",
-            "GO SAVE THE PRINCESS! SAVE THE WORLD!!!"
-        }
+        {"A hundred years ago, in the Mushroom Kingdom...", "", "Oh wait—speaking of the Mushroom Kingdom a hundred years ago,", "", "did you know there was an incredibly delicious fruit in the forests?"},
+        {"Judging by your young face, I'm guessing you've never heard of it.", "", "Let me think... it was sweet, succulent, and absolutely divine...", "", "Its flavor was like a perfect marriage between mangosteen and grapes...", "", "Speaking of grapes, do you know that Toad botanist in the east?"},
+        {"His grapes are always as shiny as tiny jewels. We love his raisins,", "", "especially when they're baked into Princess Peach's signature bread...", "", "We love it so much that every fresh batch gets snatched up in no time..."},
+        {"...", "", "Wait."},
+        {"And you actually listened to me ramble through all of that?", "", "No Toad has ever had that kind of patience! ^-^", "", "(You received a special raisin bread! Attack power +5!)"},
+        {"Listen, Mario—Princess Peach is in grave danger!", "", "That despicable Bowser captured Toadsworth to threaten her.", "", "Peach had her magic sealed, and now she's trapped", "", "in the deepest room of Bowser's castle!!", "", "(You received a Super Mushroom! Attack power +10!)", "", "GO SAVE THE PRINCESS! SAVE THE WORLD!!!"}
     };
 
     bool skipped = false;
-    noecho();
-    curs_set(0);
-
-    // --- Part 1: Main Story with Manual Page Turning ---
     for (int p = 0; p < (int)pages.size(); p++) {
         clear();
         
-        // Static hint at the bottom
+        // Static UI hints
         attron(A_DIM);
         mvprintw(LINES - 1, (COLS - 36) / 2, "[ Space: Next Page | S: Skip Story ]");
         attroff(A_DIM);
 
-        nodelay(stdscr, TRUE); // Non-blocking for real-time S detection
         int startY = (LINES - (int)pages[p].size()) / 2;
-        if (startY < 0) startY = 0;
-
-        if (typeParagraph(pages[p], startY, 40, true)) { 
+        if (typeParagraph(pages[p], startY, 30, true)) { 
             skipped = true;
             break;
         }
 
-        if (p == 3) napms(1000); // Dramatic pause for the "Wait." page
+        if (p == 3) napms(800); 
 
-        // Wait for user input to flip page
+        // Wait for page turn
         if (p < (int)pages.size() - 1) {
-            nodelay(stdscr, FALSE); // Blocking mode
+            nodelay(stdscr, FALSE);
             while (true) {
                 int ch = getch();
                 if (ch == 's' || ch == 'S') { skipped = true; break; }
@@ -985,34 +1004,23 @@ void showIntro() {
         }
     }
 
-    // --- Part 2: Skip Logic & Outro ---
-    nodelay(stdscr, FALSE);
+    // --- Outro / Skip Logic ---
     clear();
+    nodelay(stdscr, FALSE);
+    int princessX = COLS - 30;
+    drawPrincess(2, princessX);
 
     if (skipped) {
-        vector<string> skipLines = {
-            "HEY! HEY!!",
-            "",
-            "Zero patience for my masterpiece? Fine... youngsters.",
-            "",
-            "I'll skip the history lesson, but you'll need this.",
-            "",
-            "(You received a Super Mushroom! Attack power +10!)",
-            "",
-            "Now go! Save the Princess! Press any key."
-        };
-        
-        int startY = (LINES - (int)skipLines.size()) / 2;
-        typeParagraph(skipLines, startY, 40, false); // No skipping the skip rant!
-        
+        vector<string> skipLines = {"HEY! HEY!!", "", "Zero patience for my masterpiece? Fine... youngsters.", "", "I'll skip the history lesson, but you'll need this.", "", "(You received a Super Mushroom! Attack power +10!)", "", "Now go! Save the Princess! Press any key."};
+        typeParagraph(skipLines, (LINES - (int)skipLines.size()) / 2, 30, false);
     } else {
         mvprintw(LINES / 2, (COLS - 42) / 2, "You are a true listener. Now, GO SAVE THEM!");
         mvprintw(LINES / 2 + 2, (COLS - 26) / 2, "Press any key to start...");
     }
-
     refresh();
-    getch(); // Final wait for user confirmation
+    getch();
 }
+
 void showHelp() {
     vector<string> lines = {
         "===== HELP =====",
