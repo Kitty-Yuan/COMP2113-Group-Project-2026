@@ -484,7 +484,7 @@ void levelUp(Player &p) {
 }
 
 //Tutorial Catch Princess
-void tutorialMinigame(Player &p) {
+void tutorialMinigame([[maybe_unused]] Player &p) {
     const int N = 10;
     char grid[N][N];
 
@@ -600,7 +600,8 @@ void tutorial(Player &p) {
         clear();
 
         int y = 0;
-        int maxY, maxX;
+        [[maybe_unused]] int maxY;
+        int maxX;
         getmaxyx(stdscr, maxY, maxX);
 
         int startY = getCenteredStartY(12);
@@ -822,45 +823,47 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
         
-        // Display monster appearance on right side
+        // Display monster appearance in center
         int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
-        int monsterX = maxX - 30;
-        if (monsterX > 50) {
-            mvprintw(2, monsterX, "%s", m.name.c_str());
-            
-            // Special display for Ghost with red form
-            string currentAppearance = m.appearance1;
-            if (ghostRedForm && m.name == "Ghost") {
-                attron(COLOR_PAIR(2) | A_BOLD);  // Red color
-            }
-            
-            istringstream iss(currentAppearance);
-            string line;
-            int lineY = 3;
-            while (getline(iss, line) && lineY < maxY - 5) {
-                mvprintw(lineY++, monsterX, "%s", line.c_str());
-            }
-            
-            if (ghostRedForm && m.name == "Ghost") {
-                attroff(COLOR_PAIR(2) | A_BOLD);
-            }
+        int monsterX = (maxX - 20) / 2;  // Center horizontally
+        int monsterStartY = max(5, (maxY - 12) / 2);  // Center vertically
+        
+        // Display monster name and appearance at center
+        mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+        
+        // Special display for Ghost with red form
+        string currentAppearance = m.appearance1;
+        if (ghostRedForm && m.name == "Ghost") {
+            attron(COLOR_PAIR(2) | A_BOLD);  // Red color
         }
         
-        y = 10;
-        mvprintw(y++, 2, "BATTLE - %s HP: %d", m.name.c_str(), monsterHP);
+        istringstream iss(currentAppearance);
+        string line;
+        int lineY = monsterStartY + 1;
+        while (getline(iss, line) && lineY < maxY - 5) {
+            mvprintw(lineY++, monsterX, "%s", line.c_str());
+        }
+        
+        if (ghostRedForm && m.name == "Ghost") {
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        }
+        
+        // Display battle info above monster
+        y = monsterStartY - 3;
+        centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
         if (turnsReduceATK > 0) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            mvprintw(y++, 2, "** Your ATK is reduced 50%% for %d more turn(s) **", turnsReduceATK);
+            centerPrint(y++, "** Your ATK is reduced 50%% for " + to_string(turnsReduceATK) + " more turn(s) **");
             attroff(COLOR_PAIR(2) | A_BOLD);
         } else if (ghostRedForm && m.name == "Ghost") {
             attron(COLOR_PAIR(2) | A_BOLD);
-            mvprintw(y++, 2, "** Your ATK is reduced 80%% this turn **");
+            centerPrint(y++, "** Your ATK is reduced 80%% this turn **");
             attroff(COLOR_PAIR(2) | A_BOLD);
         } else {
             y++;
         }
-        mvprintw(y++, 2, "Choose: 1) Normal  2) Strong  3) Defend");
+        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
         int choice;
@@ -872,14 +875,13 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             // Display player stats panel
             displayPlayerStats(statsPanel);
             
-            // Display monster appearance on right side
-            mvprintw(2, monsterX, "%s", m.name.c_str());
+            // Display monster appearance in center
+            mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
             if (ghostRedForm && m.name == "Ghost") {
                 attron(COLOR_PAIR(2) | A_BOLD);
             }
             istringstream iss(m.appearance1);
-            string line;
-            int lineY = 3;
+            lineY = monsterStartY + 1;
             while (getline(iss, line) && lineY < maxY - 5) {
                 mvprintw(lineY++, monsterX, "%s", line.c_str());
             }
@@ -887,20 +889,21 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 attroff(COLOR_PAIR(2) | A_BOLD);
             }
             
-            y = 10;
-            mvprintw(y++, 2, "BATTLE - %s HP: %d", m.name.c_str(), monsterHP);
+            // Display battle info above monster
+            y = monsterStartY - 3;
+            centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
             if (turnsReduceATK > 0) {
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(y++, 2, "** Your ATK is reduced 50%% for %d more turn(s) **", turnsReduceATK);
+                centerPrint(y++, "** Your ATK is reduced 50%% for " + to_string(turnsReduceATK) + " more turn(s) **");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             } else if (ghostRedForm && m.name == "Ghost") {
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(y++, 2, "** Your ATK is reduced 80%% this turn **");
+                centerPrint(y++, "** Your ATK is reduced 80%% this turn **");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             } else {
                 y++;
             }
-            mvprintw(y++, 2, "Choose: 1) Normal  2) Strong  3) Defend");
+            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
             refresh();
 
             choice = readKeyWithWindowGuard();
@@ -913,13 +916,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 // Display player stats panel
                 displayPlayerStats(statsPanel);
                 
-                // Display monster appearance on right side
-                mvprintw(2, monsterX, "%s", m.name.c_str());
+                // Display monster appearance in center
                 if (ghostRedForm && m.name == "Ghost") {
                     attron(COLOR_PAIR(2) | A_BOLD);
                 }
                 istringstream iss2(m.appearance1);
-                lineY = 3;
+                lineY = monsterStartY + 1;
                 while (getline(iss2, line) && lineY < maxY - 5) {
                     mvprintw(lineY++, monsterX, "%s", line.c_str());
                 }
@@ -927,11 +929,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     attroff(COLOR_PAIR(2) | A_BOLD);
                 }
                 
-                y = 10;
-                mvprintw(y++, 2, "Invalid input!");
-                mvprintw(y++, 2, "Please press 1 / 2 / 3");
-                mvprintw(y++, 2, "1) Normal  2) Strong  3) Defend");
-                mvprintw(y++, 2, "OR click MANUAL for help");
+                // Display error message and battle info above monster
+                y = monsterStartY - 3;
+                centerPrint(y++, "Invalid input!");
+                centerPrint(y++, "Please press 1 / 2 / 3");
+                centerPrint(y++, "1) Normal  2) Strong  3) Defend");
+                centerPrint(y++, "OR click MANUAL for help");
                 refresh();
                 napms(600);
             }
@@ -964,21 +967,20 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
         
-        // Display monster appearance on right side
-        mvprintw(2, monsterX, "%s", m.name.c_str());
+        // Display monster appearance in center
+        mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
         istringstream iss3(m.appearance1);
-        string line;
-        int lineY = 3;
         while (getline(iss3, line) && lineY < maxY - 5) {
             mvprintw(lineY++, monsterX, "%s", line.c_str());
         }
         
-        y = 10;
-        if (playerAttack > 0) mvprintw(y++, 2, "You dealt %d damage!", playerAttack);
-        else if (choice == '1' || choice == '2') mvprintw(y++, 2, "Attack missed!");
+        // Display battle results above monster
+        y = monsterStartY - 3;
+        if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
+        else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
 
         if (monsterHP <= 0) {
-            mvprintw(y++, 2, "monster defeated! +20 Gold, +50 EXP");
+            centerPrint(y++, "monster defeated! +20 Gold, +50 EXP");
             p.gold += 20; p.exp += 50; levelUp(p);
             refresh();
             ncWait();
@@ -1036,9 +1038,9 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 specialMsg = "";
                 turnsReduceATK = 0;  // Clear debuff on successful defend
                 ghostRedForm = false;
-                mvprintw(y++, 2, "Defend successful! Counter attack: %d damage!", counterDmg);
+                centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
                 if (monsterHP <= 0) {
-                    mvprintw(y++, 2, "monster defeated!");
+                    centerPrint(y++, "monster defeated!");
                     p.gold += 20; p.exp += 50; levelUp(p);
                     refresh();
                     ncWait();
@@ -1054,10 +1056,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         // Display special ability messages
         if (!specialMsg.empty()) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            mvprintw(y++, 2, "%s", specialMsg.c_str());
+            centerPrint(y++, specialMsg);
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
-        mvprintw(y++, 2, "%s dealt %d damage!", m.name.c_str(), dmg);
+        centerPrint(y++, m.name + " dealt " + to_string(dmg) + " damage!");
         refresh();
         napms(800);
     }
