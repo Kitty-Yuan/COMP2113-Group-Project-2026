@@ -1501,7 +1501,8 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
 
 // ===== Main =====
 int main() {
-    //初始化 ncurses
+    setlocale(LC_ALL, "");
+    //Initialize ncurses
     initscr();
     clear();
     noecho();
