@@ -737,7 +737,9 @@ void drawSpaceContinueHint() {
     int hintY = max(0, maxY - 2);
     move(hintY, 0);
     clrtoeol();
+    attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
     mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+    attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
 }
 
 void ncWait() {
@@ -758,7 +760,9 @@ void ncWait() {
         
         // Print the hint centered
         int hintX = max(0, (maxX - static_cast<int>(hint.size())) / 2);
+        attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         mvprintw(hintY, hintX, "%s", hint.c_str());
+        attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         refresh();
 
         // Read input directly without calling readKeyWithWindowGuard
@@ -830,10 +834,12 @@ bool showTitle() {
         drawSpaceContinueHint();
 
         const string hint = "Press ENTER to start";
+        attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         mvprintw(min(maxY - 4, buttonsTopY + buttonHeight + 1),
                  max(0, (maxX - static_cast<int>(hint.size())) / 2),
                  "%s",
                  hint.c_str());
+        attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
 
         refresh();
 
@@ -1298,7 +1304,9 @@ bool authenticateUser(string &username) {
                 
                 string hint = "Press ENTER to continue...";
                 int hintY = max(0, maxY - 2);
+                attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
                 mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+                attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
                 refresh();
                 ncWait();
                 continue;
@@ -1323,13 +1331,17 @@ bool authenticateUser(string &username) {
             
             string hint = "Press ENTER to continue...";
             int hintY = max(0, maxY - 2);
+            attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
             mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
+            attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
             refresh();
             ncWait();
             return true;
         }
 
+        attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         centerPrint(getCenteredStartY(2) + 1, "Press ENTER to continue...");
+        attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         string hint = "Press ENTER to continue...";
         int hintY = max(0, maxY - 2);
         mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());

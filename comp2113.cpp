@@ -27,11 +27,6 @@ struct Player {
     bool hasKey = false;
 };
 
-enum class DeathAction {
-    Restart,
-    Quit
-};
-
 int px = 0, py = 0;
 int gx, gy;
 int cursorY = 0; // Global cursor for display
@@ -56,33 +51,38 @@ bool isPrimaryMouseClick(const MEVENT &event) {
     return (event.bstate & clickMask) != 0;
 }
 
-DeathAction showDeathScreen() {
+PostDeathAction promptPostDeathAction() {
     while (true) {
         clear();
-
         vector<string> lines = {
-            "You Died 💀",
+            "You died. Game Over.",
             "",
-            "Press ENTER to Restart",
-            "Press Q to Quit"
+            "Click HOME to return to title screen.",
+            "Click QUIT to quit the program."
         };
-
-        int startY = getCenteredStartY(lines.size());
-
-        for (int i = 0; i < (int)lines.size(); i++) {
+        int startY = getCenteredStartY(static_cast<int>(lines.size()));
+        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
             centerPrint(startY + i, lines[i]);
         }
-
+        showButton();
         refresh();
 
-        int ch = getch();  // ❗不用 mouse 了
-
-        if (ch == '\n' || ch == KEY_ENTER) {
-            return DeathAction::Restart;
+        int ch = readKeyWithWindowGuard();
+        if (ch != KEY_MOUSE) {
+            continue;
         }
 
-        if (ch == 'q' || ch == 'Q') {
-            return DeathAction::Quit;
+        MEVENT event;
+        if (getmouse(&event) != OK || !isPrimaryMouseClick(event)) {
+            continue;
+        }
+
+        TopButtonAction action = getTopButtonActionFromMouse(event);
+        if (action == TopButtonAction::Home) {
+            return PostDeathAction::Home;
+        }
+        if (action == TopButtonAction::Quit) {
+            return PostDeathAction::Quit;
         }
     }
 }
@@ -456,7 +456,9 @@ void introScreen() {
     centerPrint(y++, "- Unexpected encounters");
     y++;
 
+    attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
     centerPrint(y++, "Press ENTER to start your journey...");
+    attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
 
     refresh();
 
@@ -865,7 +867,9 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
     
     // Display wait hint
     string hint = "Press ENTER to continue...";
+    attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
     mvprintw(maxY - 2, (maxX - static_cast<int>(hint.length())) / 2, "%s", hint.c_str());
+    attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
     
     refresh();
     ncWait();
@@ -891,6 +895,9 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     int specialAbilityDuration = 0;    // How many rounds the ability lasts
     int playerAttacksSinceAbility = 0; // Minimum 1 player attack before ability ends
     
+    // Animation frame for monster effects
+    int animationFrame = 0;
+    
     int y = getCenteredStartY(3);
     centerPrint(y++, "You encountered: " + m.name + "!");
     centerPrint(y++, "Monster attack range: " + to_string(monsterMin) + " - " + to_string(monsterMax));
@@ -902,21 +909,32 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     while (monsterHP > 0 && p.hp > 0) {
         clear();
         
+        // Increment animation frame
+        animationFrame++;
+        
         // Display player stats panel
         PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
         
-        // Display monster appearance in center
+        // Display monster appearance in center with animation
         int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
         int monsterX = (maxX - 20) / 2;  // Center horizontally
         int monsterStartY = max(5, (maxY - 12) / 2);  // Center vertically
         
-        // Display monster name and appearance at center
-        //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+        // Calculate animation effects: swaying motion
+        int xOffset = 0;
+        if (animationFrame % 20 < 5) xOffset = -1;      // Sway left
+        else if (animationFrame % 20 < 10) xOffset = 0; // Center
+        else if (animationFrame % 20 < 15) xOffset = 1; // Sway right
+        else xOffset = 0;                                // Back to center
         
-        // Special display for Ghost with red form
+        int displayMonsterX = monsterX + xOffset;
+        
+        // Eye blinking effect: every 10 frames, eyes close (use appearance2 if available)
         string currentAppearance = m.appearance1;
+        bool isBlinking = (animationFrame % 10 >= 8); // Last 2 frames of each 10-frame cycle
+        
         if (ghostRedForm && m.name == "Ghost") {
             attron(COLOR_PAIR(2) | A_BOLD);  // Red color
         }
@@ -925,7 +943,15 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         string line;
         int lineY = monsterStartY + 1;
         while (getline(iss, line) && lineY < maxY - 5) {
-            mvprintw(lineY++, monsterX, "%s", line.c_str());
+            // Apply blinking effect by replacing 'o' or 'O' with '-' when blinking
+            if (isBlinking) {
+                for (size_t i = 0; i < line.length(); i++) {
+                    if (line[i] == 'o' || line[i] == 'O') {
+                        line[i] = '-';
+                    }
+                }
+            }
+            mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
         }
         
         if (ghostRedForm && m.name == "Ghost") {
@@ -946,12 +972,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         } else {
             y++;
         }
+        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         if (specialAbilityTriggered >= 0) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, "** " + m.name + "'s special ability is active! **");
+            centerPrint(y++, "** " + m.name + "'s special ability is active: " + m.specialattack1 + " **");
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
-        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
         refresh();
         
         int choice;
@@ -963,15 +989,31 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             // Display player stats panel
             displayPlayerStats(statsPanel);
             
-            // Display monster appearance in center
-            //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+            // Display monster appearance in center with animation
+            // Calculate animation effects
+            int xOffset = 0;
+            if (animationFrame % 20 < 5) xOffset = -1;
+            else if (animationFrame % 20 < 10) xOffset = 0;
+            else if (animationFrame % 20 < 15) xOffset = 1;
+            else xOffset = 0;
+            
+            int displayMonsterX = monsterX + xOffset;
+            bool isBlinking = (animationFrame % 10 >= 8);
+            
             if (ghostRedForm && m.name == "Ghost") {
                 attron(COLOR_PAIR(2) | A_BOLD);
             }
             istringstream iss(m.appearance1);
             lineY = monsterStartY + 1;
             while (getline(iss, line) && lineY < maxY - 5) {
-                mvprintw(lineY++, monsterX, "%s", line.c_str());
+                if (isBlinking) {
+                    for (size_t i = 0; i < line.length(); i++) {
+                        if (line[i] == 'o' || line[i] == 'O') {
+                            line[i] = '-';
+                        }
+                    }
+                }
+                mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
             }
             if (ghostRedForm && m.name == "Ghost") {
                 attroff(COLOR_PAIR(2) | A_BOLD);
@@ -991,15 +1033,16 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             } else {
                 y++;
             }
+            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
             if (specialAbilityTriggered >= 0) {
                 attron(COLOR_PAIR(2) | A_BOLD);
                 centerPrint(y++, "** " + m.name + "'s special ability is active! **");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             }
-            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
             refresh();
 
             choice = readKeyWithWindowGuard();
+            animationFrame++; // Increment for animation
 
             if (choice == '1' || choice == '2' || choice == '3') {
                 valid = true;
@@ -1012,14 +1055,31 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     // Display player stats panel
                     displayPlayerStats(statsPanel);
                     
-                    // Display monster appearance in center
+                    // Display monster appearance in center with animation
+                    // Calculate animation effects
+                    int xOffset = 0;
+                    if (animationFrame % 20 < 5) xOffset = -1;
+                    else if (animationFrame % 20 < 10) xOffset = 0;
+                    else if (animationFrame % 20 < 15) xOffset = 1;
+                    else xOffset = 0;
+                    
+                    int displayMonsterX = monsterX + xOffset;
+                    bool isBlinking = (animationFrame % 10 >= 8);
+                    
                     if (ghostRedForm && m.name == "Ghost") {
                         attron(COLOR_PAIR(2) | A_BOLD);
                     }
                     istringstream iss2(m.appearance1);
                     lineY = monsterStartY + 1;
                     while (getline(iss2, line) && lineY < maxY - 5) {
-                        mvprintw(lineY++, monsterX, "%s", line.c_str());
+                        if (isBlinking) {
+                            for (size_t i = 0; i < line.length(); i++) {
+                                if (line[i] == 'o' || line[i] == 'O') {
+                                    line[i] = '-';
+                                }
+                            }
+                        }
+                        mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
                     }
                     if (ghostRedForm && m.name == "Ghost") {
                         attroff(COLOR_PAIR(2) | A_BOLD);
@@ -1029,18 +1089,19 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     y = monsterStartY - 3;
                     centerPrint(y++, "Invalid input!");
                     centerPrint(y++, "Please press 1 / 2 / 3");
+                    centerPrint(y++, "1) Normal  2) Strong  3) Defend");
                     if (specialAbilityTriggered >= 0) {
                         attron(COLOR_PAIR(2) | A_BOLD);
-                        centerPrint(y++, "** " + m.name + "'s special ability is active! **");
+                        centerPrint(y++, "** " + m.name + "'s special ability is active: " + m.specialattack1 + " **");
                         attroff(COLOR_PAIR(2) | A_BOLD);
                     }
-                    centerPrint(y++, "1) Normal  2) Strong  3) Defend");
                     
                     showButton();
                     refresh();
                     
                     // Wait for input and handle button clicks or key presses
                     int input = readKeyWithWindowGuard();
+                    animationFrame++; // Increment for animation
                     
                     if (input == KEY_MOUSE) {
                         MEVENT event;
@@ -1160,11 +1221,27 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
         
-        // Display monster appearance in center
-        //mvprintw(monsterStartY, monsterX, "%s", m.name.c_str());
+        // Display monster appearance in center with animation
+        // Recalculate animation effects for current frame
+        int xOffset2 = 0;
+        if (animationFrame % 20 < 5) xOffset2 = -1;
+        else if (animationFrame % 20 < 10) xOffset2 = 0;
+        else if (animationFrame % 20 < 15) xOffset2 = 1;
+        else xOffset2 = 0;
+        
+        int displayMonsterX2 = monsterX + xOffset2;
+        bool isBlinking2 = (animationFrame % 10 >= 8);
+        
         istringstream iss3(m.appearance1);
         while (getline(iss3, line) && lineY < maxY - 5) {
-            mvprintw(lineY++, monsterX, "%s", line.c_str());
+            if (isBlinking2) {
+                for (size_t i = 0; i < line.length(); i++) {
+                    if (line[i] == 'o' || line[i] == 'O') {
+                        line[i] = '-';
+                    }
+                }
+            }
+            mvprintw(lineY++, displayMonsterX2, "%s", line.c_str());
         }
         
         // Display battle results above monster
@@ -1172,10 +1249,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
         
-        // Display active special ability status
+        // Display active special ability status below monster
         if (specialAbilityTriggered >= 0) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, m.name + "'s special ability is active!");
+            centerPrint(lineY++, m.name + "'s special ability is active: " + m.specialattack1);
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
 
@@ -1375,7 +1452,7 @@ void shop(Player &p) {
         mvprintw(row2 + 8, rightCol + 4, "[Perm +2 DEF]");
 
         attron(A_REVERSE);
-        mvprintw(LINES - 6, (COLS - 10) / 2, " 5. Leave ");
+        mvprintw(LINES - 2, (COLS - 10) / 2, " 5. Leave ");
         attroff(A_REVERSE);
         
         refresh();
@@ -1389,7 +1466,6 @@ void shop(Player &p) {
                 p.gold -= 30; 
                 p.hp = (p.hp + 15 > 100) ? 100 : p.hp + 15; 
                 msg = "Bought Normal Mushroom!"; 
-                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '2') {
@@ -1397,7 +1473,6 @@ void shop(Player &p) {
                 p.gold -= 70; 
                 p.hp = (p.hp + 40 > 100) ? 100 : p.hp + 40; 
                 msg = "Bought Herbal Mushroom!"; 
-                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '3') {
@@ -1405,7 +1480,6 @@ void shop(Player &p) {
                 p.gold -= 50; 
                 p.atk += 3; 
                 msg = "ATK Increased by 3!"; 
-                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '4') {
@@ -1413,7 +1487,6 @@ void shop(Player &p) {
                 p.gold -= 40; 
                 p.def += 2; 
                 msg = "DEF Increased by 2!"; 
-                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '5') {
@@ -1437,48 +1510,49 @@ void shop(Player &p) {
 void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
     
-    if (r < 40) {
+    if (r < 25) {
         fight(p, monsterMin, monsterMax);
-        return;
     } 
-    else if (r < 60) {
+    else if (r < 40) {
         shop(p);
-        return;
     } 
-    else if (r < 75) {
+    else if (r < 55) {
         clear();
         int mushroomRoll = rand() % 100;
         int startY = getCenteredStartY(7);
         int startX = getCenteredX(" :     P       P     : "); 
 
         if (mushroomRoll < 40) {
+            // Normal Mushroom: White, HP +15
             drawMushroom(startY, startX, 1, '-');
             centerPrint(startY + 8, "You found a Normal Mushroom! HP +15.");
-            p.hp = (p.hp + 15 > 100) ? 100 : p.hp + 15;
+            p.hp += 15;
         } 
         else if (mushroomRoll < 50) {
+            // Herbal Mushroom: Green, HP +40
             drawMushroom(startY, startX, 4, 'O');
             centerPrint(startY + 8, "You found a Herbal Mushroom! HP +40.");
-            p.hp = (p.hp + 40 > 100) ? 100 : p.hp + 40;
+            p.hp += 40;
         } 
-        else if (mushroomRoll < 75) {
+        else if (mushroomRoll < 60) {
+            // Attack Mushroom: Red, ATK +3
             drawMushroom(startY, startX, 3, 'X');
             centerPrint(startY + 8, "You found an Attack Mushroom! ATK +3.");
             p.atk += 3;
         } 
         else {
+            // Defense Mushroom: Blue, DEF +2
             drawMushroom(startY, startX, 5, 'U');
             centerPrint(startY + 8, "You found a Defense Mushroom! DEF +2.");
             p.def += 2;
         }
-        
-        refresh();
-        ncWait();
-        return;
     }
     else {
         return;
     }
+
+    refresh();
+    ncWait();
 }
 
 // ===== Map Display =====
@@ -1490,45 +1564,79 @@ void displayMap() {
     int termH, termW;
     getmaxyx(stdscr, termH, termW); 
 
-    int mapH = SIZE + 2; 
-    int mapW = SIZE * 2; 
+    // Each cell takes 3 characters wide, 2 rows high (border + content)
+    int cellWidth = 3;
+    int cellHeight = 2;
+    int mapW = SIZE * cellWidth + 1;
+    int mapH = SIZE * cellHeight + 1;
 
-    int startY = (termH - mapH) / 2;
+    int startY = (termH - mapH - 2) / 2;
     int startX = (termW - mapW) / 2;
 
     if (startY < 0) startY = 0;
     if (startX < 0) startX = 0;
 
-    mvprintw(startY, startX, "[MAP]");
-    mvprintw(startY + 1, startX, "=====================");
+    mvprintw(startY, startX, "===== MAP =====");
+    startY += 2;
 
-    int screenY = startY + 2;
-
+    // Draw top border
+    move(startY, startX);
+    for (int j = 0; j < SIZE; j++) {
+        printw("+---");
+    }
+    printw("+");
+    
+    // Draw map grid
     for (int i = 0; i < SIZE; i++) {
-
-        int screenX = startX;
-        move(screenY + i, screenX);
-
+        // Draw left border and content
+        move(startY + 1 + i * cellHeight, startX);
         for (int j = 0; j < SIZE; j++) {
-
-            if (i == px && j == py) {
-                attron(COLOR_PAIR(2) | A_BOLD);
-                printw("P"); 
-                attroff(COLOR_PAIR(2) | A_BOLD);
-                printw(" ");
-                discovered[i][j] = true;
+            char cellChar = ' ';
+            int colorPair = 1;  // default white
+            bool isPlayer = (i == px && j == py);
+            
+            if (isPlayer) {
+                cellChar = 'P';
+                colorPair = 4;  // Green for player
+            } else if (grid[i][j] == '#') {
+                cellChar = '#';
+                colorPair = 3;  // Red for wall
+            } else if (!discovered[i][j]) {
+                cellChar = '?';
+                colorPair = 2;  // Yellow for undiscovered
+            } else {
+                cellChar = '.';
+                colorPair = 1;  // White for empty
             }
-            else if (!discovered[i][j]) {
-                if (grid[i][j] == '#') printw("# ");
-                else printw("? ");
-            }
-            else {
-                printw("%c ", grid[i][j]);
+            
+            // Print cell with color
+            printw("|");
+            if (isPlayer) {
+                attron(COLOR_PAIR(colorPair) | A_BOLD | A_REVERSE);
+                printw(" %c ", cellChar);
+                attroff(COLOR_PAIR(colorPair) | A_BOLD | A_REVERSE);
+            } else {
+                attron(COLOR_PAIR(colorPair) | A_BOLD);
+                printw(" %c ", cellChar);
+                attroff(COLOR_PAIR(colorPair) | A_BOLD);
             }
         }
+        printw("|");
+        
+        // Draw horizontal border between rows
+        move(startY + 2 + i * cellHeight, startX);
+        for (int j = 0; j < SIZE; j++) {
+            printw("+---");
+        }
+        printw("+");
     }
 
-    mvprintw(screenY + SIZE, startX, "=====================");
+    // Draw bottom border (already done in the last iteration, but let's be explicit)
+    move(startY + SIZE * cellHeight, startX);
+    for (int j = 0; j < SIZE; j++) {
+        printw("+---");
+    }
+    printw("+");
 
     refresh();
 }
@@ -1589,7 +1697,7 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
             clear();
             centerPrint(getCenteredStartY(1), "You have not found the key yet! Cannot rescue princess.");
             refresh();
-            napms(500);
+            ncWait();
         } else {
             princessRoomMinigame(p, false);
             grid[px][py] = '.';
@@ -1607,8 +1715,7 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
 // ===== Main =====
 int main() {
     setlocale(LC_ALL, "");
-
-    // Initialize ncurses
+    //Initialize ncurses
     initscr();
     clear();
     noecho();
@@ -1616,30 +1723,24 @@ int main() {
     keypad(stdscr, TRUE);
     mousemask(ALL_MOUSE_EVENTS, nullptr);
     mouseinterval(150);
-    curs_set(0);
-
+    curs_set(0);  // Hide cursor
     start_color();
     init_pair(1, COLOR_WHITE,  COLOR_BLACK);
     init_pair(2, COLOR_YELLOW, COLOR_BLACK);
     init_pair(3, COLOR_RED,    COLOR_BLACK);
     init_pair(4, COLOR_GREEN,  COLOR_BLACK);
     init_pair(5, COLOR_BLUE,   COLOR_BLACK);
-
     enforceWindowSizeGate();
 
     srand(time(0));
-
     Player p;
-
     if (!showTitle()) {
         endwin();
         return 0;
     }
-
     showIntro();
 
-    std::string username;
-
+    string username;
     if (!authenticateUser(username)) {
         clear();
         centerPrint(getCenteredStartY(1), "Authentication failed too many times. Exit.");
@@ -1652,27 +1753,14 @@ int main() {
     int monsterMin, monsterMax, bossMin, bossMax;
     bool loadedFromSave = false;
     user_save_system::SaveData loadedData;
-
-    if (user_save_system::hasSave(username) &&
-        user_save_system::loadProgress(username, loadedData)) {
-
-        loadedFromSave = applySaveData(
-            loadedData,
-            p,
-            monsterMin,
-            monsterMax,
-            bossMin,
-            bossMax
-        );
-
+    if (user_save_system::hasSave(username) && user_save_system::loadProgress(username, loadedData)) {
+        loadedFromSave = applySaveData(loadedData, p, monsterMin, monsterMax, bossMin, bossMax);
         clear();
-
         if (loadedFromSave) {
             centerPrint(getCenteredStartY(1), "Save found. Progress restored.");
         } else {
             centerPrint(getCenteredStartY(1), "Save file is invalid. Starting a new game.");
         }
-
         refresh();
         napms(800);
     }
@@ -1680,7 +1768,6 @@ int main() {
     if (!loadedFromSave) {
 
         chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
-
         clear();
         centerPrint(5, "Press T for Tutorial, any other key to skip");
         refresh();
@@ -1695,19 +1782,16 @@ int main() {
         initializeNewMap();
     }
 
-    user_save_system::saveProgress(
-        username,
-        buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax)
-    );
+    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
 
-    // ================= GAME LOOP =================
     while (true) {
-
         clear();
         cursorY = 0;
-
+        
+        // Display map
         displayMap();
-
+        
+        // Display player stats panel in top-left
         PlayerStats statsPanel = {
             p.hp, 100,
             p.atk,
@@ -1717,84 +1801,80 @@ int main() {
             p.level,
             p.hasKey
         };
-
         displayPlayerStats(statsPanel);
-
+        
         showButton();
+        
         refresh();
 
-        // ================= DEATH =================
-        if (p.hp <= 0) {
-
-            DeathAction action = showDeathScreen();
-
-            if (action == DeathAction::Quit) {
+        if (p.hp <= 0) { 
+            PostDeathAction action = promptPostDeathAction();
+            if (action == PostDeathAction::Quit) {
                 break;
             }
 
-            // restart game
             p = Player();
             px = 0;
             py = 0;
-
+            if (!showTitle()) {
+                break;
+            }
+            showIntro();
             chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
             initializeNewMap();
-
+            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
             continue;
         }
-
-        // ================= WIN CONDITION =================
-        if (px == gx && py == gy && p.hasKey) {
+        if (px == gx && py == gy && p.hasKey) { 
             clear();
             centerPrint(getCenteredStartY(1), "You rescued the princess! Victory!");
             showButton();
             refresh();
             ncWait();
-            break;
+            break; 
         }
-
         if (px == gx && py == gy && !p.hasKey) {
             centerPrint(cursorY++, "You have not found the key yet! Cannot rescue princess.");
         }
 
         centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
-
         showButton();
         refresh();
-
+        
         int key = readKeyWithWindowGuard();
 
-        // ================= MOUSE =================
         if (key == KEY_MOUSE) {
             MEVENT event;
-
             if (getmouse(&event) == OK && isPrimaryMouseClick(event)) {
-
                 TopButtonAction action = getTopButtonActionFromMouse(event);
-
                 if (action == TopButtonAction::Help) {
                     showHelp();
                     continue;
                 }
-
+                if (action == TopButtonAction::Home) {
+                    p = Player();
+                    px = 0;
+                    py = 0;
+                    if (!showTitle()) {
+                        break;
+                    }
+                    showIntro();
+                    chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
+                    initializeNewMap();
+                    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+                    continue;
+                }
                 if (action == TopButtonAction::Quit) {
                     break;
                 }
             }
-
             continue;
         }
 
-        // ================= MOVE =================
         char m = normalizeMoveKey(key);
-
         if (m != '\0') {
             movePlayer(m, p, monsterMin, monsterMax, bossMin, bossMax);
-
-            user_save_system::saveProgress(
-                username,
-                buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax)
-            );
+            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
         }
     }
 
