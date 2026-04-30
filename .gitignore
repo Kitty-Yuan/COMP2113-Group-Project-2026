@@ -35,4 +35,4 @@ Testing/
 user_save_system/data/
 
 # 保留 Makefile
-!Makefile
+Makefile
