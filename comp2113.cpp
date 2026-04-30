@@ -1856,7 +1856,14 @@ int main() {
             centerPrint(cursorY++, "You have not found the key yet! Cannot rescue princess.");
         }
 
-        centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
+        // Display movement instruction at fixed position (bottom of screen, above buttons)
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        attron(COLOR_PAIR(1) | A_BOLD);
+        mvprintw(maxY - 3, 0, "%-*s", maxX, "");  // Clear line
+        mvprintw(maxY - 3, max(0, (maxX - 32) / 2), "Move (W/A/S/D or Arrow Keys):");
+        attroff(COLOR_PAIR(1) | A_BOLD);
+        
         showButton();
         refresh();
         
