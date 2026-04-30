@@ -1575,7 +1575,8 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
 #include <ncurses.h>
 
 void displayMap() {
-    clear();
+    // Don't clear here - let the main loop handle clearing
+    // clear();
 
     int termH, termW;
     getmaxyx(stdscr, termH, termW); 
