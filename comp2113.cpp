@@ -1590,7 +1590,13 @@ void displayMap() {
     if (startY < 0) startY = 0;
     if (startX < 0) startX = 0;
 
-    mvprintw(startY, startX, "===== MAP =====");
+    // Center the MAP title within the map grid (not screen center)
+    // The actual map width is SIZE * 4 + 1 (each "+---" is 4 chars, plus final "+")
+    string mapTitle = "===== MAP =====";
+    int actualMapWidth = SIZE * 4 + 1;
+    int titleX = startX + (actualMapWidth - static_cast<int>(mapTitle.length())) / 2;
+    if (titleX < 0) titleX = 0;
+    mvprintw(startY, titleX, "%s", mapTitle.c_str());
     startY += 2;
 
     // Draw top border

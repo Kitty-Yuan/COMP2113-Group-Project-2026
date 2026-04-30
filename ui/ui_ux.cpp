@@ -1060,9 +1060,9 @@ void displayDifficultyLevel(int difficulty) {
     else if (difficulty == 4) difficultyStr = "HELL";
     else return;  // Invalid difficulty
     
-    // Display difficulty level vertically on the left side with highlight
+    // Display difficulty level vertically on the left side with highlight (below stats panel)
     int startX = 2;  // 2 characters from left edge
-    int startY = 1;  // Start from line 1
+    int startY = 14; // Further below stats panel
     
     attron(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
     
