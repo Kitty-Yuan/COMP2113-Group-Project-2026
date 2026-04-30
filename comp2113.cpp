@@ -1375,7 +1375,7 @@ void shop(Player &p) {
         mvprintw(row2 + 8, rightCol + 4, "[Perm +2 DEF]");
 
         attron(A_REVERSE);
-        mvprintw(LINES - 2, (COLS - 10) / 2, " 5. Leave ");
+        mvprintw(LINES - 6, (COLS - 10) / 2, " 5. Leave ");
         attroff(A_REVERSE);
         
         refresh();
