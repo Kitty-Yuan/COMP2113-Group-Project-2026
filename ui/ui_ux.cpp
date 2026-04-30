@@ -706,8 +706,8 @@ int readKeyWithWindowGuard() {
                 if (event.bstate & clickMask) {
                     TopButtonAction action = getTopButtonActionFromMouse(event);
                     if (action == TopButtonAction::Home) {
-                        timeout(-1);
-                        return KET_HOME_BUTTON;
+                        showHelp();
+                        continue;
                     } else if (action == TopButtonAction::Quit) {
                         endwin();
                         exit(0);

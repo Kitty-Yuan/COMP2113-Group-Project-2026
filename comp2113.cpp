@@ -27,6 +27,11 @@ struct Player {
     bool hasKey = false;
 };
 
+enum class DeathAction {
+    Restart,
+    Quit
+};
+
 int px = 0, py = 0;
 int gx, gy;
 int cursorY = 0; // Global cursor for display
@@ -51,38 +56,33 @@ bool isPrimaryMouseClick(const MEVENT &event) {
     return (event.bstate & clickMask) != 0;
 }
 
-PostDeathAction promptPostDeathAction() {
+DeathAction showDeathScreen() {
     while (true) {
         clear();
+
         vector<string> lines = {
-            "You died. Game Over.",
+            "You Died 💀",
             "",
-            "Click HOME to return to title screen.",
-            "Click QUIT to quit the program."
+            "Press ENTER to Restart",
+            "Press Q to Quit"
         };
-        int startY = getCenteredStartY(static_cast<int>(lines.size()));
-        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
+
+        int startY = getCenteredStartY(lines.size());
+
+        for (int i = 0; i < (int)lines.size(); i++) {
             centerPrint(startY + i, lines[i]);
         }
-        showButton();
+
         refresh();
 
-        int ch = readKeyWithWindowGuard();
-        if (ch != KEY_MOUSE) {
-            continue;
+        int ch = getch();  // ❗不用 mouse 了
+
+        if (ch == '\n' || ch == KEY_ENTER) {
+            return DeathAction::Restart;
         }
 
-        MEVENT event;
-        if (getmouse(&event) != OK || !isPrimaryMouseClick(event)) {
-            continue;
-        }
-
-        TopButtonAction action = getTopButtonActionFromMouse(event);
-        if (action == TopButtonAction::Home) {
-            return PostDeathAction::Home;
-        }
-        if (action == TopButtonAction::Quit) {
-            return PostDeathAction::Quit;
+        if (ch == 'q' || ch == 'Q') {
+            return DeathAction::Quit;
         }
     }
 }
@@ -1607,7 +1607,8 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
 // ===== Main =====
 int main() {
     setlocale(LC_ALL, "");
-    //Initialize ncurses
+
+    // Initialize ncurses
     initscr();
     clear();
     noecho();
@@ -1615,24 +1616,30 @@ int main() {
     keypad(stdscr, TRUE);
     mousemask(ALL_MOUSE_EVENTS, nullptr);
     mouseinterval(150);
-    curs_set(0);  // Hide cursor
+    curs_set(0);
+
     start_color();
     init_pair(1, COLOR_WHITE,  COLOR_BLACK);
     init_pair(2, COLOR_YELLOW, COLOR_BLACK);
     init_pair(3, COLOR_RED,    COLOR_BLACK);
     init_pair(4, COLOR_GREEN,  COLOR_BLACK);
     init_pair(5, COLOR_BLUE,   COLOR_BLACK);
+
     enforceWindowSizeGate();
 
     srand(time(0));
+
     Player p;
+
     if (!showTitle()) {
         endwin();
         return 0;
     }
+
     showIntro();
 
-    string username;
+    std::string username;
+
     if (!authenticateUser(username)) {
         clear();
         centerPrint(getCenteredStartY(1), "Authentication failed too many times. Exit.");
@@ -1645,14 +1652,27 @@ int main() {
     int monsterMin, monsterMax, bossMin, bossMax;
     bool loadedFromSave = false;
     user_save_system::SaveData loadedData;
-    if (user_save_system::hasSave(username) && user_save_system::loadProgress(username, loadedData)) {
-        loadedFromSave = applySaveData(loadedData, p, monsterMin, monsterMax, bossMin, bossMax);
+
+    if (user_save_system::hasSave(username) &&
+        user_save_system::loadProgress(username, loadedData)) {
+
+        loadedFromSave = applySaveData(
+            loadedData,
+            p,
+            monsterMin,
+            monsterMax,
+            bossMin,
+            bossMax
+        );
+
         clear();
+
         if (loadedFromSave) {
             centerPrint(getCenteredStartY(1), "Save found. Progress restored.");
         } else {
             centerPrint(getCenteredStartY(1), "Save file is invalid. Starting a new game.");
         }
+
         refresh();
         napms(800);
     }
@@ -1660,6 +1680,7 @@ int main() {
     if (!loadedFromSave) {
 
         chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
+
         clear();
         centerPrint(5, "Press T for Tutorial, any other key to skip");
         refresh();
@@ -1674,16 +1695,19 @@ int main() {
         initializeNewMap();
     }
 
-    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+    user_save_system::saveProgress(
+        username,
+        buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax)
+    );
 
+    // ================= GAME LOOP =================
     while (true) {
+
         clear();
         cursorY = 0;
-        
-        // Display map
+
         displayMap();
-        
-        // Display player stats panel in top-left
+
         PlayerStats statsPanel = {
             p.hp, 100,
             p.atk,
@@ -1693,80 +1717,84 @@ int main() {
             p.level,
             p.hasKey
         };
+
         displayPlayerStats(statsPanel);
-        
+
         showButton();
-        
         refresh();
 
-        if (p.hp <= 0) { 
-            PostDeathAction action = promptPostDeathAction();
-            if (action == PostDeathAction::Quit) {
+        // ================= DEATH =================
+        if (p.hp <= 0) {
+
+            DeathAction action = showDeathScreen();
+
+            if (action == DeathAction::Quit) {
                 break;
             }
 
+            // restart game
             p = Player();
             px = 0;
             py = 0;
-            if (!showTitle()) {
-                break;
-            }
-            showIntro();
+
             chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
             initializeNewMap();
-            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+
             continue;
         }
-        if (px == gx && py == gy && p.hasKey) { 
+
+        // ================= WIN CONDITION =================
+        if (px == gx && py == gy && p.hasKey) {
             clear();
             centerPrint(getCenteredStartY(1), "You rescued the princess! Victory!");
             showButton();
             refresh();
             ncWait();
-            break; 
+            break;
         }
+
         if (px == gx && py == gy && !p.hasKey) {
             centerPrint(cursorY++, "You have not found the key yet! Cannot rescue princess.");
         }
 
         centerPrint(cursorY++, "Move (W/A/S/D or Arrow Keys):");
+
         showButton();
         refresh();
-        
+
         int key = readKeyWithWindowGuard();
 
+        // ================= MOUSE =================
         if (key == KEY_MOUSE) {
             MEVENT event;
+
             if (getmouse(&event) == OK && isPrimaryMouseClick(event)) {
+
                 TopButtonAction action = getTopButtonActionFromMouse(event);
+
                 if (action == TopButtonAction::Help) {
                     showHelp();
                     continue;
                 }
-                if (action == TopButtonAction::Home) {
-                    p = Player();
-                    px = 0;
-                    py = 0;
-                    if (!showTitle()) {
-                        break;
-                    }
-                    showIntro();
-                    chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
-                    initializeNewMap();
-                    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
-                    continue;
-                }
+
                 if (action == TopButtonAction::Quit) {
                     break;
                 }
             }
+
             continue;
         }
 
+        // ================= MOVE =================
         char m = normalizeMoveKey(key);
+
         if (m != '\0') {
             movePlayer(m, p, monsterMin, monsterMax, bossMin, bossMax);
-            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+
+            user_save_system::saveProgress(
+                username,
+                buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax)
+            );
         }
     }
 
