@@ -1050,7 +1050,7 @@ void showIntro() {
 
 void displayDifficultyLevel(int difficulty) {
     [[maybe_unused]] int maxY;
-    int maxX;
+    [[maybe_unused]] int maxX;
     getmaxyx(stdscr, maxY, maxX);
     
     string difficultyStr;
@@ -1060,12 +1060,17 @@ void displayDifficultyLevel(int difficulty) {
     else if (difficulty == 4) difficultyStr = "HELL";
     else return;  // Invalid difficulty
     
-    string levelDisplay = "[LEVEL: " + difficultyStr + "]";
-    int levelX = maxX - static_cast<int>(levelDisplay.length()) - 2;
-    levelX = max(0, levelX);  // Ensure it doesn't go off-screen
+    // Display difficulty level vertically on the left side with highlight
+    int startX = 2;  // 2 characters from left edge
+    int startY = 1;  // Start from line 1
     
     attron(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
-    mvprintw(0, levelX, "%s", levelDisplay.c_str());
+    
+    // Display each character vertically
+    for (int i = 0; i < static_cast<int>(difficultyStr.length()) && startY + i < maxY; i++) {
+        mvprintw(startY + i, startX, "[%c]", difficultyStr[i]);
+    }
+    
     attroff(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
 }
 
