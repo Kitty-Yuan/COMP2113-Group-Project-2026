@@ -1030,23 +1030,149 @@ void showIntro() {
 }
 
 void showHelp() {
-    vector<string> lines = {
-        "===== HELP =====",
+    // Comprehensive game manual content
+    vector<string> manual = {
+        "╔════════════════════════════════════════════════════════════╗",
+        "║              MAZE KNIGHT - GAME MANUAL                     ║",
+        "╚════════════════════════════════════════════════════════════╝",
         "",
-        "- Movement: Enter w a s d or arrow keys to move.",
-        "- Battle: Choose 1 Normal Attack, 2 Strong Attack, 3 Defend.",
-        "- Merchant: Buy or rob (risk).",
-        "- Chest: May contain gold, potion, or monster.",
-        "- Level up: EXP reaches 100 = auto level up.",
-        "- Victory: Find the key and rescue the princess."
+        "▼ GAME CONTROLS",
+        "─────────────────────────────────────────────────────────────",
+        "  W or ↑        Move Up",
+        "  S or ↓        Move Down",
+        "  A or ←        Move Left",
+        "  D or →        Move Right",
+        "  ESC           Return to Home",
+        "",
+        "▼ GAME SYMBOLS",
+        "─────────────────────────────────────────────────────────────",
+        "  P             You (Player)",
+        "  #             Wall (Cannot pass)",
+        "  .             Empty Safe Space",
+        "  ?             Undiscovered Space (Hidden events may occur)",
+        "  K             Golden Key (Required to win)",
+        "  T             Trap (Deals 15 damage)",
+        "  C             Treasure Chest (Drops gold)",
+        "  B             Boss Enemy (Final battle before princess)",
+        "  G             Goal - Princess (Rescue her to win!)",
+        "",
+        "▼ PLAYER STATS EXPLAINED",
+        "─────────────────────────────────────────────────────────────",
+        "  HP            Health Points - You lose when HP reaches 0",
+        "  ATK           Attack Power - Damage dealt to enemies",
+        "  DEF           Defense - Reduces damage taken from enemies",
+        "  GOLD          Currency - Spend on mushrooms at merchants",
+        "  EXP           Experience - 100 EXP = Level Up!",
+        "  LEVEL         Your power level - Increases all stats",
+        "  KEY           Quest item required to rescue the princess",
+        "",
+        "▼ EVENTS & ENCOUNTERS",
+        "─────────────────────────────────────────────────────────────",
+        "  SAFE PASSAGE  45% chance - Safe space, nothing happens",
+        "  MONSTER       25% chance - Battle a random creature",
+        "  MERCHANT      15% chance - Buy mushrooms or try your luck",
+        "  MUSHROOM      15% chance - Find and collect a mushroom",
+        "",
+        "▼ MONSTERS & CREATURES",
+        "─────────────────────────────────────────────────────────────",
+        "  👻 GHOST      Special: Incorporeal Form (50% ATK reduction)",
+        "      Haunting Presence - Reduces your ATK temporarily",
+        "",
+        "  🌰 CHESTNUT   Special: Spore Burst - AOE damage",
+        "      Fungal Shield - Increases DEF by 30%",
+        "",
+        "  🦉 OWL        Special: Fire Blow (+40% damage)",
+        "      Night Vision - Increased accuracy",
+        "",
+        "  💧 BLOB       Special: Eat Money - Steals your GOLD",
+        "      Split Attack - Multiple hits per turn",
+        "",
+        "▼ BATTLE SYSTEM",
+        "─────────────────────────────────────────────────────────────",
+        "  During combat, choose one of three actions:",
+        "",
+        "  1. NORMAL ATTACK",
+        "     • Deal standard ATK damage to enemy",
+        "     • Always hits",
+        "",
+        "  2. STRONG ATTACK",
+        "     • Costs 3 HP to perform",
+        "     • 75% accuracy, 1.3-1.69x damage multiplier",
+        "     • High risk, high reward",
+        "",
+        "  3. DEFEND",
+        "     • 40% success rate of blocking next attack",
+        "     • Reduces damage by 60% when successful",
+        "     • Gain 5 HP as counter-damage",
+        "",
+        "▼ MUSHROOM TYPES & EFFECTS",
+        "─────────────────────────────────────────────────────────────",
+        "  🍄 NORMAL      HP +15 - Basic healing",
+        "",
+        "  🍄 HERBAL      HP +40 - Powerful restoration",
+        "",
+        "  🍄 ATTACK      ATK +3 - Boost your attack power",
+        "",
+        "  🍄 DEFENSE     DEF +2 - Increase your defense",
+        "",
+        "▼ LEVELING UP",
+        "─────────────────────────────────────────────────────────────",
+        "  When EXP reaches 100:",
+        "  • Level increases by 1",
+        "  • Max HP +20",
+        "  • Attack Power +5",
+        "  • Defense +3",
+        "  • EXP resets to 0 and keeps growing",
+        "",
+        "▼ DIFFICULTY LEVELS",
+        "─────────────────────────────────────────────────────────────",
+        "  EASY           9×9 map, weak enemies (5-10 ATK)",
+        "",
+        "  NORMAL         12×12 map, moderate enemies (8-12 ATK)",
+        "",
+        "  HARD           15×15 map, strong enemies (10-15 ATK)",
+        "",
+        "  HELL           20×20 map, deadly enemies (12-18 ATK)",
+        "",
+        "▼ HOW TO WIN",
+        "─────────────────────────────────────────────────────────────",
+        "  1. Explore the maze and find the Golden Key (K)",
+        "  2. Defeat or avoid the Boss (B) at the end",
+        "  3. Reach the Princess (G)",
+        "  4. Win the chase minigame to rescue her",
+        "",
+        "  Winning = Ultimate victory and glory!",
+        "",
+        "▼ TIPS & STRATEGIES",
+        "─────────────────────────────────────────────────────────────",
+        "  • Visit merchants early to stock mushrooms",
+        "  • Level up before facing strong enemies",
+        "  • Use DEFEND to manage HP in tough battles",
+        "  • Explore carefully - traps can drain HP fast",
+        "  • Keep track of your GOLD for crucial purchases",
+        "  • The KEY is essential - find it before the boss!",
+        "",
+        "▼ SAVE SYSTEM",
+        "─────────────────────────────────────────────────────────────",
+        "  • Game auto-saves after each move",
+        "  • Login required to load your progress",
+        "  • Multiple save slots available",
+        "",
+        "╔════════════════════════════════════════════════════════════╗",
+        "║  Press UP/DOWN arrow keys or SCROLL to see more           ║",
+        "║  Press ESC or click [X] to close this manual               ║",
+        "╚════════════════════════════════════════════════════════════╝"
     };
+
+    int scrollOffset = 0;
     int contentWidth = 0;
-    for (const string &line : lines) {
+    for (const string &line : manual) {
         contentWidth = max(contentWidth, static_cast<int>(line.size()));
     }
 
-    const int popupWidth = max(66, contentWidth + 4);
-    const int popupHeight = static_cast<int>(lines.size()) + 6;
+    const int popupWidth = min(80, contentWidth + 2);
+    const int popupHeight = 25; // Window height in lines
+    const int contentHeight = static_cast<int>(manual.size());
 
     while (true) {
         int maxY, maxX;
@@ -1059,18 +1185,39 @@ void showHelp() {
         mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
         werase(popup);
         box(popup, 0, 0);
-        mvwprintw(popup, 0, 2, " HELP ");
-        mvwprintw(popup, 0, popupWidth - 4, "[X]");
+        
+        mvwprintw(popup, 0, 2, " GAME MANUAL ");
+        mvwprintw(popup, 0, popupWidth - 5, "[X]");
 
-        for (int i = 0; i < static_cast<int>(lines.size()); i++) {
-            mvwprintw(popup, 2 + i, 2, "%s", lines[i].c_str());
+        // Display scrollable content
+        int viewHeight = popupHeight - 4; // Leave room for borders
+        int maxScrollOffset = max(0, contentHeight - viewHeight);
+        scrollOffset = min(scrollOffset, maxScrollOffset);
+
+        for (int i = 0; i < viewHeight && (scrollOffset + i) < contentHeight; i++) {
+            mvwprintw(popup, 1 + i, 1, "%-*s", popupWidth - 2, 
+                     manual[scrollOffset + i].c_str());
         }
 
-        mvwprintw(popup, popupHeight - 2, 2, "Click [X] to close.");
+        // Show scroll indicator
+        if (contentHeight > viewHeight) {
+            float scrollPercent = (float)scrollOffset / maxScrollOffset;
+            int scrollBarPos = (int)(scrollPercent * (viewHeight - 1));
+            mvwprintw(popup, 1 + scrollBarPos, popupWidth - 1, "#");
+            
+            // Scroll hints
+            if (scrollOffset > 0) {
+                mvwprintw(popup, 1, popupWidth - 3, "^");
+            }
+            if (scrollOffset < maxScrollOffset) {
+                mvwprintw(popup, popupHeight - 2, popupWidth - 3, "v");
+            }
+        }
+
         wrefresh(popup);
 
-        const int closeX1 = startX + popupWidth - 4;
-        const int closeX2 = startX + popupWidth - 2;
+        const int closeX1 = startX + popupWidth - 5;
+        const int closeX2 = startX + popupWidth - 3;
         const int closeY = startY;
 
         while (true) {
@@ -1081,12 +1228,32 @@ void showHelp() {
                 refresh();
                 break;
             }
-            if (ch == 27) {
+            if (ch == 27 || ch == 'q' || ch == 'Q') { // ESC or Q to close
                 delwin(popup);
                 touchwin(stdscr);
                 refresh();
                 return;
             }
+            
+            // Handle scrolling
+            if (ch == KEY_UP || ch == 'w' || ch == 'W') {
+                scrollOffset = max(0, scrollOffset - 1);
+                break; // Redraw
+            }
+            if (ch == KEY_DOWN || ch == 's' || ch == 'S') {
+                scrollOffset = min(maxScrollOffset, scrollOffset + 1);
+                break; // Redraw
+            }
+            if (ch == KEY_PPAGE) { // Page Up
+                scrollOffset = max(0, scrollOffset - (viewHeight - 2));
+                break;
+            }
+            if (ch == KEY_NPAGE) { // Page Down
+                scrollOffset = min(maxScrollOffset, scrollOffset + (viewHeight - 2));
+                break;
+            }
+            
+            // Handle mouse click to close
             if (ch != KEY_MOUSE) {
                 continue;
             }
@@ -1102,7 +1269,9 @@ void showHelp() {
                 continue;
             }
 
-            if (event.y >= closeY && event.y <= closeY + 1 && event.x >= closeX1 - 1 && event.x <= closeX2 + 1) {
+            // Close button click
+            if (event.y >= closeY && event.y <= closeY + 1 && 
+                event.x >= closeX1 - 1 && event.x <= closeX2 + 1) {
                 delwin(popup);
                 touchwin(stdscr);
                 refresh();
