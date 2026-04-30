@@ -1029,6 +1029,27 @@ void showIntro() {
     }
 }
 
+void displayDifficultyLevel(int difficulty) {
+    [[maybe_unused]] int maxY;
+    int maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    string difficultyStr;
+    if (difficulty == 1) difficultyStr = "EASY";
+    else if (difficulty == 2) difficultyStr = "NORMAL";
+    else if (difficulty == 3) difficultyStr = "HARD";
+    else if (difficulty == 4) difficultyStr = "HELL";
+    else return;  // Invalid difficulty
+    
+    string levelDisplay = "[LEVEL: " + difficultyStr + "]";
+    int levelX = maxX - static_cast<int>(levelDisplay.length()) - 2;
+    levelX = max(0, levelX);  // Ensure it doesn't go off-screen
+    
+    attron(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+    mvprintw(0, levelX, "%s", levelDisplay.c_str());
+    attroff(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+}
+
 void showHelp() {
     // Comprehensive game manual content
     vector<string> manual = {

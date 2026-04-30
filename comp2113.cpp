@@ -16,6 +16,7 @@ int SIZE;
 char grid[50][50]; 
 bool visited[50][50];
 bool discovered[50][50];
+int currentDifficulty = 0; // 1=Easy, 2=Normal, 3=Hard, 4=Hell
 
 struct Player {
     int hp = 100;
@@ -165,6 +166,13 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monst
     }
 
     discovered[px][py] = true;
+    
+    // Determine and set difficulty level based on SIZE and monster stats
+    if (SIZE == 9) currentDifficulty = 1;      // Easy
+    else if (SIZE == 12) currentDifficulty = 2; // Normal
+    else if (SIZE == 15) currentDifficulty = 3; // Hard
+    else if (SIZE == 20) currentDifficulty = 4; // Hell
+    
     return true;
 }
 
@@ -419,6 +427,8 @@ void chooseDifficulty(int &monsterMin, int &monsterMax, int &bossMin, int &bossM
         }
 
     }
+    
+    currentDifficulty = diff;
     
     if (diff == 1) { SIZE = 9; monsterMin=5; monsterMax=10; bossMin=10; bossMax=15; }
     else if (diff == 2) { SIZE = 12; monsterMin=8; monsterMax=12; bossMin=12; bossMax=18; }
@@ -878,6 +888,7 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
 // ===== Battle System =====
 void fight(Player &p, int monsterMin, int monsterMax) {
     clear();
+    displayDifficultyLevel(currentDifficulty);
     
     // Display player stats panel
     PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
@@ -908,6 +919,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
 
     while (monsterHP > 0 && p.hp > 0) {
         clear();
+        displayDifficultyLevel(currentDifficulty);
         
         // Increment animation frame
         animationFrame++;
@@ -985,6 +997,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
 
         while (!valid) {
             clear();
+            displayDifficultyLevel(currentDifficulty);
             
             // Display player stats panel
             displayPlayerStats(statsPanel);
@@ -1051,6 +1064,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 bool inputResolved = false;
                 while (!inputResolved) {
                     clear();
+                    displayDifficultyLevel(currentDifficulty);
                     
                     // Display player stats panel
                     displayPlayerStats(statsPanel);
@@ -1420,6 +1434,7 @@ void shop(Player &p) {
     bool shopping = true;
     while (shopping) {
         clear();
+        displayDifficultyLevel(currentDifficulty);
 
         PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
@@ -1518,6 +1533,7 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
     } 
     else if (r < 55) {
         clear();
+        displayDifficultyLevel(currentDifficulty);
         int mushroomRoll = rand() % 100;
         int startY = getCenteredStartY(7);
         int startX = getCenteredX(" :     P       P     : "); 
@@ -1787,6 +1803,9 @@ int main() {
     while (true) {
         clear();
         cursorY = 0;
+        
+        // Display difficulty level with highlight at top-right
+        displayDifficultyLevel(currentDifficulty);
         
         // Display map
         displayMap();

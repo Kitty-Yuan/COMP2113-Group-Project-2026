@@ -44,6 +44,8 @@ void ncWait();
 void showIntro();
 void showHelp();
 void showButton();
+void displayDifficultyLevel(int difficulty);  // Display current difficulty at top-right
+extern int currentDifficulty;  // Global difficulty level variable
 TopButtonAction getTopButtonActionFromMouse(const MEVENT &event);
 
 bool isWindowLargeEnough();
