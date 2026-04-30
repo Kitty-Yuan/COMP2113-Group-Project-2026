@@ -1512,7 +1512,10 @@ void displayMap() {
         for (int j = 0; j < SIZE; j++) {
 
             if (i == px && j == py) {
-                printw("P ");
+                attron(COLOR_PAIR(2) | A_BOLD);
+                printw("P"); 
+                attroff(COLOR_PAIR(2) | A_BOLD);
+                printw(" ");
                 discovered[i][j] = true;
             }
             else if (!discovered[i][j]) {
