@@ -602,7 +602,7 @@ int runSideScrollDemo() {
 
     clear();
     mvprintw(10, 20, "Game Over!");
-    mvprintw(12, 20, "Press ENTER to continue...");
+    showEnterToContinueHint();
     refresh();
     getch();
     return 0;
@@ -742,6 +742,28 @@ void drawSpaceContinueHint() {
     attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
 }
 
+void showEnterToContinueHint() {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    // Display at 3 lines from bottom with red highlight
+    int hintY = maxY - 3;
+    if (hintY < 0) hintY = 0;
+    
+    string hint = "Press ENTER to continue...";
+    int hintX = max(0, (maxX - static_cast<int>(hint.length())) / 2);
+    
+    // Clear the line first
+    move(hintY, 0);
+    clrtoeol();
+    
+    // Display with red background and bold
+    attron(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+    mvprintw(hintY, hintX, "%s", hint.c_str());
+    attroff(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+    refresh();
+}
+
 void ncWait() {
     const string hint = "Press ENTER to continue...";
 
@@ -829,9 +851,6 @@ bool showTitle() {
 
         const int manualX = buttonsStartX;
         const int quitX = buttonsStartX + buttonWidth + buttonGap;
-
-
-        drawSpaceContinueHint();
 
         const string hint = "Press ENTER to start";
         attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);

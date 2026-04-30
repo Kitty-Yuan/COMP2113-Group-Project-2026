@@ -875,11 +875,8 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
     mvprintw(msgStartY, (maxX - static_cast<int>(abilityMsg.length())) / 2, "%s", abilityMsg.c_str());
     attroff(COLOR_PAIR(3) | A_BOLD);
     
-    // Display wait hint
-    string hint = "Press ENTER to continue...";
-    attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-    mvprintw(maxY - 2, (maxX - static_cast<int>(hint.length())) / 2, "%s", hint.c_str());
-    attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
+    // Display wait hint using unified function
+    showEnterToContinueHint();
     
     refresh();
     ncWait();

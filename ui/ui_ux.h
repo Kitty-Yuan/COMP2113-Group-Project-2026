@@ -41,6 +41,7 @@ int getCenteredX(const std::string &text);
 int getCenteredStartY(int totalLines);
 void centerPrint(int y, const std::string &text);
 void ncWait();
+void showEnterToContinueHint();  // Display highlighted "Press ENTER to continue" at bottom
 void showIntro();
 void showHelp();
 void showButton();
