@@ -1036,6 +1036,8 @@ void showHelp() {
         "║              MAZE KNIGHT - GAME MANUAL                     ║",
         "╚════════════════════════════════════════════════════════════╝",
         "",
+        "                    [↑↓ Scroll with Arrow Keys ↑↓]",
+        "",
         "▼ GAME CONTROLS",
         "─────────────────────────────────────────────────────────────",
         "  W or ↑        Move Up",
@@ -1186,11 +1188,20 @@ void showHelp() {
         werase(popup);
         box(popup, 0, 0);
         
+        // Define viewHeight early for use in hints
+        int viewHeight = popupHeight - 5; // Leave room for borders and tip
+        
         mvwprintw(popup, 0, 2, " GAME MANUAL ");
         mvwprintw(popup, 0, popupWidth - 5, "[X]");
+        
+        // Show scroll hint at bottom in highlight
+        if (contentHeight > viewHeight) {
+            wattron(popup, COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+            mvwprintw(popup, popupHeight - 2, 2, "TIP: Use UP/DOWN arrows or W/S to scroll");
+            wattroff(popup, COLOR_PAIR(3) | A_BOLD | A_REVERSE);
+        }
 
         // Display scrollable content
-        int viewHeight = popupHeight - 4; // Leave room for borders
         int maxScrollOffset = max(0, contentHeight - viewHeight);
         scrollOffset = min(scrollOffset, maxScrollOffset);
 
