@@ -1389,6 +1389,7 @@ void shop(Player &p) {
                 p.gold -= 30; 
                 p.hp = (p.hp + 15 > 100) ? 100 : p.hp + 15; 
                 msg = "Bought Normal Mushroom!"; 
+                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '2') {
@@ -1396,6 +1397,7 @@ void shop(Player &p) {
                 p.gold -= 70; 
                 p.hp = (p.hp + 40 > 100) ? 100 : p.hp + 40; 
                 msg = "Bought Herbal Mushroom!"; 
+                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '3') {
@@ -1403,6 +1405,7 @@ void shop(Player &p) {
                 p.gold -= 50; 
                 p.atk += 3; 
                 msg = "ATK Increased by 3!"; 
+                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '4') {
@@ -1410,6 +1413,7 @@ void shop(Player &p) {
                 p.gold -= 40; 
                 p.def += 2; 
                 msg = "DEF Increased by 2!"; 
+                shopping = false;
             } else msg = "Not enough gold!";
         } 
         else if (choice == '5') {
