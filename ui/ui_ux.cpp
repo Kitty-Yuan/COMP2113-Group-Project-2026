@@ -12,6 +12,7 @@ Merged from: monsters.cpp, scene.cpp, user_interaction.cpp
 #include <sstream>
 #include <string>
 #include <vector>
+#include <locale.h>
 
 #include "ui_ux.h"
 #include "../user_save_system/user_save_system.h"
@@ -869,13 +870,7 @@ bool showTitle() {
     }
 }   
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <ncurses.h>
-#include <locale.h>
 
-using namespace std;
 
 // --- Princess Asset ---
 const vector<string> PRINCESS_UI = {
@@ -948,9 +943,8 @@ bool typeParagraph(const vector<string>& paragraph, int startY, int delay_ms, bo
         if (isHeyHey) attron(COLOR_PAIR(3) | A_BOLD);
 
         for (int j = 0; j < (int)text.length(); j++) {
-            // Keep the Princess on screen during every frame of typing
             drawPrincess(princessY, princessX);
-
+            if (isHeyHey) attron(COLOR_PAIR(3) | A_BOLD);
             mvaddch(startY + i, x + j, text[j]);
             refresh();
 
