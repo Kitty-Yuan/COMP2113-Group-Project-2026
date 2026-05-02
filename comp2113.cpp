@@ -1590,13 +1590,13 @@ void shop(Player &p) {
 void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
     
-    if (r < 25) {
+    if (r < 20) {
         fight(p, monsterMin, monsterMax);
     } 
-    else if (r < 40) {
+    else if (r < 35) {
         shop(p);
     } 
-    else if (r < 55) {
+    else if (r < 50) {
         clear();
         displayDifficultyLevel(currentDifficulty);
         int mushroomRoll = rand() % 100;
