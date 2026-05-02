@@ -19,11 +19,10 @@ Merged from: monsters.cpp, scene.cpp, user_interaction.cpp
 
 using namespace std;
 
+extern bool returnToDifficultyMenu;
+
 // ===== Scene assets =====
 string tree = R"(
-    /\
-   /**\
-  /****\
  /******\
 /********\
    ||||
@@ -706,8 +705,8 @@ int readKeyWithWindowGuard() {
                 if (event.bstate & clickMask) {
                     TopButtonAction action = getTopButtonActionFromMouse(event);
                     if (action == TopButtonAction::Home) {
-                        showHelp();
-                        continue;
+                        timeout(-1);
+                        return KET_HOME_BUTTON;
                     } else if (action == TopButtonAction::Quit) {
                         endwin();
                         exit(0);
@@ -787,11 +786,12 @@ void ncWait() {
         attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
         refresh();
 
-        // Read input directly without calling readKeyWithWindowGuard
-        // to avoid it clearing the screen or printing extra elements
-        timeout(120);
-        int ch = wgetch(stdscr);
-        timeout(-1);
+        int ch = readKeyWithWindowGuard();
+
+        if (ch == KET_HOME_BUTTON) {
+            returnToDifficultyMenu = true;
+            return;
+        }
         
         // Handle window resize by redrawn the hint
         if (ch == KEY_RESIZE || ch == ERR) {
@@ -1478,7 +1478,8 @@ string promptInputLine(int y,
 bool authenticateUser(string &username) {
     for (int attempt = 0; attempt < 3; ++attempt) {
         clear();
-        int maxY, maxX;
+        [[maybe_unused]] int maxY;
+        int maxX;
         getmaxyx(stdscr, maxY, maxX);
         
         vector<string> tips = {
@@ -1489,14 +1490,15 @@ bool authenticateUser(string &username) {
             ""
         };
         int startY = getCenteredStartY(static_cast<int>(tips.size()) + 4);
-        for (int i = 0; i < static_cast<int>(tips.size()); i++) {
-            centerPrint(startY + i, tips[i]);
-        }
 
         // Input username with validation
         string inputName;
         bool validUsername = false;
         while (!validUsername) {
+            clear();
+            for (int i = 0; i < static_cast<int>(tips.size()); i++) {
+                centerPrint(startY + i, tips[i]);
+            }
             inputName = promptInputLine(
                 startY + static_cast<int>(tips.size()),
                 "Username: ",
@@ -1526,12 +1528,6 @@ bool authenticateUser(string &username) {
                     centerPrint(startY + i, tips[i]);
                 }
                 centerPrint(startY + static_cast<int>(tips.size()) + 2, "Invalid input! Use only letters, digits, _ or -");
-                
-                string hint = "Press ENTER to continue...";
-                int hintY = max(0, maxY - 2);
-                attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-                mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
-                attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
                 refresh();
                 ncWait();
                 continue;
@@ -1553,23 +1549,11 @@ bool authenticateUser(string &username) {
         if (result.authenticated) {
             username = inputName;
             centerPrint(getCenteredStartY(2) + 1, "Authentication success.");
-            
-            string hint = "Press ENTER to continue...";
-            int hintY = max(0, maxY - 2);
-            attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-            mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
-            attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
             refresh();
             ncWait();
             return true;
         }
 
-        attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-        centerPrint(getCenteredStartY(2) + 1, "Press ENTER to continue...");
-        attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-        string hint = "Press ENTER to continue...";
-        int hintY = max(0, maxY - 2);
-        mvprintw(hintY, max(0, (maxX - static_cast<int>(hint.size())) / 2), "%s", hint.c_str());
         refresh();
         ncWait();
     }

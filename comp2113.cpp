@@ -28,10 +28,73 @@ struct Player {
     bool hasKey = false;
 };
 
+user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax);
+bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monsterMin, int &monsterMax, int &bossMin, int &bossMax);
+void initializeNewMap();
+void chooseDifficulty(int &monsterMin, int &monsterMax, int &bossMin, int &bossMax);
+void tutorial(Player &p);
+
 int px = 0, py = 0;
 int gx, gy;
 int cursorY = 0; // Global cursor for display
 int cursorX = 0;
+bool returnToDifficultyMenu = false;
+
+string buildDifficultySaveSlot(const string &username, int difficulty) {
+    return username + "__difficulty_" + to_string(difficulty);
+}
+
+bool startDifficultySession(const string &username,
+                            string &activeSaveSlot,
+                            Player &p,
+                            int &monsterMin,
+                            int &monsterMax,
+                            int &bossMin,
+                            int &bossMax,
+                            bool allowTutorial) {
+    chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
+    activeSaveSlot = buildDifficultySaveSlot(username, currentDifficulty);
+
+    bool loadedFromSave = false;
+    user_save_system::SaveData loadedData;
+    if (user_save_system::hasSave(activeSaveSlot) &&
+        user_save_system::loadProgress(activeSaveSlot, loadedData)) {
+        loadedFromSave = applySaveData(loadedData, p, monsterMin, monsterMax, bossMin, bossMax);
+    }
+
+    clear();
+    if (loadedFromSave) {
+        centerPrint(getCenteredStartY(1), "Save found for this difficulty. Progress restored.");
+        refresh();
+        napms(800);
+    } else {
+        p = Player();
+        px = 0;
+        py = 0;
+
+        centerPrint(getCenteredStartY(1), "No save found for this difficulty. Starting a new game.");
+        refresh();
+        ncWait();
+
+        if (allowTutorial) {
+            clear();
+            centerPrint(getCenteredStartY(1), "Press T for Tutorial, any other key to skip");
+            refresh();
+
+            int ch = readKeyWithWindowGuard();
+            if (ch == 'T' || ch == 't') {
+                Player temp = p;
+                tutorial(temp);
+            }
+        }
+
+        initializeNewMap();
+    }
+
+    returnToDifficultyMenu = false;
+    user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+    return loadedFromSave;
+}
 
 char normalizeMoveKey(int key) {
     if (key == 'w' || key == 'W' || key == KEY_UP) return 'w';
@@ -58,7 +121,7 @@ PostDeathAction promptPostDeathAction() {
         vector<string> lines = {
             "You died. Game Over.",
             "",
-            "Click HOME to return to title screen.",
+            "Click HOME to return to difficulty selection.",
             "Click QUIT to quit the program."
         };
         int startY = getCenteredStartY(static_cast<int>(lines.size()));
@@ -69,6 +132,9 @@ PostDeathAction promptPostDeathAction() {
         refresh();
 
         int ch = readKeyWithWindowGuard();
+        if (ch == KET_HOME_BUTTON) {
+            return PostDeathAction::Home;
+        }
         if (ch != KEY_MOUSE) {
             continue;
         }
@@ -111,11 +177,13 @@ user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int mo
 
     data.gridRows.assign(SIZE, string(SIZE, '.'));
     data.discoveredRows.assign(SIZE, string(SIZE, '0'));
+    data.visitedRows.assign(SIZE, string(SIZE, '0'));
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             data.gridRows[i][j] = grid[i][j];
             data.discoveredRows[i][j] = discovered[i][j] ? '1' : '0';
+            data.visitedRows[i][j] = visited[i][j] ? '1' : '0';
         }
     }
 
@@ -146,18 +214,22 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monst
     p.level = data.level;
     p.hasKey = data.hasKey;
 
-    if (static_cast<int>(data.gridRows.size()) != SIZE || static_cast<int>(data.discoveredRows.size()) != SIZE) {
+    if (static_cast<int>(data.gridRows.size()) != SIZE ||
+        static_cast<int>(data.discoveredRows.size()) != SIZE ||
+        static_cast<int>(data.visitedRows.size()) != SIZE) {
         return false;
     }
 
     for (int i = 0; i < SIZE; i++) {
-        if (static_cast<int>(data.gridRows[i].size()) != SIZE || static_cast<int>(data.discoveredRows[i].size()) != SIZE) {
+        if (static_cast<int>(data.gridRows[i].size()) != SIZE ||
+            static_cast<int>(data.discoveredRows[i].size()) != SIZE ||
+            static_cast<int>(data.visitedRows[i].size()) != SIZE) {
             return false;
         }
         for (int j = 0; j < SIZE; j++) {
             grid[i][j] = data.gridRows[i][j];
             discovered[i][j] = (data.discoveredRows[i][j] == '1');
-            visited[i][j] = false;
+            visited[i][j] = (data.visitedRows[i][j] == '1');
         }
     }
 
@@ -166,6 +238,7 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monst
     }
 
     discovered[px][py] = true;
+    visited[px][py] = true;
     
     // Determine and set difficulty level based on SIZE and monster stats
     if (SIZE == 9) currentDifficulty = 1;      // Easy
@@ -262,7 +335,9 @@ void createPath(int sx, int sy, int ex, int ey) {
     if (found) {
         int x = ex, y = ey;
         while (x != sx || y != sy) {
-            grid[x][y] = '.';
+            if (grid[x][y] == '#') {
+                grid[x][y] = '.';
+            }
             int px = parent_x[x][y];
             int py = parent_y[x][y];
             x = px;
@@ -316,6 +391,7 @@ void initializeNewMap() {
     createPath(px, py, SIZE/2, SIZE/2);  // P -> B
     
     discovered[px][py] = true;
+    visited[px][py] = true;
 }
 
 // =====Catch princess=====
@@ -491,7 +567,7 @@ void levelUp(Player &p) {
         string levelUpMsg = "Level Up! Lv " + to_string(p.level) + " HP+20 ATK+5 DEF+3";
         centerPrint(getCenteredStartY(1), levelUpMsg);
         refresh();
-        napms(1000); // Wait 1 second
+        ncWait();
     }
 }
 
@@ -838,22 +914,22 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
     
     // Draw a decorative border
     attron(COLOR_PAIR(2) | A_BOLD);
-    for (int x = 5; x < maxX - 5; x++) {
-        mvaddch(5, x, '=');
-        mvaddch(maxY - 5, x, '=');
+    for (int x = 8; x < maxX - 8; x++) {
+        mvaddch(8, x, '=');
+        mvaddch(maxY - 8, x, '=');
     }
-    for (int y = 5; y < maxY - 5; y++) {
-        mvaddch(y, 5, '|');
-        mvaddch(y, maxX - 6, '|');
+    for (int y = 8; y < maxY - 8; y++) {
+        mvaddch(y, 8, '|');
+        mvaddch(y, maxX - 9, '|');
     }
-    mvaddch(5, 5, '+');
-    mvaddch(5, maxX - 6, '+');
-    mvaddch(maxY - 5, 5, '+');
-    mvaddch(maxY - 5, maxX - 6, '+');
+    mvaddch(8, 8, '+');
+    mvaddch(8, maxX - 9, '+');
+    mvaddch(maxY - 8, 8, '+');
+    mvaddch(maxY - 8, maxX - 9, '+');
     attroff(COLOR_PAIR(2) | A_BOLD);
     
     // Display monster name in top center
-    int monsterNameY = 7;
+    int monsterNameY = 10;
     int monsterNameX = (maxX - static_cast<int>(m.name.length())) / 2;
     attron(COLOR_PAIR(2) | A_BOLD);
     mvprintw(monsterNameY, monsterNameX, "%s", m.name.c_str());
@@ -875,9 +951,6 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
     mvprintw(msgStartY, (maxX - static_cast<int>(abilityMsg.length())) / 2, "%s", abilityMsg.c_str());
     attroff(COLOR_PAIR(3) | A_BOLD);
     
-    // Display wait hint using unified function
-    showEnterToContinueHint();
-    
     refresh();
     ncWait();
 }
@@ -894,14 +967,8 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     int monsterIndex = rand() % monsters.size();
     Monster m = monsters[monsterIndex];
     
-    // Special ability states
-    int turnsReduceATK = 0;           // Remaining turns with 50% ATK reduction (Ghost attack1)
-    bool ghostRedForm = false;        // Ghost is in red form (attack2)
-    
-    // Special ability trigger mechanism
-    int specialAbilityTriggered = -1; // -1: not active, 0+: ability is active
-    int specialAbilityDuration = 0;    // How many rounds the ability lasts
-    int playerAttacksSinceAbility = 0; // Minimum 1 player attack before ability ends
+    // Special ability state: Ghost ability 2 can reduce player ATK for the next turns.
+    int turnsReduceATK = 0;
     
     // Animation frame for monster effects
     int animationFrame = 0;
@@ -944,10 +1011,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         string currentAppearance = m.appearance1;
         bool isBlinking = (animationFrame % 10 >= 8); // Last 2 frames of each 10-frame cycle
         
-        if (ghostRedForm && m.name == "Ghost") {
-            attron(COLOR_PAIR(2) | A_BOLD);  // Red color
-        }
-        
         istringstream iss(currentAppearance);
         string line;
         int lineY = monsterStartY + 1;
@@ -963,10 +1026,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
         }
         
-        if (ghostRedForm && m.name == "Ghost") {
-            attroff(COLOR_PAIR(2) | A_BOLD);
-        }
-        
         // Display battle info above monster
         y = monsterStartY - 3;
         centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
@@ -974,19 +1033,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             attron(COLOR_PAIR(2) | A_BOLD);
             centerPrint(y++, "** Your ATK is reduced 50% for " + to_string(turnsReduceATK) + " more turn(s) **");
             attroff(COLOR_PAIR(2) | A_BOLD);
-        } else if (ghostRedForm && m.name == "Ghost") {
-            attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, "** Your ATK is reduced 80%% this turn **");
-            attroff(COLOR_PAIR(2) | A_BOLD);
         } else {
             y++;
         }
         centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
-        if (specialAbilityTriggered >= 0) {
-            attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(y++, "** " + m.name + "'s special ability is active: " + m.specialattack1 + " **");
-            attroff(COLOR_PAIR(2) | A_BOLD);
-        }
         refresh();
         
         int choice;
@@ -1010,9 +1060,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             int displayMonsterX = monsterX + xOffset;
             bool isBlinking = (animationFrame % 10 >= 8);
             
-            if (ghostRedForm && m.name == "Ghost") {
-                attron(COLOR_PAIR(2) | A_BOLD);
-            }
             istringstream iss(m.appearance1);
             lineY = monsterStartY + 1;
             while (getline(iss, line) && lineY < maxY - 5) {
@@ -1025,9 +1072,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 }
                 mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
             }
-            if (ghostRedForm && m.name == "Ghost") {
-                attroff(COLOR_PAIR(2) | A_BOLD);
-            }
             
             // Display battle info above monster
             y = monsterStartY - 3;
@@ -1036,23 +1080,19 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 attron(COLOR_PAIR(2) | A_BOLD);
                 centerPrint(y++, "** Your ATK is reduced 50% for " + to_string(turnsReduceATK) + " more turn(s) **");
                 attroff(COLOR_PAIR(2) | A_BOLD);
-            } else if (ghostRedForm && m.name == "Ghost") {
-                attron(COLOR_PAIR(2) | A_BOLD);
-                centerPrint(y++, "** Your ATK is reduced 80%% this turn **");
-                attroff(COLOR_PAIR(2) | A_BOLD);
             } else {
                 y++;
             }
             centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
-            if (specialAbilityTriggered >= 0) {
-                attron(COLOR_PAIR(2) | A_BOLD);
-                centerPrint(y++, "** " + m.name + "'s special ability is active! **");
-                attroff(COLOR_PAIR(2) | A_BOLD);
-            }
             refresh();
 
             choice = readKeyWithWindowGuard();
             animationFrame++; // Increment for animation
+
+            if (choice == KET_HOME_BUTTON) {
+                returnToDifficultyMenu = true;
+                return;
+            }
 
             if (choice == '1' || choice == '2' || choice == '3') {
                 valid = true;
@@ -1077,9 +1117,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     int displayMonsterX = monsterX + xOffset;
                     bool isBlinking = (animationFrame % 10 >= 8);
                     
-                    if (ghostRedForm && m.name == "Ghost") {
-                        attron(COLOR_PAIR(2) | A_BOLD);
-                    }
                     istringstream iss2(m.appearance1);
                     lineY = monsterStartY + 1;
                     while (getline(iss2, line) && lineY < maxY - 5) {
@@ -1092,20 +1129,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                         }
                         mvprintw(lineY++, displayMonsterX, "%s", line.c_str());
                     }
-                    if (ghostRedForm && m.name == "Ghost") {
-                        attroff(COLOR_PAIR(2) | A_BOLD);
-                    }
                     
                     // Display error message and battle info above monster
                     y = monsterStartY - 3;
                     centerPrint(y++, "Invalid input!");
                     centerPrint(y++, "Please press 1 / 2 / 3");
                     centerPrint(y++, "1) Normal  2) Strong  3) Defend");
-                    if (specialAbilityTriggered >= 0) {
-                        attron(COLOR_PAIR(2) | A_BOLD);
-                        centerPrint(y++, "** " + m.name + "'s special ability is active: " + m.specialattack1 + " **");
-                        attroff(COLOR_PAIR(2) | A_BOLD);
-                    }
                     
                     showButton();
                     refresh();
@@ -1113,6 +1142,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     // Wait for input and handle button clicks or key presses
                     int input = readKeyWithWindowGuard();
                     animationFrame++; // Increment for animation
+
+                    if (input == KET_HOME_BUTTON) {
+                        returnToDifficultyMenu = true;
+                        return;
+                    }
                     
                     if (input == KEY_MOUSE) {
                         MEVENT event;
@@ -1149,8 +1183,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         // Apply ATK reduction if active
         if (turnsReduceATK > 0) {
             atkBuff = (int)(p.atk * 0.5);  // 50% reduction
-        } else if (ghostRedForm && m.name == "Ghost") {
-            atkBuff = (int)(p.atk * 0.2);  // 80% reduction -> 20% remains
         }
         
         if (choice == '1') playerAttack = rand() % atkBuff + 1;
@@ -1173,6 +1205,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             centerPrint(getCenteredStartY(2), "This will cost 3 HP. Continue? (Y/N)");
             refresh();
             int confirm = readKeyWithWindowGuard();
+            if (confirm == KET_HOME_BUTTON) {
+                returnToDifficultyMenu = true;
+                return;
+            }
             if (confirm != 'Y' && confirm != 'y') {
                 continue; // Cancel, return to battle menu
             }
@@ -1189,42 +1225,58 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         }        
         else if (choice == '3') defendSuccess = (rand() % 100 < 40) ? 1 : 0;
 
-        monsterHP -= playerAttack;
-        
-        // Clear ATK reduction for this turn after applying
-        ghostRedForm = false;
-        
-        // Count player attacks for ability duration
-        playerAttacksSinceAbility++;
-        
-        // ===== Check for special ability trigger =====
-        if (specialAbilityTriggered < 0 && rand() % 100 < 25) {  // 25% chance to trigger
-            specialAbilityDuration = 2 + rand() % 3;  // Duration: 2-4 rounds
-            playerAttacksSinceAbility = 0;
-            specialAbilityTriggered = 0;  // Mark ability as active
-            
-            // Display special ability effect
-            string abilityMsg;
-            if (m.name == "Ghost") {
-                abilityMsg = "GHOST USES: " + m.specialattack1;
-            } else if (m.name == "chestnut") {
-                abilityMsg = "CHESTNUT USES: " + m.specialattack1;
-            } else if (m.name == "Owl") {
-                abilityMsg = "OWL USES: " + m.specialattack1;
-            } else if (m.name == "Blob") {
-                abilityMsg = "BLOB USES: " + m.specialattack1;
-            }
-            
+        bool abilityTriggeredThisTurn = false;
+        int triggeredAbilityIndex = 0;
+        string triggeredAbilityName;
+        double abilityDamageMultiplier = 1.0;
+
+        // New rule: after player picks an attack (1/2), there is a 40% chance
+        // to trigger special ability 1 or 2 for this turn.
+        if ((choice == '1' || choice == '2') && rand() % 100 < 40) {
+            abilityTriggeredThisTurn = true;
+            triggeredAbilityIndex = (rand() % 2) + 1;
+            triggeredAbilityName = (triggeredAbilityIndex == 1) ? m.specialattack1 : m.specialattack2;
+
+            string abilityMsg = m.name + " USES: " + triggeredAbilityName;
             displaySpecialAbilityEffect(m, abilityMsg);
-        }
-        
-        // Check if ability duration has expired
-        if (specialAbilityTriggered >= 0) {
-            specialAbilityDuration--;
-            if (specialAbilityDuration <= 0 && playerAttacksSinceAbility > 0) {
-                specialAbilityTriggered = -1;  // Ability ends
+
+            // Stack ability effect on this turn's attack flow.
+            if (m.name == "Ghost") {
+                if (triggeredAbilityIndex == 1) {
+                    playerAttack = (int)(playerAttack * 0.5);
+                    abilityDamageMultiplier = 1.35;
+                } else {
+                    turnsReduceATK = max(turnsReduceATK, 2);
+                    abilityDamageMultiplier = 1.25;
+                }
+            } else if (m.name == "chestnut") {
+                if (triggeredAbilityIndex == 1) {
+                    abilityDamageMultiplier = 1.30;
+                } else {
+                    playerAttack = (int)(playerAttack * 0.7);
+                    abilityDamageMultiplier = 1.20;
+                }
+            } else if (m.name == "Owl") {
+                if (triggeredAbilityIndex == 1) {
+                    abilityDamageMultiplier = 1.40;
+                } else {
+                    abilityDamageMultiplier = 1.25;
+                    if (rand() % 100 < 20) {
+                        playerAttack = 0;
+                    }
+                }
+            } else if (m.name == "Blob") {
+                if (triggeredAbilityIndex == 1) {
+                    abilityDamageMultiplier = 1.20;
+                    p.gold = max(0, p.gold - 5);
+                } else {
+                    abilityDamageMultiplier = 1.15;
+                    monsterHP += 5;
+                }
             }
         }
+
+        monsterHP -= playerAttack;
 
         clear();
         
@@ -1260,18 +1312,21 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
         
-        // Display active special ability status below monster
-        if (specialAbilityTriggered >= 0) {
+        if (abilityTriggeredThisTurn) {
             attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(lineY++, m.name + "'s special ability is active: " + m.specialattack1);
+            centerPrint(lineY++, m.name + " triggered: " + triggeredAbilityName);
             attroff(COLOR_PAIR(2) | A_BOLD);
         }
 
         if (monsterHP <= 0) {
+            centerPrint(y++, "monster dealt 0 damage!");
             centerPrint(y++, "monster defeated! +20 Gold, +50 EXP");
-            p.gold += 20; p.exp += 50; levelUp(p);
             refresh();
             ncWait();
+
+            p.gold += 20;
+            p.exp += 50;
+            levelUp(p);
             break;
         }
 
@@ -1281,19 +1336,8 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         }
 
         int dmg = (rand() % (monsterMax - monsterMin + 1)) + monsterMin;
-        
-        // Apply ability effect if active
-        if (specialAbilityTriggered >= 0) {
-            // Different abilities have different effects
-            if (m.name == "Ghost") {
-                dmg = (int)(dmg * 1.5);  // Ghost's ability increases damage
-            } else if (m.name == "chestnut") {
-                dmg = (int)(dmg * 1.3);  // Chestnut's ability increases damage
-            } else if (m.name == "Owl") {
-                dmg = (int)(dmg * 1.4);  // Owl's ability increases damage
-            } else if (m.name == "Blob") {
-                dmg = (int)(dmg * 1.2);  // Blob's ability slightly increases damage
-            }
+        if (abilityTriggeredThisTurn) {
+            dmg = (int)(dmg * abilityDamageMultiplier);
         }
         
         if (choice == '3') {
@@ -1304,10 +1348,14 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                 dmg = 0;
                 centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
                 if (monsterHP <= 0) {
-                    centerPrint(y++, "monster defeated!");
-                    p.gold += 20; p.exp += 50; levelUp(p);
+                    centerPrint(y++, "monster dealt 0 damage!");
+                    centerPrint(y++, "monster defeated! +20 Gold, +50 EXP");
                     refresh();
                     ncWait();
+
+                    p.gold += 20;
+                    p.exp += 50;
+                    levelUp(p);
                     break;
                 }
             } else {
@@ -1347,6 +1395,10 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         refresh();
         
         int choice = readKeyWithWindowGuard();
+        if (choice == KET_HOME_BUTTON) {
+            returnToDifficultyMenu = true;
+            return;
+        }
         
         int playerAttack = 0;
         int defendSuccess = 0;
@@ -1366,6 +1418,10 @@ void bossFight(Player &p, int bossMin, int bossMax) {
             centerPrint(getCenteredStartY(2), "This will cost 3 HP. Continue? (Y/N)");
             refresh();
             int confirm = readKeyWithWindowGuard();
+            if (confirm == KET_HOME_BUTTON) {
+                returnToDifficultyMenu = true;
+                return;
+            }
             if (confirm != 'Y' && confirm != 'y') {
                 continue;
             }
@@ -1392,10 +1448,14 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
 
         if (bossHP <= 0) {
+            centerPrint(y++, "Boss dealt 0 damage!");
             centerPrint(y++, "Boss defeated! +100 Gold, +200 EXP");
-            p.gold += 100; p.exp += 200; levelUp(p);
             refresh();
             ncWait();
+
+            p.gold += 100;
+            p.exp += 200;
+            levelUp(p);
             break;
         }
 
@@ -1408,10 +1468,14 @@ void bossFight(Player &p, int bossMin, int bossMax) {
                 dmg = 0;
                 centerPrint(y++, "Defend successful! Counter attack: " + to_string(counterDmg) + " damage!");
                 if (bossHP <= 0) {
-                    centerPrint(y++, "Boss defeated!");
-                    p.gold += 100; p.exp += 200; levelUp(p);
+                    centerPrint(y++, "Boss dealt 0 damage!");
+                    centerPrint(y++, "Boss defeated! +100 Gold, +200 EXP");
                     refresh();
                     ncWait();
+
+                    p.gold += 100;
+                    p.exp += 200;
+                    levelUp(p);
                     break;
                 }
             } else {
@@ -1464,12 +1528,16 @@ void shop(Player &p) {
         mvprintw(row2 + 8, rightCol + 4, "[Perm +2 DEF]");
 
         attron(A_REVERSE);
-        mvprintw(LINES - 2, (COLS - 10) / 2, " 5. Leave ");
+        mvprintw(LINES - 4, (COLS - 10) / 2, " 5. Leave ");
         attroff(A_REVERSE);
         
         refresh();
 
         int choice = readKeyWithWindowGuard();
+        if (choice == KET_HOME_BUTTON) {
+            returnToDifficultyMenu = true;
+            return;
+        }
         string msg = "";
 
         // Logic: Purchase Handling
@@ -1711,7 +1779,13 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
         napms(500);
         return; 
     }
-    if (grid[px][py] == 'B') { bossFight(p, bossMin, bossMax); grid[px][py] = '.'; return; }
+    if (grid[px][py] == 'B') {
+        bossFight(p, bossMin, bossMax);
+        if (!returnToDifficultyMenu) {
+            grid[px][py] = '.';
+        }
+        return;
+    }
     if (grid[px][py] == 'G') {
         if (!p.hasKey) {
             clear();
@@ -1727,6 +1801,9 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
     if (grid[px][py] == '.') {
         if (firstVisit) {
             event(p, monsterMin, monsterMax, bossMin, bossMax);
+            if (returnToDifficultyMenu) {
+                return;
+            }
         }
     }
             
@@ -1771,38 +1848,8 @@ int main() {
     }
 
     int monsterMin, monsterMax, bossMin, bossMax;
-    bool loadedFromSave = false;
-    user_save_system::SaveData loadedData;
-    if (user_save_system::hasSave(username) && user_save_system::loadProgress(username, loadedData)) {
-        loadedFromSave = applySaveData(loadedData, p, monsterMin, monsterMax, bossMin, bossMax);
-        clear();
-        if (loadedFromSave) {
-            centerPrint(getCenteredStartY(1), "Save found. Progress restored.");
-        } else {
-            centerPrint(getCenteredStartY(1), "Save file is invalid. Starting a new game.");
-        }
-        refresh();
-        napms(800);
-    }
-
-    if (!loadedFromSave) {
-
-        chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
-        clear();
-        centerPrint(5, "Press T for Tutorial, any other key to skip");
-        refresh();
-
-        int ch = getch();
-
-        if (ch == 'T' || ch == 't') {
-            Player temp = p;
-            tutorial(temp);
-        }
-
-        initializeNewMap();
-    }
-
-    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+    string activeSaveSlot;
+    startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true);
 
     while (true) {
         clear();
@@ -1836,16 +1883,7 @@ int main() {
                 break;
             }
 
-            p = Player();
-            px = 0;
-            py = 0;
-            if (!showTitle()) {
-                break;
-            }
-            showIntro();
-            chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
-            initializeNewMap();
-            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
             continue;
         }
         if (px == gx && py == gy && p.hasKey) { 
@@ -1873,6 +1911,12 @@ int main() {
         
         int key = readKeyWithWindowGuard();
 
+        if (key == KET_HOME_BUTTON) {
+            user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+            continue;
+        }
+
         if (key == KEY_MOUSE) {
             MEVENT event;
             if (getmouse(&event) == OK && isPrimaryMouseClick(event)) {
@@ -1882,16 +1926,8 @@ int main() {
                     continue;
                 }
                 if (action == TopButtonAction::Home) {
-                    p = Player();
-                    px = 0;
-                    py = 0;
-                    if (!showTitle()) {
-                        break;
-                    }
-                    showIntro();
-                    chooseDifficulty(monsterMin, monsterMax, bossMin, bossMax);
-                    initializeNewMap();
-                    user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+                    user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+                    startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
                     continue;
                 }
                 if (action == TopButtonAction::Quit) {
@@ -1904,7 +1940,11 @@ int main() {
         char m = normalizeMoveKey(key);
         if (m != '\0') {
             movePlayer(m, p, monsterMin, monsterMax, bossMin, bossMax);
-            user_save_system::saveProgress(username, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+            user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
+            if (returnToDifficultyMenu) {
+                startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+                continue;
+            }
         }
     }
 

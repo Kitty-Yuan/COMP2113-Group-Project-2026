@@ -36,6 +36,7 @@ struct SaveData {
 
     std::vector<std::string> gridRows;
     std::vector<std::string> discoveredRows;
+    std::vector<std::string> visitedRows;
 };
 
 AuthResult loginOrRegister(const std::string& username, const std::string& password);

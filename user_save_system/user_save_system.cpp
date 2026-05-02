@@ -156,7 +156,9 @@ bool saveProgress(const std::string& username, const SaveData& data) {
     if (data.size <= 0 || data.size > kMaxMapSize) {
         return false;
     }
-    if (static_cast<int>(data.gridRows.size()) != data.size || static_cast<int>(data.discoveredRows.size()) != data.size) {
+    if (static_cast<int>(data.gridRows.size()) != data.size ||
+        static_cast<int>(data.discoveredRows.size()) != data.size ||
+        static_cast<int>(data.visitedRows.size()) != data.size) {
         return false;
     }
 
@@ -167,6 +169,9 @@ bool saveProgress(const std::string& username, const SaveData& data) {
         if (static_cast<int>(data.discoveredRows[i].size()) != data.size) {
             return false;
         }
+        if (static_cast<int>(data.visitedRows[i].size()) != data.size) {
+            return false;
+        }
     }
 
     std::ofstream fout(getSavePath(username), std::ios::trunc);
@@ -174,7 +179,7 @@ bool saveProgress(const std::string& username, const SaveData& data) {
         return false;
     }
 
-    fout << "VERSION 1\n";
+    fout << "VERSION 2\n";
     fout << "SIZE " << data.size << "\n";
     fout << "POS " << data.px << ' ' << data.py << "\n";
     fout << "GOAL " << data.gx << ' ' << data.gy << "\n";
@@ -190,6 +195,11 @@ bool saveProgress(const std::string& username, const SaveData& data) {
 
     fout << "DISCOVERED\n";
     for (const std::string& row : data.discoveredRows) {
+        fout << row << "\n";
+    }
+
+    fout << "VISITED\n";
+    for (const std::string& row : data.visitedRows) {
         fout << row << "\n";
     }
 
@@ -211,7 +221,7 @@ bool loadProgress(const std::string& username, SaveData& outData) {
     if (!readExpectedTag(fin, "VERSION")) return false;
     int version = 0;
     fin >> version;
-    if (!fin || version != 1) return false;
+    if (!fin || (version != 1 && version != 2)) return false;
 
     if (!readExpectedTag(fin, "SIZE")) return false;
     fin >> outData.size;
@@ -243,6 +253,7 @@ bool loadProgress(const std::string& username, SaveData& outData) {
 
     outData.gridRows.assign(outData.size, std::string());
     outData.discoveredRows.assign(outData.size, std::string());
+    outData.visitedRows.assign(outData.size, std::string(outData.size, '0'));
 
     std::string line;
     std::getline(fin, line); // consume trailing newline
@@ -264,6 +275,24 @@ bool loadProgress(const std::string& username, SaveData& outData) {
         if (!fin || static_cast<int>(outData.discoveredRows[i].size()) != outData.size) {
             return false;
         }
+    }
+
+    if (version >= 2) {
+        std::getline(fin, marker);
+        if (!fin || marker != "VISITED") {
+            return false;
+        }
+
+        for (int i = 0; i < outData.size; i++) {
+            std::getline(fin, outData.visitedRows[i]);
+            if (!fin || static_cast<int>(outData.visitedRows[i].size()) != outData.size) {
+                return false;
+            }
+        }
+    } else {
+        // Legacy saves did not persist visited tiles. Use discovered tiles as the
+        // closest approximation so revisiting loaded areas does not retrigger events.
+        outData.visitedRows = outData.discoveredRows;
     }
 
     outData.valid = true;
