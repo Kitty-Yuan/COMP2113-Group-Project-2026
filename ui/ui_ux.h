@@ -52,6 +52,7 @@ TopButtonAction getTopButtonActionFromMouse(const MEVENT &event);
 bool isWindowLargeEnough();
 void enforceWindowSizeGate();
 int readKeyWithWindowGuard();
+int readKeyAnimFrame(int timeoutMs);  // Non-blocking read for animation; returns ERR if no input
 void show_ATT(int value, int maxVal, std::string type, int y, int x);
 
 // Player stats display

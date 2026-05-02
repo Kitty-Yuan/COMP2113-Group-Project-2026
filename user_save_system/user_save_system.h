@@ -37,6 +37,8 @@ struct SaveData {
     std::vector<std::string> gridRows;
     std::vector<std::string> discoveredRows;
     std::vector<std::string> visitedRows;
+
+    bool cleared = false;  // true when this difficulty has been beaten
 };
 
 AuthResult loginOrRegister(const std::string& username, const std::string& password);

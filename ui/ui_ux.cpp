@@ -250,7 +250,7 @@ Monster owl = {
       /\ /\
     ((@ v @))
     () ::: ()
-    VV VV
+      VV VV
     )",
 
     "fireBlow: owl will get angry when player is attacking it, and it will blow fire to player randomly, dealing 10% damage",
@@ -803,6 +803,50 @@ void ncWait() {
             break;
         }
     }
+}
+
+int readKeyAnimFrame(int timeoutMs) {
+    if (!isWindowLargeEnough()) {
+        enforceWindowSizeGate();
+        clear();
+        refresh();
+        return ERR;
+    }
+    timeout(timeoutMs);
+    int ch = wgetch(stdscr);
+    timeout(-1);
+
+    if (ch == ERR) return ERR;
+
+    if (ch == KEY_RESIZE) {
+        enforceWindowSizeGate();
+        clear();
+        refresh();
+        return ERR;
+    }
+
+    if (ch == KEY_MOUSE) {
+        MEVENT event;
+        if (getmouse(&event) == OK) {
+            mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
+                                BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
+            if (event.bstate & clickMask) {
+                TopButtonAction action = getTopButtonActionFromMouse(event);
+                if (action == TopButtonAction::Home) {
+                    return KET_HOME_BUTTON;
+                } else if (action == TopButtonAction::Quit) {
+                    endwin();
+                    exit(0);
+                } else if (action == TopButtonAction::Help) {
+                    showHelp();
+                    return ERR;
+                }
+            }
+        }
+        return ERR;
+    }
+
+    return ch;
 }
 
 

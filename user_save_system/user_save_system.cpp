@@ -179,7 +179,8 @@ bool saveProgress(const std::string& username, const SaveData& data) {
         return false;
     }
 
-    fout << "VERSION 2\n";
+    fout << "VERSION 3\n";
+    fout << "CLEARED " << (data.cleared ? 1 : 0) << "\n";
     fout << "SIZE " << data.size << "\n";
     fout << "POS " << data.px << ' ' << data.py << "\n";
     fout << "GOAL " << data.gx << ' ' << data.gy << "\n";
@@ -221,7 +222,15 @@ bool loadProgress(const std::string& username, SaveData& outData) {
     if (!readExpectedTag(fin, "VERSION")) return false;
     int version = 0;
     fin >> version;
-    if (!fin || (version != 1 && version != 2)) return false;
+    if (!fin || (version < 1 || version > 3)) return false;
+
+    if (version >= 3) {
+        if (!readExpectedTag(fin, "CLEARED")) return false;
+        int clearedInt = 0;
+        fin >> clearedInt;
+        if (!fin) return false;
+        outData.cleared = (clearedInt != 0);
+    }
 
     if (!readExpectedTag(fin, "SIZE")) return false;
     fin >> outData.size;
