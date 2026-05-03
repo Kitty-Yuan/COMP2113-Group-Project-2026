@@ -650,8 +650,8 @@ void princessRoomMinigame(Player &p, bool isTrial) {
             // Check victory after princess move (foolish princess)
             if (rpx == rgx && rpy == rgy) {
                 clear();
-                centerPrint(getCenteredStartY(2), "Foolish princess walked right into you!");
-                centerPrint(getCenteredStartY(3), "VICTORY! You caught the princess!");
+                centerPrint(getCenteredStartY(2), "Princess walked right into you!");
+                centerPrint(getCenteredStartY(3), "VICTORY! You rescued the princess!");
                 refresh();
                 ncWait();
                 return;
@@ -820,7 +820,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
 
         int startY = getCenteredStartY(N + 5);
 
-        centerPrint(startY++, "Catch the enemy!");
+        centerPrint(startY++, "Catch the monster!");
         centerPrint(startY++, "It moves every 2 steps...");
         centerPrint(startY++, "---------------------");
 
@@ -877,7 +877,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
         // ===== catch the enemy after player move =====
         if (px == ex && py == ey) {
             clear();
-            centerPrint(getCenteredStartY(2), "You caught the enemy!");
+            centerPrint(getCenteredStartY(2), "You caught the monster!");
             centerPrint(getCenteredStartY(2)+1, "Victory!");
             refresh();
             ncWait();
@@ -906,8 +906,8 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
             // ===== catch the enemy after enemy move =====
             if (px == ex && py == ey) {
                 clear();
-                centerPrint(getCenteredStartY(2), "Foolish enemy walked right into you!");
-                centerPrint(getCenteredStartY(2)+1, "You caught the enemy! Victory!");
+                centerPrint(getCenteredStartY(2), "Foolish monster walked right into you!");
+                centerPrint(getCenteredStartY(2)+1, "You caught the monster! Victory!");
                 refresh();
                 ncWait();
                 return;
@@ -1274,13 +1274,15 @@ void tutorial(Player &p) {
             }
 
             centerPrint(getCenteredStartY(1),
-                "You found the exit...");
+                "You found the monster...");
             refresh();
             napms(800);
 
             tutorialMinigame(p);
             clear();   // Clear minigame leftovers
             centerPrint(getCenteredStartY(1), "Tutorial Complete!");
+            centerPrint(getCenteredStartY(1)+1, "He discovered That you entered his fortress...");
+            centerPrint(getCenteredStartY(1)+2, "So he carried the princess on his back and began to run away...");
             refresh();
             ncWait();
 
