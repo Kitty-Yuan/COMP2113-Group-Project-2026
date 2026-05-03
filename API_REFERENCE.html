@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Adventure - API Reference Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        nav {
+            background: var(--primary);
+            position: sticky;
+            top: 0;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--warning);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .search-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--light);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+
+        section {
+            background: white;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        section h2 {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+            color: white;
+            padding: 1rem 2rem;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        section h3 {
+            color: var(--secondary);
+            margin-top: 1.5rem;
+            margin-left: 2rem;
+            padding-top: 1rem;
+            font-size: 1.3rem;
+            border-top: 2px solid var(--light);
+        }
+
+        section h3:first-of-type {
+            margin-top: 0;
+            border-top: none;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .struct-definition {
+            background: #f8f9fa;
+            border-left: 4px solid var(--secondary);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .struct-name {
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .member {
+            margin: 0.75rem 0;
+            padding-left: 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+        }
+
+        .member-type {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .member-name {
+            color: var(--secondary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: var(--dark);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--light);
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .signature {
+            background: #f8f9fa;
+            border-left: 3px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .return-type {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .function-name {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .param {
+            color: var(--dark);
+        }
+
+        .description {
+            margin: 1rem 0;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin: 0.5rem 0.25rem 0.5rem 0;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .tag-core {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tag-ui {
+            background: var(--warning);
+            color: white;
+        }
+
+        .tag-save {
+            background: var(--success);
+            color: white;
+        }
+
+        .tag-util {
+            background: #95a5a6;
+            color: white;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+        }
+
+        .example {
+            background: #f8f9fa;
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .example-title {
+            font-weight: bold;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .quick-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-nav-item {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+        }
+
+        .quick-nav-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin-left: 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .difficulty-easy {
+            background: var(--success);
+            color: white;
+        }
+
+        .difficulty-medium {
+            background: var(--warning);
+            color: white;
+        }
+
+        .difficulty-hard {
+            background: var(--accent);
+            color: white;
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--secondary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 1.5rem;
+            z-index: 99;
+        }
+
+        .scroll-to-top.show {
+            display: flex;
+        }
+
+        .flow-chart {
+            background: #f8f9fa;
+            border-left: 4px solid var(--secondary);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .quick-nav {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎮 Dungeon Adventure</h1>
+        <p>API Reference Documentation | Terminal RPG Game</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#structures">Structures</a></li>
+            <li><a href="#core-functions">Core Functions</a></li>
+            <li><a href="#ui-functions">UI Functions</a></li>
+            <li><a href="#save-system">Save System</a></li>
+            <li><a href="#constants">Constants</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- Search Bar -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search functions, structs, keywords...">
+        </div>
+
+        <!-- Quick Navigation -->
+        <div class="quick-nav">
+            <a href="#structures" class="quick-nav-item">📦 Data Structures</a>
+            <a href="#core-functions" class="quick-nav-item">⚙️ Game Engine</a>
+            <a href="#battle-system" class="quick-nav-item">⚔️ Battle System</a>
+            <a href="#ui-functions" class="quick-nav-item">🎨 UI/Rendering</a>
+            <a href="#save-system" class="quick-nav-item">💾 Save System</a>
+            <a href="#game-flow" class="quick-nav-item">📊 Game Flow</a>
+        </div>
+
+        <!-- ====== OVERVIEW ====== -->
+        <section id="overview">
+            <h2>📖 Project Overview</h2>
+            <div class="content">
+                <p><strong>Dungeon Adventure</strong> is a terminal-based RPG game written in C++17 using ncurses library. Players navigate through procedurally generated dungeon mazes, encounter random events and monsters, manage inventory, and complete challenging bosses across multiple difficulty levels.</p>
+
+                <h3>Key Features</h3>
+                <ul style="margin-left: 2rem; margin-top: 1rem;">
+                    <li>🗺️ Procedurally generated 2D maze dungeons (4 difficulty levels: 9x9 to 20x20)</li>
+                    <li>⚔️ Turn-based combat system with 40% special ability trigger rate</li>
+                    <li>🎮 4 unique monster types with 2 special abilities each</li>
+                    <li>👑 Boss battle with 100 HP and animation sequences</li>
+                    <li>🎪 Side mini-games (Princess chase, Mushroom collection)</li>
+                    <li>💾 User authentication and game progress saving (binary format)</li>
+                    <li>🎨 Colorful ncurses UI with animations and ASCII art</li>
+                    <li>📊 Level-up system, shop, item collection</li>
+                </ul>
+
+                <h3 style="margin-top: 2rem;">Technology Stack</h3>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>Language:</strong> C++17</li>
+                    <li><strong>UI Framework:</strong> ncurses (terminal UI library)</li>
+                    <li><strong>Build System:</strong> Makefile with g++</li>
+                    <li><strong>Storage:</strong> Binary file format for save data</li>
+                </ul>
+
+                <h3 style="margin-top: 2rem;">Module Structure</h3>
+                <table>
+                    <tr>
+                        <th>Module</th>
+                        <th>File(s)</th>
+                        <th>Responsibility</th>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-core">Core Engine</span></td>
+                        <td>comp2113.cpp</td>
+                        <td>Game loop, map generation, movement, event system</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-ui">UI/Rendering</span></td>
+                        <td>ui/ui_ux.h, ui/ui_ux.cpp</td>
+                        <td>ncurses UI, animations, player input handling</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-save">Save System</span></td>
+                        <td>user_save_system/user_save_system.h, .cpp</td>
+                        <td>User authentication, progress saving/loading</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- ====== STRUCTURES ====== -->
+        <section id="structures">
+            <h2>📦 Data Structures</h2>
+            <div class="content">
+                <h3>Player Structure</h3>
+                <div class="struct-definition">
+                    <div class="struct-name">struct Player</div>
+                    <div class="description">Core player character data</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">hp</span> - Current health points (0-100, starts at 100)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">atk</span> - Attack power (affects damage dealt)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">def</span> - Defense power (reduces incoming damage)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">gold</span> - Currency for shopping</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">exp</span> - Experience points (triggers levelUp at 100)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">level</span> - Current level (increases with exp)</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">hasKey</span> - Whether player has the dungeon key</div>
+                </div>
+
+                <h3>Monster Structure</h3>
+                <div class="struct-definition">
+                    <div class="struct-name">struct Monster</div>
+                    <div class="description">Monster character definition with abilities</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">name</span> - Monster name (Ghost, chestnut, Owl, Blob)</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">appearance1</span> - ASCII art frame 1</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">appearance2</span> - ASCII art frame 2 (for animation)</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">specialattack1</span> - Ability 1 name</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">specialattack2</span> - Ability 2 name</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">Introduction</span> - Monster description</div>
+                </div>
+
+                <h3>PlayerStats Structure</h3>
+                <div class="struct-definition">
+                    <div class="struct-name">struct PlayerStats</div>
+                    <div class="description">UI display version of player stats (includes maxHP)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">hp, maxHP, atk, def, gold, exp, level</span> - Display stats</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">hasKey</span> - Key status indicator</div>
+                </div>
+
+                <h3>SaveData Structure</h3>
+                <div class="struct-definition">
+                    <div class="struct-name">struct SaveData (namespace user_save_system)</div>
+                    <div class="description">Complete game state snapshot for persistence</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">valid</span> - Whether save is valid</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">px, py</span> - Player position on map</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">gx, gy</span> - Goal position (Princess room)</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">hp, atk, def, gold, exp, level</span> - Player stats</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">hasKey, cleared</span> - Game flags</div>
+                    <div class="member"><span class="member-type">vector&lt;string&gt;</span> <span class="member-name">gridRows, discoveredRows, visitedRows</span> - Map state</div>
+                    <div class="member"><span class="member-type">int</span> <span class="member-name">monsterMin, monsterMax, bossMin, bossMax</span> - Difficulty parameters</div>
+                </div>
+
+                <h3>AuthResult Structure</h3>
+                <div class="struct-definition">
+                    <div class="struct-name">struct AuthResult (namespace user_save_system)</div>
+                    <div class="description">User authentication outcome</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">authenticated</span> - Success flag</div>
+                    <div class="member"><span class="member-type">bool</span> <span class="member-name">existingUser</span> - Is returning user</div>
+                    <div class="member"><span class="member-type">string</span> <span class="member-name">message</span> - Status message</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== CORE FUNCTIONS ====== -->
+        <section id="core-functions">
+            <h2>⚙️ Core Game Functions</h2>
+            <div class="content">
+                <h3>Main Entry Point</h3>
+                <div class="signature">int main()</div>
+                <div class="description">Game entry point. Initializes ncurses environment, manages difficulty selection, and main game loop until player exits or completes game.</div>
+
+                <h3>Initialization & Setup</h3>
+                <div class="signature">void initializeNewMap()</div>
+                <div class="description">Generates new dungeon maze using BFS path carving algorithm. Randomly places: 1 key (K), 1 goal (G), traps (T), chests (C), boss (B), and 30 monsters scattered throughout map.</div>
+
+                <div class="signature">bool startDifficultySession(string username, int activeSaveSlot, Player&amp; p, int&amp; difficulty, int&amp; monsterMin, int&amp; monsterMax, int&amp; bossMin, int&amp; bossMax)</div>
+                <div class="description">Initializes a new difficulty session. Loads save data if available, or creates fresh game. Shows tutorial option on first play.</div>
+
+                <div class="signature">void chooseDifficulty(int&amp; difficulty, int&amp; monsterMin, int&amp; monsterMax, int&amp; bossMin, int&amp; bossMax)</div>
+                <div class="description">Displays difficulty menu (1: Easy 9x9, 2: Normal 12x12, 3: Hard 15x15, 4: Hell 20x20) and sets corresponding parameters.</div>
+
+                <h3>Player Movement & Interaction</h3>
+                <div class="signature">void movePlayer(char m, Player&amp; p, int&amp; px, int&amp; py, char grid[][50], bool visited[][50], int monsterMin, int monsterMax, int bossMin, int bossMax)</div>
+                <div class="description">
+                    Handles player movement in 4 directions (W/A/S/D or arrow keys). Checks collision, updates position, and triggers event based on tile:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li><code>K</code> - Collect dungeon key</li>
+                        <li><code>T</code> - Trap damage (-15 HP)</li>
+                        <li><code>C</code> - Open chest (+20 Gold with animation)</li>
+                        <li><code>B</code> - Boss battle</li>
+                        <li><code>G</code> - Princess room (win game!)</li>
+                        <li><code>.</code> - Random event</li>
+                    </ul>
+                </div>
+
+                <div class="signature">char normalizeMoveKey(int key)</div>
+                <div class="description">Converts various input formats (W/S/A/D, arrow keys, numpad) into standardized character (W/A/S/D).</div>
+
+                <h3>Map Display & Pathfinding</h3>
+                <div class="signature">void displayMap()</div>
+                <div class="description">Renders current dungeon map state using ASCII grid. Shows discovered tiles, player position (P), walls (#), and unexplored areas (?).</div>
+
+                <div class="signature">bool hasPath(int sx, int sy, int ex, int ey, char grid[][50], int SIZE)</div>
+                <div class="description">BFS algorithm to check if path exists between start and end coordinates through non-wall tiles.</div>
+
+                <div class="signature">void createPath(int sx, int sy, int ex, int ey, char grid[][50], int SIZE)</div>
+                <div class="description">BFS path generation. Carves walkable corridor from start to end by clearing wall tiles (used in maze generation).</div>
+
+                <h3>Level Progression</h3>
+                <div class="signature">void levelUp(Player&amp; p)</div>
+                <div class="description">
+                    Triggers when player EXP ≥ 100. Increments level and grants stat bonuses:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>HP +20</li>
+                        <li>ATK +5</li>
+                        <li>DEF +3</li>
+                        <li>Reset EXP to 0</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== BATTLE SYSTEM ====== -->
+        <section id="battle-system">
+            <h2>⚔️ Battle System</h2>
+            <div class="content">
+                <h3>Normal Battle</h3>
+                <div class="signature">void fight(Player&amp; p, int monsterMin, int monsterMax)</div>
+                <div class="description">
+                    Main turn-based combat loop. Each turn:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Display monster animation and player stats</li>
+                        <li>Player chooses action: 1) Normal, 2) Strong (-3 HP, 75% hit, 1.3-1.69x damage), 3) Defend (40% success, counter attack)</li>
+                        <li>40% chance to trigger monster special ability (Stage 1: display skill, Stage 2: show damage)</li>
+                        <li>Calculate and apply damage both ways</li>
+                        <li>Repeat until monster or player reaches 0 HP</li>
+                    </ul>
+                    Reward on victory: +20 Gold, +50 EXP
+                </div>
+
+                <h3>Monster Special Abilities</h3>
+                <table>
+                    <tr>
+                        <th>Monster</th>
+                        <th>Ability 1</th>
+                        <th>Ability 2</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Ghost</strong></td>
+                        <td>Incorporeal Form: Player ATK -50%, Monster +35%</td>
+                        <td>Spectral Drain: Player ATK -30%, Monster +25%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chestnut</strong></td>
+                        <td>Spore Burst: Player ATK -50%, Monster +30%</td>
+                        <td>Toxic Cloud: 70% miss, Monster +20%, else "You break through"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Owl</strong></td>
+                        <td>Fire Blow: Deal an extra 10 damage to player</td>
+                        <td>Flash Blindness: 30% miss, Monster +25%, else "Shield eyes"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Blob</strong></td>
+                        <td>Consume Gold: Reduce player Gold by 15 (min 0), Monster +20%</td>
+                        <td>Gelatinous Body: 100% miss, Monster +15%</td>
+                    </tr>
+                </table>
+
+                <h3>Ability Display System (Two-Stage)</h3>
+                <div class="signature">void displaySpecialAbilityEffect(const Monster&amp; m, const string&amp; abilityMsg, const vector&lt;string&gt;&amp; effectLines, const Player&amp; p)</div>
+                <div class="description">
+                    <strong>Stage 1: Skill Trigger</strong> - Displays in bordered frame (x: 8-maxX-8, y: 8-maxY-8):
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Monster name and ASCII art</li>
+                        <li>Ability name in red (e.g., "Ghost USES: Incorporeal Form")</li>
+                        <li>Effect descriptions (2-3 lines describing impact)</li>
+                        <li>Left sidebar: Player stats panel</li>
+                        <li>Right sidebar: 3 battle action buttons (1/2/3)</li>
+                    </ul>
+                    Waits for Enter keypress before proceeding to Stage 2.
+                </div>
+
+                <div class="signature">void displayAbilityDamageResult(const Monster&amp; m, int playerDamage, int monsterDamage, bool playerAttackMissed, const Player&amp; p)</div>
+                <div class="description">
+                    <strong>Stage 2: Damage Resolution</strong> - Shows results in same bordered frame:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Title: "=== ATTACK RESULT ==="</li>
+                        <li>Player result: "You dealt X damage!" or "Your attack MISSED!"</li>
+                        <li>Monster result: "Ghost dealt X damage!"</li>
+                        <li>Left sidebar: Updated player stats</li>
+                        <li>Right sidebar: Action buttons available</li>
+                    </ul>
+                </div>
+
+                <h3>Boss Battle</h3>
+                <div class="signature">void bossFight(Player&amp; p, int bossMin, int bossMax)</div>
+                <div class="description">
+                    Special battle vs "DREAD KING" boss (100 HP fixed). Features:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Boss has 3 animation frames: idle, charging, slashing</li>
+                        <li>Uses standard fight() logic without special abilities</li>
+                        <li>Victory triggers game completion (unlock next difficulty)</li>
+                    </ul>
+                </div>
+
+                <div class="signature">void drawBossAnimFrame(int frame, int baseX, int baseY, int maxY)</div>
+                <div class="description">Renders DREAD KING boss with 3 frame animation (cycles every 8 frames). Shows ASCII art of menacing boss character.</div>
+            </div>
+        </section>
+
+        <!-- ====== EVENTS ====== -->
+        <section id="events">
+            <h2>🎪 Event System</h2>
+            <div class="content">
+                <h3>Random Events</h3>
+                <div class="signature">void event(Player&amp; p, int monsterMin, int monsterMax, int bossMin, int bossMax)</div>
+                <div class="description">
+                    Triggered when stepping on empty floor (.). Rolls random event:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li><strong>20%</strong> - Encounter monster → fight()</li>
+                        <li><strong>15%</strong> - Discover shop → shop()</li>
+                        <li><strong>15%</strong> - Find mushroom (40% HP, 60% ATK boost)</li>
+                        <li><strong>45%</strong> - Safe passage (no event)</li>
+                    </ul>
+                </div>
+
+                <h3>Shop System</h3>
+                <div class="signature">void shop(Player&amp; p)</div>
+                <div class="description">
+                    Player can purchase 4 mushroom types:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Health Mushroom (5 Gold) → +20 HP</li>
+                        <li>Strength Mushroom (10 Gold) → +3 ATK</li>
+                        <li>Defense Mushroom (10 Gold) → +2 DEF</li>
+                        <li>Expensive Mushroom (50 Gold) → +10 HP + 2 ATK</li>
+                    </ul>
+                    Shows ASCII art mushrooms with color coding (green, red, blue, yellow).
+                </div>
+
+                <h3>Chest Event</h3>
+                <div class="signature">void displayChestEvent(Player&amp; p)</div>
+                <div class="description">
+                    Triggered when stepping on 'C' tile. Displays in bordered frame:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Title: "=== TREASURE CHEST ==="</li>
+                        <li>Chest ASCII animation (3 frames: closed, closed, open)</li>
+                        <li>Gold before: "Before: X Gold"</li>
+                        <li>Gold after: "After: X Gold (+20)"</li>
+                        <li>500ms delay between animation frames</li>
+                    </ul>
+                </div>
+
+                <h3>Mini-Games</h3>
+                <div class="signature">void princessRoomMinigame(Player&amp; p, bool isTrial)</div>
+                <div class="description">
+                    Princess chase side-scroller game:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li><strong>Normal:</strong> 30x10 arena, unlimited moves, catch princess to win</li>
+                        <li><strong>Tutorial:</strong> 10x10 arena, 10-step limit for practice</li>
+                        <li>Controls: W/A/S/D to move, princess moves randomly</li>
+                    </ul>
+                </div>
+
+                <div class="signature">void tutorialMinigame(Player&amp; p)</div>
+                <div class="description">Practice version of princess minigame (10x10 map, 10 move limit).</div>
+            </div>
+        </section>
+
+        <!-- ====== UI FUNCTIONS ====== -->
+        <section id="ui-functions">
+            <h2>🎨 UI/Rendering Functions</h2>
+            <div class="content">
+                <h3>Screen Management</h3>
+                <div class="signature">bool showTitle()</div>
+                <div class="description">Displays title screen with game logo and "Press any key to continue" prompt. Returns false if user wants to exit.</div>
+
+                <div class="signature">void showIntro()</div>
+                <div class="description">6-page story introduction about the dungeon adventure. Allows skipping with Q key.</div>
+
+                <div class="signature">void showHelp()</div>
+                <div class="description">Detailed game manual covering controls, mechanics, items, and tips.</div>
+
+                <div class="signature">void introScreen()</div>
+                <div class="description">Initial adventure explanation screen shown before main menu.</div>
+
+                <h3>User Authentication</h3>
+                <div class="signature">bool authenticateUser(string&amp; username)</div>
+                <div class="description">
+                    User login/registration interface:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Supports username/password entry with masking</li>
+                        <li>3-attempt limit for password validation</li>
+                        <li>Calls user_save_system::loginOrRegister()</li>
+                        <li>Returns true if authentication successful</li>
+                    </ul>
+                </div>
+
+                <h3>Display Panels</h3>
+                <div class="signature">void displayPlayerStats(const PlayerStats&amp; stats)</div>
+                <div class="description">Renders left-side player information panel showing: HP, ATK, DEF, Gold, EXP, Level, Key status. Uses colors: yellow text on dark background.</div>
+
+                <div class="signature">void displayDifficultyLevel(int difficulty)</div>
+                <div class="description">Displays current difficulty in left-bottom corner (vertical text). 1=Easy, 2=Normal, 3=Hard, 4=Hell.</div>
+
+                <div class="signature">void showButton()</div>
+                <div class="description">Renders battle action buttons at right side: "1) Normal | 2) Strong | 3) Defend" with keyboard shortcut hints.</div>
+
+                <h3>Monster Animations</h3>
+                <div class="signature">void drawMonsterAnimFrame(const Monster&amp; m, int frame, int baseX, int baseY, int maxY)</div>
+                <div class="description">
+                    Draws animated monster in center of screen. Each monster has 2-3 ASCII frames:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li><strong>Ghost:</strong> Eyes blinking (flicker effect)</li>
+                        <li><strong>Chestnut:</strong> Spore emission (expand/contract)</li>
+                        <li><strong>Owl:</strong> Eye blink animation</li>
+                        <li><strong>Blob:</strong> Body stretching</li>
+                    </ul>
+                    Color: cyan with bold attribute.
+                </div>
+
+                <h3>Text Output Utilities</h3>
+                <div class="signature">void centerPrint(int y, string text)</div>
+                <div class="description">Prints text centered horizontally at specified Y coordinate.</div>
+
+                <div class="signature">int getCenteredX(string text)</div>
+                <div class="description">Returns X coordinate needed to center given string on screen.</div>
+
+                <div class="signature">int getCenteredStartY(int totalLines)</div>
+                <div class="description">Calculates starting Y for vertically centering a block of N lines.</div>
+
+                <h3>Input Handling</h3>
+                <div class="signature">int readKeyWithWindowGuard()</div>
+                <div class="description">Reads user input with window size validation (enforces minimum 120x32). Shows warning if too small.</div>
+
+                <div class="signature">int readKeyAnimFrame(int timeoutMs)</div>
+                <div class="description">Non-blocking input read with timeout (in milliseconds). Used during animation loops to accept player input without halting frame updates.</div>
+
+                <div class="signature">void ncWait()</div>
+                <div class="description">Pauses and waits for player to press Enter before continuing. Used after important events.</div>
+
+                <h3>Visual Effects</h3>
+                <div class="signature">void fireEffect(int startX, int startY, int duration)</div>
+                <div class="description">Renders animated fire/explosion effect at given position for specified duration (in milliseconds).</div>
+
+                <div class="signature">void drawMushroom(int startY, int startX, int colorPair, char pattern)</div>
+                <div class="description">Renders ASCII art mushroom in specified color at position.</div>
+
+                <div class="signature">void drawPrincess(int startY, int startX)</div>
+                <div class="description">Renders princess character ASCII art (used in minigame).</div>
+
+                <h3>Window Management</h3>
+                <div class="signature">void enforceWindowSizeGate()</div>
+                <div class="description">Continuously checks window dimensions. Blocks gameplay if smaller than 120x32, requests user to resize.</div>
+
+                <div class="signature">bool isWindowLargeEnough()</div>
+                <div class="description">Returns true if current window is at least 120x32, false otherwise.</div>
+
+                <h3>Demo Screens</h3>
+                <div class="signature">int runSideScrollDemo()</div>
+                <div class="description">Standalone side-scrolling game demo (bonus feature, non-essential to main game).</div>
+
+                <div class="signature">int runMonsterMenuDemo()</div>
+                <div class="description">Monster encyclopedia/menu showcase (displays all 4 monsters with descriptions).</div>
+            </div>
+        </section>
+
+        <!-- ====== SAVE SYSTEM ====== -->
+        <section id="save-system">
+            <h2>💾 Save & User System</h2>
+            <div class="content">
+                <h3>User Authentication (namespace user_save_system)</h3>
+                <div class="signature">AuthResult loginOrRegister(const string&amp; username, const string&amp; password)</div>
+                <div class="description">
+                    Validates or creates user account:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Reads from <code>data/users.txt</code></li>
+                        <li>If user exists: validates password</li>
+                        <li>If new user: creates entry with hashed password</li>
+                        <li>Returns AuthResult with authenticated flag and message</li>
+                    </ul>
+                </div>
+
+                <h3>Save/Load Progress</h3>
+                <div class="signature">bool hasSave(const string&amp; username)</div>
+                <div class="description">Checks if save file exists for given username in data/saves/ directory.</div>
+
+                <div class="signature">SaveData buildSaveData(const Player&amp; p, int difficulty, int monsterMin, int monsterMax, int bossMin, int bossMax, int px, int py, int gx, int gy, bool cleared, const vector&lt;string&gt;&amp; gridRows, const vector&lt;string&gt;&amp; discoveredRows, const vector&lt;string&gt;&amp; visitedRows)</div>
+                <div class="description">Constructs SaveData structure from current game state (used before saving to disk).</div>
+
+                <div class="signature">bool applySaveData(const SaveData&amp; saveData, Player&amp; p, int&amp; difficulty, int&amp; monsterMin, int&amp; monsterMax, int&amp; bossMin, int&amp; bossMax, int&amp; px, int&amp; py, int&amp; gx, int&amp; gy, bool&amp; cleared, vector&lt;string&gt;&amp; gridRows, vector&lt;string&gt;&amp; discoveredRows, vector&lt;string&gt;&amp; visitedRows)</div>
+                <div class="description">Restores game state from loaded SaveData (opposite of buildSaveData).</div>
+
+                <div class="signature">bool saveProgress(const string&amp; username, SaveData&amp; saveData)</div>
+                <div class="description">
+                    Writes SaveData to binary file:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Path: <code>data/saves/[username_hex].save</code> (username converted to hex)</li>
+                        <li>Binary format for efficiency</li>
+                        <li>Includes complete game state: player stats, map, position, difficulty</li>
+                    </ul>
+                </div>
+
+                <div class="signature">bool loadProgress(const string&amp; username, SaveData&amp; saveData)</div>
+                <div class="description">Reads SaveData from binary save file (inverse of saveProgress).</div>
+
+                <h3>Difficulty Progress Tracking</h3>
+                <div class="signature">bool isDifficultyCleared(const string&amp; username, int difficulty)</div>
+                <div class="description">
+                    Checks if specified difficulty (1-4) has been completed by player:
+                    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                        <li>Reads from <code>data/users.txt</code> metadata</li>
+                        <li>Returns true if difficulty flag is set</li>
+                        <li>Used to unlock harder difficulties</li>
+                    </ul>
+                </div>
+
+                <h3>File Format</h3>
+                <div class="example">
+                    <div class="example-title">Save File Structure</div>
+Users Database: data/users.txt
+- Format: username:password_hash:cleared_difficulties
+
+Save Files: data/saves/[username_hex].save
+- Binary format containing SaveData struct
+- Example: "John" → filename "4a6f686e.save"
+
+Difficulty Flags: 1=Easy, 2=Normal, 4=Hard, 8=Hell
+- Cleared multiple difficulties? (1|2|4) = 7 (Easy+Normal+Hard)
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== CONSTANTS ====== -->
+        <section id="constants">
+            <h2>📋 Constants & Enumerations</h2>
+            <div class="content">
+                <h3>Difficulty Settings</h3>
+                <table>
+                    <tr>
+                        <th>Difficulty</th>
+                        <th>Map Size</th>
+                        <th>Monster ATK Range</th>
+                        <th>Boss ATK Range</th>
+                    </tr>
+                    <tr>
+                        <td>1 - Easy</td>
+                        <td>9x9</td>
+                        <td>5-10</td>
+                        <td>10-15</td>
+                    </tr>
+                    <tr>
+                        <td>2 - Normal</td>
+                        <td>12x12</td>
+                        <td>8-15</td>
+                        <td>15-20</td>
+                    </tr>
+                    <tr>
+                        <td>3 - Hard</td>
+                        <td>15x15</td>
+                        <td>12-18</td>
+                        <td>20-25</td>
+                    </tr>
+                    <tr>
+                        <td>4 - Hell</td>
+                        <td>20x20</td>
+                        <td>15-25</td>
+                        <td>25-35</td>
+                    </tr>
+                </table>
+
+                <h3>Map Tiles</h3>
+                <table>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Meaning</th>
+                        <th>Interaction</th>
+                    </tr>
+                    <tr>
+                        <td><code>P</code></td>
+                        <td>Player</td>
+                        <td>Current position</td>
+                    </tr>
+                    <tr>
+                        <td><code>#</code></td>
+                        <td>Wall</td>
+                        <td>Impassable</td>
+                    </tr>
+                    <tr>
+                        <td><code>.</code></td>
+                        <td>Floor</td>
+                        <td>Random event (20% fight, 15% shop, 15% mushroom, 45% safe)</td>
+                    </tr>
+                    <tr>
+                        <td><code>K</code></td>
+                        <td>Key</td>
+                        <td>Collect → hasKey=true</td>
+                    </tr>
+                    <tr>
+                        <td><code>T</code></td>
+                        <td>Trap</td>
+                        <td>HP -15</td>
+                    </tr>
+                    <tr>
+                        <td><code>C</code></td>
+                        <td>Chest</td>
+                        <td>Gold +20 with animation</td>
+                    </tr>
+                    <tr>
+                        <td><code>B</code></td>
+                        <td>Boss</td>
+                        <td>Boss battle (100 HP DREAD KING)</td>
+                    </tr>
+                    <tr>
+                        <td><code>G</code></td>
+                        <td>Goal (Princess)</td>
+                        <td>Victory! (requires key)</td>
+                    </tr>
+                    <tr>
+                        <td><code>?</code></td>
+                        <td>Undiscovered</td>
+                        <td>Fog of war (not yet visited)</td>
+                    </tr>
+                </table>
+
+                <h3>Color Pairs (ncurses)</h3>
+                <table>
+                    <tr>
+                        <th>COLOR_PAIR</th>
+                        <th>Color</th>
+                        <th>Usage</th>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>White (default)</td>
+                        <td>Normal text, stats display</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Yellow</td>
+                        <td>Borders, emphasis, titles</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Red</td>
+                        <td>Warnings, danger, special abilities</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Green</td>
+                        <td>Success, player character, positive effects</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Blue</td>
+                        <td>Defense/protect effects, coolness</td>
+                    </tr>
+                </table>
+
+                <h3>Input Constants</h3>
+                <div class="signature">enum class TopButtonAction { None, Home, Help, Quit }</div>
+                <div class="description">Result of top button click detection (used for mouse input).</div>
+
+                <div class="signature">enum class PostDeathAction { ReturnToMenu, Quit }</div>
+                <div class="description">Player choice after character death.</div>
+
+                <div class="signature">#define KET_HOME_BUTTON ...</div>
+                <div class="description">Special key code for HOME button input.</div>
+
+                <h3>Game Mechanics Constants</h3>
+                <table>
+                    <tr>
+                        <th>Constant</th>
+                        <th>Value</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Player Max HP</td>
+                        <td>100</td>
+                        <td>Starting and maximum health</td>
+                    </tr>
+                    <tr>
+                        <td>Player Start ATK</td>
+                        <td>10</td>
+                        <td>Starting attack power</td>
+                    </tr>
+                    <tr>
+                        <td>Player Start DEF</td>
+                        <td>5</td>
+                        <td>Starting defense</td>
+                    </tr>
+                    <tr>
+                        <td>Ability Trigger %</td>
+                        <td>40%</td>
+                        <td>Chance monster uses special ability per turn</td>
+                    </tr>
+                    <tr>
+                        <td>Level EXP Threshold</td>
+                        <td>100</td>
+                        <td>EXP needed to level up</td>
+                    </tr>
+                    <tr>
+                        <td>Level Up Bonuses</td>
+                        <td>+20 HP, +5 ATK, +3 DEF</td>
+                        <td>Stats gained per level</td>
+                    </tr>
+                    <tr>
+                        <td>Boss HP</td>
+                        <td>100</td>
+                        <td>DREAD KING hit points (fixed)</td>
+                    </tr>
+                    <tr>
+                        <td>Trap Damage</td>
+                        <td>-15 HP</td>
+                        <td>Damage from stepping on trap</td>
+                    </tr>
+                    <tr>
+                        <td>Chest Reward</td>
+                        <td>+20 Gold</td>
+                        <td>Reward for opening chest</td>
+                    </tr>
+                    <tr>
+                        <td>Fight Reward</td>
+                        <td>+20 Gold, +50 EXP</td>
+                        <td>Victory bonus</td>
+                    </tr>
+                    <tr>
+                        <td>Strong Attack Cost</td>
+                        <td>-3 HP</td>
+                        <td>Health cost for strong attack</td>
+                    </tr>
+                    <tr>
+                        <td>Strong Hit Chance</td>
+                        <td>75%</td>
+                        <td>Probability strong attack connects</td>
+                    </tr>
+                    <tr>
+                        <td>Strong Damage Multiplier</td>
+                        <td>1.30-1.69x</td>
+                        <td>Damage variance for strong attack</td>
+                    </tr>
+                    <tr>
+                        <td>Defend Success Rate</td>
+                        <td>40%</td>
+                        <td>Chance to successfully block attack</td>
+                    </tr>
+                    <tr>
+                        <td>Counter Damage</td>
+                        <td>0.4x ATK + 0.4-0.6x incoming</td>
+                        <td>Damage dealt when defense succeeds</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- ====== GAME FLOW ====== -->
+        <section id="game-flow">
+            <h2>📊 Game Flow & Architecture</h2>
+            <div class="content">
+                <h3>Main Game Loop</h3>
+                <div class="flow-chart">main()
+  │
+  ├─ initNcurses()
+  │
+  ├─ showTitle()
+  │  └─ Return if player exits
+  │
+  ├─ showIntro() [Skip optional]
+  │  └─ 6-page story setup
+  │
+  ├─ authenticateUser()
+  │  └─ Login/Register with user_save_system
+  │
+  └─ DIFFICULTY_LOOP: for difficulty 1-4
+     │
+     ├─ chooseDifficulty()
+     │  └─ Player selects 1-4
+     │
+     ├─ startDifficultySession()
+     │  ├─ Check if already cleared
+     │  ├─ Load save or initialize new
+     │  └─ Show tutorial option
+     │
+     └─ GAME_LOOP: while (!gameOver)
+        │
+        ├─ displayMap() [show current grid]
+        ├─ displayPlayerStats() [left side]
+        ├─ readKeyWithWindowGuard() [input]
+        │
+        ├─ if (move key W/A/S/D)
+        │  └─ movePlayer()
+        │     ├─ Collision check
+        │     ├─ Event check:
+        │     │  ├─ K: hasKey=true
+        │     │  ├─ T: HP-=15
+        │     │  ├─ C: displayChestEvent()
+        │     │  ├─ B: bossFight()
+        │     │  │  └─ Boss defeated? → gameOver=true
+        │     │  ├─ G: (if hasKey) → gameOver=true (WIN!)
+        │     │  └─ .: event() [20% fight, 15% shop, 15% mushroom, 45% safe]
+        │     │
+        │     ├─ fight(): 40% ability per turn
+        │     │  ├─ displaySpecialAbilityEffect() [Stage 1]
+        │     │  └─ displayAbilityDamageResult() [Stage 2]
+        │     │
+        │     ├─ shop(): Purchase mushrooms
+        │     │
+        │     └─ levelUp(): if EXP≥100 → HP+20, ATK+5, DEF+3
+        │
+        ├─ if (player HP ≤ 0)
+        │  └─ promptPostDeathAction()
+        │     ├─ Return to menu
+        │     └─ Quit
+        │
+        └─ saveProgress() before exit
+                </div>
+
+                <h3>Battle Turn Sequence</h3>
+                <div class="flow-chart">fight() Turn
+  │
+  ├─ Display monster animation frame
+  ├─ Show player stats & battle menu
+  ├─ readKeyWithWindowGuard() → player action (1/2/3)
+  │
+  ├─ Calculate player attack
+  │  ├─ Action 1: Normal → random(0, ATK)
+  │  ├─ Action 2: Strong
+  │  │  ├─ Cost: -3 HP
+  │  │  ├─ Hit: 75% chance
+  │  │  ├─ Damage: ATK * 1.30-1.69x
+  │  │  └─ Miss: 0
+  │  └─ Action 3: Defend
+  │     ├─ Success: 40%
+  │     └─ Counter: 0.4*ATK + 0.4-0.6*incomingDmg
+  │
+  ├─ Check monster ability (40% chance)
+  │  ├─ YES → displaySpecialAbilityEffect() [Stage 1]
+  │  │        ├─ Show skill trigger
+  │  │        ├─ Show effect descriptions
+  │  │        ├─ Modify player attack / miss chance
+  │  │        └─ ncWait() [Wait for Enter]
+  │  │
+  │  │        Apply damage (player ATK → monster HP)
+  │  │
+  │  │        displayAbilityDamageResult() [Stage 2]
+  │  │        ├─ Show player result
+  │  │        ├─ Show monster result
+  │  │        └─ ncWait() [Wait for Enter]
+  │  │
+  │  └─ NO  → Apply damage normally
+  │           Display result in main UI
+  │
+  ├─ Check if monster defeated
+  │  ├─ YES → Display victory message
+  │  │        Player: +20 Gold, +50 EXP
+  │  │        levelUp() if EXP≥100
+  │  │        break [exit loop]
+  │  │
+  │  └─ NO  → Calculate monster damage
+  │           ├─ Base: random(min, max)
+  │           ├─ Ability bonus if triggered
+  │           └─ Apply to player HP
+  │
+  ├─ Check if player defeated
+  │  └─ YES → promptPostDeathAction()
+  │
+  └─ Next turn...
+                </div>
+
+                <h3>Module Dependencies</h3>
+                <div class="flow-chart">comp2113.cpp [Core Game Loop]
+  │
+  ├─ Includes: ui/ui_ux.h
+  │  └─ Uses: displayMap(), displayPlayerStats(), drawMonsterAnimFrame(),
+  │           readKeyWithWindowGuard(), centerPrint(), ncWait(), showButton()
+  │
+  ├─ Includes: user_save_system/user_save_system.h
+  │  └─ Uses: loginOrRegister(), saveProgress(), loadProgress(),
+  │           isDifficultyCleared(), buildSaveData(), applySaveData()
+  │
+  └─ Implements:
+     ├─ main() [entry point]
+     ├─ fight() [battle logic]
+     ├─ bossFight()
+     ├─ movePlayer() [movement & events]
+     ├─ displaySpecialAbilityEffect() [ability display]
+     ├─ displayAbilityDamageResult()
+     ├─ initializeNewMap() [maze generation]
+     ├─ event(), shop(), princessRoomMinigame()
+     └─ levelUp(), tutorialMinigame(), showIntro()
+
+ui/ui_ux.cpp [Rendering & Input]
+  │
+  ├─ Uses: ncurses library
+  │  └─ initscr(), getmaxyx(), mvprintw(), attron/attroff(), getch()
+  │
+  ├─ Implements:
+  │  ├─ showTitle(), showHelp(), authenticateUser()
+  │  ├─ displayPlayerStats(), displayDifficultyLevel()
+  │  ├─ drawMonsterAnimFrame(), drawBossAnimFrame()
+  │  ├─ drawMushroom(), drawPrincess(), fireEffect()
+  │  ├─ centerPrint(), getCenteredX(), getCenteredStartY()
+  │  ├─ readKeyWithWindowGuard(), readKeyAnimFrame(), ncWait()
+  │  ├─ enforceWindowSizeGate(), isWindowLargeEnough()
+  │  └─ showButton(), getTopButtonActionFromMouse()
+  │
+  └─ Defines: Monster array, color pairs
+
+user_save_system/user_save_system.cpp [Persistence]
+  │
+  ├─ File I/O:
+  │  ├─ data/users.txt [user database]
+  │  └─ data/saves/[hex].save [game saves]
+  │
+  ├─ Implements:
+  │  ├─ loginOrRegister() [user auth]
+  │  ├─ saveProgress() [write save file]
+  │  ├─ loadProgress() [read save file]
+  │  ├─ isDifficultyCleared() [check progress]
+  │  ├─ buildSaveData(), applySaveData()
+  │  └─ Hex encoding: username → filename
+  │
+  └─ Data format: SaveData struct (binary)
+                </div>
+
+                <h3>Game States & Transitions</h3>
+                <div class="flow-chart">TITLE
+  │
+  └─→ INTRO (optional skip)
+       │
+       └─→ AUTHENTICATE
+            │
+            └─→ DIFFICULTY_SELECT
+                 │
+                 ├─→ TUTORIAL (optional, first time only)
+                 │    │
+                 │    └─→ EXPLORATION
+                 │         │
+                 │         ├─→ COMBAT
+                 │         │    ├─ displaySpecialAbilityEffect() [Stage 1]
+                 │         │    └─ displayAbilityDamageResult() [Stage 2]
+                 │         │
+                 │         ├─→ SHOP
+                 │         │
+                 │         ├─→ TRAP_HIT
+                 │         │
+                 │         ├─→ MINIGAME
+                 │         │
+                 │         ├─→ BOSS_FIGHT
+                 │         │    └─ Victory? → GAME_WON
+                 │         │
+                 │         ├─→ PLAYER_DEFEATED → DEATH_MENU
+                 │         │                     ├─ RETRY (back to EXPLORATION)
+                 │         │                     └─ QUIT → DIFFICULTY_SELECT
+                 │         │
+                 │         └─→ COLLECTED_KEY + REACHED_GOAL
+                 │              │
+                 │              └─→ GAME_WON
+                 │                  │
+                 │                  └─→ DIFFICULTY_SELECT (unlock next)
+                 │
+                 └─→ Repeat for each difficulty (1-4)
+                      │
+                      └─→ All difficulties cleared? → MAIN_MENU (ready for restart)
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== FOOTER ====== -->
+    </div>
+
+    <footer>
+        <p>&copy; 2024-2026 HKU COMP2113 Group Project | Dungeon Adventure Terminal RPG</p>
+        <p>Documentation generated with API Reference Guide. For code details, see repository source files.</p>
+    </footer>
+
+    <div class="scroll-to-top" id="scrollToTop">↑</div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const sections = document.querySelectorAll('section');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            sections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                if (searchTerm === '' || text.includes(searchTerm)) {
+                    section.style.display = '';
+                    // Highlight matching content
+                    const content = section.innerHTML;
+                    if (searchTerm !== '') {
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        section.innerHTML = content.replace(regex, '<mark style="background-color: yellow;">$1</mark>');
+                    }
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+
+        // Scroll to top button
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        });
+        
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Smooth navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

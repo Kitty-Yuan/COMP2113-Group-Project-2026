@@ -1182,10 +1182,9 @@ void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int
         colorPair = 2;
         attrs = blink ? A_DIM : A_BOLD;
     } else if (m.name == "Blob") {
-        // Green; brighter (reverse) on squish frame
-        int phase = (frame / 6) % 3;
+        // Green without reverse-video to avoid background block on squish frame
         colorPair = 4;
-        attrs = (phase == 1) ? (A_BOLD | A_REVERSE) : A_BOLD;
+        attrs = A_BOLD;
     } else {
         colorPair = 2;
         attrs = A_BOLD;
@@ -1445,10 +1444,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             // ===== OWL Abilities =====
             else if (m.name == "Owl") {
                 if (triggeredAbilityIndex == 1) {
-                    // Ability 1: Fire Blow - monster attack +40% THIS TURN
-                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.40);
+                    // Ability 1: Fire Blow - fixed +10 monster damage THIS TURN
+                    monsterAbilityDamageBonus = 10;
                     abilityEffectLines.push_back("Fire Blow - unleashes a blazing wave of flame");
-                    abilityEffectLines.push_back("Owl's attack power increases by 40%!");
+                    abilityEffectLines.push_back("Owl deals an extra 10 damage this turn!");
                 } else {
                     // Ability 2: Flash Blindness - 30% chance player attack misses
                     if (rand() % 100 < 30) {
