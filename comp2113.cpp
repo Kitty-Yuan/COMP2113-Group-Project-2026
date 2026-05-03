@@ -322,7 +322,12 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monst
     
     return true;
 }
-// Helper function to check if a path exists using BFS
+/**
+ * @brief Checks if a traversable path exists between two points using Breadth-First Search (BFS).
+ * @param sx,sy Starting coordinates.
+ * @param ex,ey Target coordinates.
+ * @return true if a path consisting only of floor tiles ('.') exists.
+ */
 bool hasPath(int sx, int sy, int ex, int ey) {
     if (sx == ex && sy == ey) return true;
     if (grid[sx][sy] == '#' || grid[ex][ey] == '#') return false;
@@ -361,8 +366,15 @@ bool hasPath(int sx, int sy, int ex, int ey) {
     return false;
 }
 
-// Helper function to create a path between two points
+/**
+ * @brief Guarantees a path between two points by converting walls ('#') to floors ('.').
+ * @details Performs a BFS to find the shortest potential path ignoring walls, 
+ * then backtracks from the target to the start to carve the path.
+ * @param sx,sy Starting coordinates.
+ * @param ex,ey Target coordinates.
+ */
 void createPath(int sx, int sy, int ex, int ey) {
+    // Helper function to create a path between two points
     if (hasPath(sx, sy, ex, ey)) return;
     
     bool temp_visited[50][50];
@@ -419,6 +431,11 @@ void createPath(int sx, int sy, int ex, int ey) {
     }
 }
 
+/**
+ * @brief Initializes the game world with randomized terrain and essential landmarks.
+ * @details Uses probability-based wall generation and ensures all key locations 
+ * (Key, Goal, Shop, etc.) are reachable from the player's start.
+ */
 void initializeNewMap() {
     // Generate random map with walls
     for (int i = 0; i < SIZE; i++) {
@@ -467,8 +484,15 @@ void initializeNewMap() {
     visited[px][py] = true;
 }
 
-// =====Catch princess=====
+/**
+ * @brief Triggers the final endgame mini-game: The Princess Chase.
+ * @details The player must reach the Goal (Princess) within a step limit. 
+ * The step limit is dynamically calculated based on the player's remaining HP.
+ * @param p Reference to the Player struct (HP is reduced to 0 on failure).
+ * @param isTrial If true, uses a fixed step count for tutorial purposes.
+ */
 void princessRoomMinigame(Player &p, bool isTrial) {
+    // =====Catch princess=====
     const int roomSize = 15;
     char room[roomSize][roomSize];
     srand(time(0));
@@ -549,7 +573,6 @@ void princessRoomMinigame(Player &p, bool isTrial) {
         }
     }
 }
-
 // ===== Difficulty =====
 void chooseDifficulty(const string &username, int &monsterMin, int &monsterMax, int &bossMin, int &bossMax) {
     int diff = 0;
