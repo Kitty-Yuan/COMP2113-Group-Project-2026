@@ -18,14 +18,18 @@ bool visited[50][50];
 bool discovered[50][50];
 int currentDifficulty = 0; // 1=Easy, 2=Normal, 3=Hard, 4=Hell
 
+/**
+ * @struct Player
+ * @brief Main structure holding player statistics and state.
+ */
 struct Player {
-    int hp = 100;
-    int atk = 8;
-    int def = 5;
-    int gold = 10;
-    int exp = 0;
-    int level = 1;
-    bool hasKey = false;
+    int hp = 100;      /**< Health points */
+    int atk = 8;       /**< Attack power */
+    int def = 5;       /**< Defense power */
+    int gold = 10;     /**< Currency balance */
+    int exp = 0;       /**< Experience points */
+    int level = 1;     /**< Character level */
+    bool hasKey = false; /**< Progression flag for winning the game */
 };
 
 user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax);
@@ -40,14 +44,32 @@ int cursorY = 0; // Global cursor for display
 int cursorX = 0;
 bool returnToDifficultyMenu = false;
 
+/**
+ * @brief Generates the save slot key for specific difficulty levels.
+ * @param username Current player's name
+ * @param difficulty Numeric difficulty level
+ * @return Formatted string for file naming
+ */
 string buildDifficultySaveSlot(const string &username, int difficulty) {
     return username + "__difficulty_" + to_string(difficulty);
 }
 
+/**
+ * @brief Generates the identifier for a cleared difficulty status.
+ * @param username Current player's name
+ * @param difficulty Numeric difficulty level
+ * @return Formatted string for persistent storage check
+ */
 string buildClearedSlot(const string &username, int difficulty) {
     return username + "__cleared_" + to_string(difficulty);
 }
 
+/**
+ * @brief Checks the save system to see if a specific difficulty has been beaten.
+ * @param username User to check
+ * @param difficulty Level to check
+ * @return true if the level was previously cleared
+ */
 bool isDifficultyCleared(const string &username, int difficulty) {
     string slot = buildClearedSlot(username, difficulty);
     if (!user_save_system::hasSave(slot)) return false;
@@ -55,6 +77,15 @@ bool isDifficultyCleared(const string &username, int difficulty) {
     return user_save_system::loadProgress(slot, data) && data.cleared;
 }
 
+/**
+ * @brief Manages the session lifecycle (Difficulty -> Load/New -> Tutorial -> Save).
+ * @param username Active user
+ * @param[out] activeSaveSlot The slot ID currently in use
+ * @param[out] p Player object to initialize/restore
+ * @param allowTutorial Whether to show the tutorial prompt
+ * @param chooseDiffAgain Whether to trigger the difficulty selection UI
+ * @return true if the session was restored from an existing save
+ */
 bool startDifficultySession(const string &username,
                             string &activeSaveSlot,
                             Player &p,
@@ -114,6 +145,11 @@ bool startDifficultySession(const string &username,
     return loadedFromSave;
 }
 
+/**
+ * @brief Maps various ncurses key codes to standard 'wasd' chars.
+ * @param key Raw input from getch()
+ * @return Normalized direction char or null char if invalid
+ */
 char normalizeMoveKey(int key) {
     if (key == 'w' || key == 'W' || key == KEY_UP) return 'w';
     if (key == 's' || key == 'S' || key == KEY_DOWN) return 's';
@@ -122,17 +158,27 @@ char normalizeMoveKey(int key) {
     return '\0';
 }
 
+/**
+ * @brief Exit choices after game over.
+ */
 enum class PostDeathAction {
-    Home,
-    Quit
+    Home, /**< Return to main menu */
+    Quit  /**< Terminate application */
 };
 
+/**
+ * @brief Helper to filter ncurses mouse events for primary clicks.
+ */
 bool isPrimaryMouseClick(const MEVENT &event) {
     mmask_t clickMask = BUTTON1_CLICKED | BUTTON1_PRESSED | BUTTON1_RELEASED |
                         BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED;
     return (event.bstate & clickMask) != 0;
 }
 
+/**
+ * @brief Displays the Game Over screen and handles navigation input.
+ * @return The user's selected PostDeathAction
+ */
 PostDeathAction promptPostDeathAction() {
     while (true) {
         clear();
@@ -172,6 +218,10 @@ PostDeathAction promptPostDeathAction() {
     }
 }
 
+/**
+ * @brief Packages current game state variables into a serializable struct.
+ * @return A SaveData object containing player, map, and monster information
+ */
 user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax) {
     user_save_system::SaveData data;
     data.valid = true;
@@ -208,6 +258,12 @@ user_save_system::SaveData buildSaveData(const Player &p, int monsterMin, int mo
     return data;
 }
 
+/**
+ * @brief Validates and unpacks save data into the active game environment.
+ * @param data Source save data
+ * @param[out] p Target player struct
+ * @return true if data was valid and applied, false if data was corrupted
+ */
 bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monsterMin, int &monsterMax, int &bossMin, int &bossMax) {
     if (!data.valid || data.size <= 0 || data.size > 50) {
         return false;
@@ -266,7 +322,6 @@ bool applySaveData(const user_save_system::SaveData &data, Player &p, int &monst
     
     return true;
 }
-
 // Helper function to check if a path exists using BFS
 bool hasPath(int sx, int sy, int ex, int ey) {
     if (sx == ex && sy == ey) return true;
