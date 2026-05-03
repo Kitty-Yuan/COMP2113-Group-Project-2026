@@ -699,8 +699,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
             if (px == ex && py == ey) {
                 clear();
                 centerPrint(getCenteredStartY(2), "Foolish enemy walked right into you!");
-                centerPrint(getCenteredStartY(2), "You caught the enemy!");
-                centerPrint(getCenteredStartY(2)+1, "Victory!");
+                centerPrint(getCenteredStartY(2)+1, "You caught the enemy! Victory!");
                 refresh();
                 ncWait();
                 return;
@@ -718,7 +717,7 @@ void tutorial(Player &p) {
     ncWait();
 
     char demoMap[5][5] = {
-        {'P','.','#','.','K'},
+        {'.','.','#','.','K'},
         {'.','#','.','.','.'},
         {'.','.','B','#','.'},
         {'#','.','#','.','.'},
@@ -993,7 +992,7 @@ void tutorial(Player &p) {
             napms(800);
 
             tutorialMinigame(p);
-
+            clear();
             centerPrint(getCenteredStartY(1),
                 "Tutorial Complete!");
             refresh();
