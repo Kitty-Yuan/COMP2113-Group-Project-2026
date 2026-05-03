@@ -22,17 +22,6 @@ using namespace std;
 extern bool returnToDifficultyMenu;
 
 // ===== Scene assets =====
-string tree = R"(
- /******\
-/********\
-   ||||
-   ||||
-)";
-
-string ground = R"(
-▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-)";
 
 string title = R"(
 __  __                   _  __      _       _     _   

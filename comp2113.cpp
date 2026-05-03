@@ -831,9 +831,9 @@ void tutorial(Player &p) {
             int minPower=5,maxPower=7;
             while (monsterHP>0 && p.hp>0) {
                 clear();
-                y = 0;
-                mvprintw(y++, 0, "BATTLE - Your HP: %d | Monster HP: %d", p.hp, monsterHP);
-                mvprintw(y++, 0, "Choose: 1) Normal  2) Strong  3) Defend");
+                y = getCenteredStartY(2);
+                centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Monster HP: " + to_string(monsterHP));
+                centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
                 refresh();
                 
                 int choice = readKeyWithWindowGuard();
@@ -871,14 +871,18 @@ void tutorial(Player &p) {
                 monsterHP-=playerAttack;
                 
                 clear();
-                y = 0;
-                if(playerAttack>0) mvprintw(y++, 0, "You dealt %d damage!", playerAttack);
+                y = getCenteredStartY(4);
+                if(playerAttack>0) {
+                    centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
+                    refresh();
+                    ncWait();
+                }
                 if(monsterHP<=0){
-                    mvprintw(y++, 0, "monster defeated!");
+                    centerPrint(y++, "monster defeated!");
                     p.gold+=10; 
                     p.exp+=20;
                     refresh();
-                    napms(500);
+                    ncWait();
                     break;
                 }
                 
@@ -889,10 +893,12 @@ void tutorial(Player &p) {
                         monsterHP-=counterDmg;
                         p.hp+=5;
                         edmg=0;
-                        mvprintw(y++, 0, "Defend success! Counter: %d damage!", counterDmg);
+                        centerPrint(y++, "Defend success! Counter: " + to_string(counterDmg) + " damage!");
+                        refresh();
+                        ncWait();
                         if(monsterHP<=0) {
-                            mvprintw(y++, 0, "monster defeated!");
-                            p.gold+=10; p.exp+=20; refresh(); napms(500); break;
+                            centerPrint(y++, "monster defeated!");
+                            p.gold+=10; p.exp+=20; refresh(); ncWait(); break;
                         }
                     } else {
                         edmg=(int)(edmg*0.4);
@@ -900,9 +906,9 @@ void tutorial(Player &p) {
                 }
                 if(edmg<1) edmg=1;
                 p.hp-=edmg;
-                mvprintw(y++, 0, "monster dealt %d damage!", edmg);
+                centerPrint(y++, "monster dealt " + to_string(edmg) + " damage!");
                 refresh();
-                napms(500);
+                ncWait();
             }
             demoMap[x][y_pos]='.';
         }
@@ -942,11 +948,20 @@ void tutorial(Player &p) {
 
 
 // ===== Special Ability Display =====
-void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
+// Stage 1: Display ability trigger and effect description
+void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg, 
+                                  const vector<string> &effectLines, const Player &p) {
     clear();
     
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
+    
+    // Display player stats panel (left side)
+    PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+    displayPlayerStats(statsPanel);
+    
+    // Display battle menu buttons (right side)
+    showButton();
     
     // Draw a decorative border
     attron(COLOR_PAIR(2) | A_BOLD);
@@ -964,28 +979,104 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg) {
     mvaddch(maxY - 8, maxX - 9, '+');
     attroff(COLOR_PAIR(2) | A_BOLD);
     
-    // Display monster name in top center
+    // Display monster name inside border
     int monsterNameY = 10;
     int monsterNameX = (maxX - static_cast<int>(m.name.length())) / 2;
     attron(COLOR_PAIR(2) | A_BOLD);
     mvprintw(monsterNameY, monsterNameX, "%s", m.name.c_str());
     attroff(COLOR_PAIR(2) | A_BOLD);
     
-    // Display monster appearance
-    int appearanceStartY = monsterNameY + 2;
+    // Display monster appearance inside border
     int appearanceStartX = (maxX - 30) / 2;
     istringstream iss(m.appearance1);
     string line;
-    int lineY = appearanceStartY;
+    int lineY = monsterNameY + 2;
     while (getline(iss, line) && lineY < maxY - 10) {
-        mvprintw(lineY++, appearanceStartX, "%s", line.c_str());
+        if (lineY >= 10) {
+            mvprintw(lineY++, appearanceStartX, "%s", line.c_str());
+        }
     }
     
-    // Display ability message in big font style
-    int msgStartY = maxY - 8;
+    // Display ability message inside border
+    int msgStartY = maxY - 13;
+    if (msgStartY < 15) msgStartY = 15;
     attron(COLOR_PAIR(3) | A_BOLD);
-    mvprintw(msgStartY, (maxX - static_cast<int>(abilityMsg.length())) / 2, "%s", abilityMsg.c_str());
+    int msgX = (maxX - static_cast<int>(abilityMsg.length())) / 2;
+    mvprintw(msgStartY, msgX, "%s", abilityMsg.c_str());
     attroff(COLOR_PAIR(3) | A_BOLD);
+    
+    // Display effect descriptions inside border
+    int effectY = msgStartY + 2;
+    attron(COLOR_PAIR(1));
+    for (const auto &effectLine : effectLines) {
+        if (effectY < maxY - 2) {
+            int effectX = (maxX - static_cast<int>(effectLine.length())) / 2;
+            mvprintw(effectY++, effectX, "%s", effectLine.c_str());
+        }
+    }
+    attroff(COLOR_PAIR(1));
+    
+    refresh();
+    ncWait();
+}
+
+// Stage 2: Display attack result within the same bordered frame
+void displayAbilityDamageResult(const Monster &m, int playerDamage, int monsterDamage, 
+                                 bool playerAttackMissed, const Player &p) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    clear();
+    
+    // Display player stats panel (left side)
+    PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
+    displayPlayerStats(statsPanel);
+    
+    // Display battle menu buttons (right side)
+    showButton();
+    
+    // Draw a decorative border
+    attron(COLOR_PAIR(2) | A_BOLD);
+    for (int x = 8; x < maxX - 8; x++) {
+        mvaddch(8, x, '=');
+        mvaddch(maxY - 8, x, '=');
+    }
+    for (int y = 8; y < maxY - 8; y++) {
+        mvaddch(y, 8, '|');
+        mvaddch(y, maxX - 9, '|');
+    }
+    mvaddch(8, 8, '+');
+    mvaddch(8, maxX - 9, '+');
+    mvaddch(maxY - 8, 8, '+');
+    mvaddch(maxY - 8, maxX - 9, '+');
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    
+    // Display title inside border
+    int titleY = 10;
+    string titleText = "=== ATTACK RESULT ===";
+    int titleX = (maxX - static_cast<int>(titleText.length())) / 2;
+    attron(COLOR_PAIR(3) | A_BOLD);
+    mvprintw(titleY, titleX, "%s", titleText.c_str());
+    attroff(COLOR_PAIR(3) | A_BOLD);
+    
+    // Display player's attack result inside border
+    int resultY = titleY + 3;
+    attron(COLOR_PAIR(1));
+    string playerResult;
+    if (playerAttackMissed) {
+        playerResult = "Your attack MISSED!";
+    } else {
+        playerResult = "You dealt " + to_string(playerDamage) + " damage!";
+    }
+    int playerX = (maxX - static_cast<int>(playerResult.length())) / 2;
+    mvprintw(resultY++, playerX, "%s", playerResult.c_str());
+    
+    // Display monster's attack result inside border
+    resultY += 2;
+    string monsterResult = m.name + " dealt " + to_string(monsterDamage) + " damage!";
+    int monsterX = (maxX - static_cast<int>(monsterResult.length())) / 2;
+    mvprintw(resultY++, monsterX, "%s", monsterResult.c_str());
+    attroff(COLOR_PAIR(1));
     
     refresh();
     ncWait();
@@ -1050,14 +1141,11 @@ void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int
 
     string frameStr;
     int xOff = 0;
-    int yOff = 0;
 
     if (m.name == "Ghost") {
         xOff = (frame % 8 < 4) ? -1 : 1;
-        yOff = (frame % 6 < 3) ? 0 : -1;
         frameStr = ((frame / 15) % 2 == 0) ? ghost_face : ghost_mist;
     } else if (m.name == "chestnut") {
-        yOff = (frame % 8 < 2) ? -1 : 0;
         frameStr = ((frame / 12) % 3 == 2) ? chestnut_spore : chestnut_normal;
     } else if (m.name == "Owl") {
         bool blink = (frame % 14 >= 12);
@@ -1074,7 +1162,7 @@ void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int
 
     istringstream iss(frameStr);
     string ln;
-    int lineY = baseY + 1 + yOff;
+    int lineY = baseY + 1;
 
     // Per-monster color + attribute selection
     int colorPair = 1;
@@ -1112,6 +1200,66 @@ void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int
     attroff(COLOR_PAIR(colorPair) | attrs);
 }
 
+// ===== Boss Animation Frames =====
+void drawBossAnimFrame(int frame, int baseX, int baseY, int maxY) {
+    static const string boss_idle =
+        "       /\\\\\\\n"
+        "      / 0 0 \\\n"
+        "  .--|   ^   |--.\n"
+        " /   |  ---  |   \\\n"
+        "|    | [===] |    |\n"
+        "|    |  | |  |    |\n"
+        " \\   |  | |  |   /\n"
+        "  '._|__|_|__|_.'\n"
+        "     / /   \\ \\\n"
+        "    /_/     \\_\\\n";
+
+    static const string boss_charge =
+        "     \\  /\\  /\n"
+        "      \\/  \\/ \n"
+        "  .--| 0  0 |--.\n"
+        " /   |  __  |   \\\n"
+        "|    | [##] |    |\n"
+        "|    |  ||  |    |\n"
+        " \\   |  ||  |   /\n"
+        "  '._|__||__|_.'\n"
+        "    _/ /  \\ \\\n"
+        "   /__/    \\__\\\n";
+
+    static const string boss_slash =
+        "      __/\\\\__\n"
+        "     / 0 0  /\n"
+        " .--|   ^  /--.\n"
+        "/   |  -- /    \\\n"
+        "|   | [==/=====>\n"
+        "|   |  | /|     |\n"
+        " \\  |  |/ |    /\n"
+        "  '._|__|__|_.'\n"
+        "     / /  \\ \\\n"
+        "    /_/    \\_\\\n";
+
+    string frameStr;
+    int phase = (frame / 8) % 3;
+    if (phase == 0) frameStr = boss_idle;
+    else if (phase == 1) frameStr = boss_charge;
+    else frameStr = boss_slash;
+
+    int colorPair = 3;
+    int attrs = ((frame / 4) % 2 == 0) ? A_BOLD : (A_BOLD | A_DIM);
+
+    attron(COLOR_PAIR(colorPair) | attrs);
+    istringstream iss(frameStr);
+    string ln;
+    int lineY = baseY;
+    while (getline(iss, ln) && lineY < maxY - 4) {
+        if (lineY >= 0) {
+            mvprintw(lineY, baseX, "%s", ln.c_str());
+        }
+        lineY++;
+    }
+    attroff(COLOR_PAIR(colorPair) | attrs);
+}
+
 // ===== Battle System =====
 void fight(Player &p, int monsterMin, int monsterMax) {
     clear();
@@ -1123,9 +1271,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     
     int monsterIndex = rand() % monsters.size();
     Monster m = monsters[monsterIndex];
-    
-    // Special ability state: Ghost ability 2 can reduce player ATK for the next turns.
-    int turnsReduceATK = 0;
     
     // Animation frame for monster effects
     int animationFrame = 0;
@@ -1145,7 +1290,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         getmaxyx(stdscr, maxY, maxX);
         int monsterX = (maxX - 20) / 2;
         int monsterStartY = max(5, (maxY - 12) / 2);
-        int lineY = monsterStartY + 1;
         string line;
         PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
 
@@ -1161,13 +1305,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
 
             y = monsterStartY - 3;
             centerPrint(y++, "BATTLE - " + m.name + " HP: " + to_string(monsterHP));
-            if (turnsReduceATK > 0) {
-                attron(COLOR_PAIR(2) | A_BOLD);
-                centerPrint(y++, "** Your ATK is reduced 50% for " + to_string(turnsReduceATK) + " more turn(s) **");
-                attroff(COLOR_PAIR(2) | A_BOLD);
-            } else {
-                y++;
-            }
             if (showInvalidMsg) {
                 attron(COLOR_PAIR(3) | A_BOLD);
                 centerPrint(y++, "Invalid! Press 1) Normal  2) Strong  3) Defend");
@@ -1207,17 +1344,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             }
         }
 
-        // Calculate player attack with debuff effects
+        // Calculate player attack
         int playerAttack = 0;
         int defendSuccess = 0;
-        int atkBuff = p.atk;
         
-        // Apply ATK reduction if active
-        if (turnsReduceATK > 0) {
-            atkBuff = (int)(p.atk * 0.5);  // 50% reduction
-        }
-        
-        if (choice == '1') playerAttack = rand() % atkBuff + 1;
+        if (choice == '1') playerAttack = rand() % p.atk + 1;
         else if (choice == '2') {
             if (p.hp <= 3) {
                 clear();
@@ -1249,7 +1380,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             // Attack determination
             if (rand() % 100 < 75) {
                 double mult = 1.3 + (rand() % 40) / 100.0; // 1.30 ~ 1.69
-                playerAttack = (int)(atkBuff * mult);
+                playerAttack = (int)(p.atk * mult);
                 if (playerAttack < 1) playerAttack = 1;
             } else {
                 playerAttack = 0;
@@ -1260,7 +1391,9 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         bool abilityTriggeredThisTurn = false;
         int triggeredAbilityIndex = 0;
         string triggeredAbilityName;
-        double abilityDamageMultiplier = 1.0;
+        vector<string> abilityEffectLines;
+        int monsterAbilityDamageBonus = 0;  // Monster's damage bonus from ability
+        bool playerAttackMissed = false;
 
         // New rule: after player picks an attack (1/2), there is a 40% chance
         // to trigger special ability 1 or 2 for this turn.
@@ -1270,42 +1403,87 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             triggeredAbilityName = (triggeredAbilityIndex == 1) ? m.specialattack1 : m.specialattack2;
 
             string abilityMsg = m.name + " USES: " + triggeredAbilityName;
-            displaySpecialAbilityEffect(m, abilityMsg);
 
-            // Stack ability effect on this turn's attack flow.
+            // ===== GHOST Abilities =====
             if (m.name == "Ghost") {
                 if (triggeredAbilityIndex == 1) {
+                    // Ability 1: Incorporeal Form - reduces player attack by 50% THIS TURN ONLY
                     playerAttack = (int)(playerAttack * 0.5);
-                    abilityDamageMultiplier = 1.35;
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.35);
+                    abilityEffectLines.push_back("Incorporeal Form - becomes intangible and evades attacks");
+                    abilityEffectLines.push_back("Your attack damage is reduced by 50%!");
                 } else {
-                    turnsReduceATK = max(turnsReduceATK, 2);
-                    abilityDamageMultiplier = 1.25;
-                }
-            } else if (m.name == "chestnut") {
-                if (triggeredAbilityIndex == 1) {
-                    abilityDamageMultiplier = 1.30;
-                } else {
+                    // Ability 2: Spectral Drain - reduces player attack by 30% THIS TURN ONLY
                     playerAttack = (int)(playerAttack * 0.7);
-                    abilityDamageMultiplier = 1.20;
-                }
-            } else if (m.name == "Owl") {
-                if (triggeredAbilityIndex == 1) {
-                    abilityDamageMultiplier = 1.40;
-                } else {
-                    abilityDamageMultiplier = 1.25;
-                    if (rand() % 100 < 20) {
-                        playerAttack = 0;
-                    }
-                }
-            } else if (m.name == "Blob") {
-                if (triggeredAbilityIndex == 1) {
-                    abilityDamageMultiplier = 1.20;
-                    p.gold = max(0, p.gold - 5);
-                } else {
-                    abilityDamageMultiplier = 1.15;
-                    monsterHP += 5;
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.25);
+                    abilityEffectLines.push_back("Spectral Drain - drains your vital energy");
+                    abilityEffectLines.push_back("Your attack damage is reduced by 30%!");
                 }
             }
+            // ===== CHESTNUT Abilities =====
+            else if (m.name == "chestnut") {
+                if (triggeredAbilityIndex == 1) {
+                    // Ability 1: Spore Burst - reduces player attack by 50% THIS TURN ONLY
+                    playerAttack = (int)(playerAttack * 0.5);
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.30);
+                    abilityEffectLines.push_back("Spore Burst - releases toxic spores into the air");
+                    abilityEffectLines.push_back("Your attack damage is reduced by 50%!");
+                } else {
+                    // Ability 2: Toxic Cloud - 70% chance player attack misses
+                    if (rand() % 100 < 70) {
+                        playerAttack = 0;
+                        playerAttackMissed = true;
+                        abilityEffectLines.push_back("Toxic Cloud - a poisonous fog covers the field");
+                        abilityEffectLines.push_back("Your attack will MISS!");
+                    } else {
+                        abilityEffectLines.push_back("Toxic Cloud - a poisonous fog covers the field");
+                        abilityEffectLines.push_back("You managed to break through the fog!");
+                    }
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.20);
+                }
+            }
+            // ===== OWL Abilities =====
+            else if (m.name == "Owl") {
+                if (triggeredAbilityIndex == 1) {
+                    // Ability 1: Fire Blow - monster attack +40% THIS TURN
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.40);
+                    abilityEffectLines.push_back("Fire Blow - unleashes a blazing wave of flame");
+                    abilityEffectLines.push_back("Owl's attack power increases by 40%!");
+                } else {
+                    // Ability 2: Flash Blindness - 30% chance player attack misses
+                    if (rand() % 100 < 30) {
+                        playerAttack = 0;
+                        playerAttackMissed = true;
+                        abilityEffectLines.push_back("Flash Blindness - a blinding flash fills the air");
+                        abilityEffectLines.push_back("Your attack will MISS!");
+                    } else {
+                        abilityEffectLines.push_back("Flash Blindness - a blinding flash fills the air");
+                        abilityEffectLines.push_back("You manage to shield your eyes and attack!");
+                    }
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.25);
+                }
+            }
+            // ===== BLOB Abilities =====
+            else if (m.name == "Blob") {
+                if (triggeredAbilityIndex == 1) {
+                    // Ability 1: Consume Gold - steal 15 gold from player THIS TURN
+                    int goldStolen = min(15, p.gold);
+                    p.gold = max(0, p.gold - goldStolen);
+                    abilityEffectLines.push_back("Consume Gold - absorbs your precious coins");
+                    abilityEffectLines.push_back("You lost " + to_string(goldStolen) + " gold!");
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.20);
+                } else {
+                    // Ability 2: Gelatinous Body - 100% chance player attack misses
+                    playerAttack = 0;
+                    playerAttackMissed = true;
+                    abilityEffectLines.push_back("Gelatinous Body - becomes a slippery gelatinous mass");
+                    abilityEffectLines.push_back("Your attack passes right through!");
+                    monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.15);
+                }
+            }
+            
+            // Display ability effect (STAGE 1: Skill description)
+            displaySpecialAbilityEffect(m, abilityMsg, abilityEffectLines, p);
         }
 
         monsterHP -= playerAttack;
@@ -1318,17 +1496,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         
         // Display monster appearance in center with animation
         drawMonsterAnimFrame(m, animationFrame, monsterX, monsterStartY, maxY);
-        lineY = monsterStartY + 7;
 
-        // Display battle results above monster
+        // Display battle results above monster (only if ability was NOT triggered)
         y = monsterStartY - 3;
-        if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
-        else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
-        
-        if (abilityTriggeredThisTurn) {
-            attron(COLOR_PAIR(2) | A_BOLD);
-            centerPrint(lineY++, m.name + " triggered: " + triggeredAbilityName);
-            attroff(COLOR_PAIR(2) | A_BOLD);
+        if (!abilityTriggeredThisTurn) {
+            if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
+            else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
         }
 
         if (monsterHP <= 0) {
@@ -1343,14 +1516,9 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             break;
         }
 
-        // Decrease remaining turns of ATK reduction
-        if (turnsReduceATK > 0) {
-            turnsReduceATK--;
-        }
-
         int dmg = (rand() % (monsterMax - monsterMin + 1)) + monsterMin;
         if (abilityTriggeredThisTurn) {
-            dmg = (int)(dmg * abilityDamageMultiplier);
+            dmg += monsterAbilityDamageBonus;
         }
         
         if (choice == '3') {
@@ -1378,9 +1546,15 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         if (dmg < 1) dmg = 1;
         p.hp -= dmg;
         
-        centerPrint(y++, m.name + " dealt " + to_string(dmg) + " damage!");
-        refresh();
-        ncWait();
+        // Display damage result (only if ability was NOT triggered - otherwise it was already shown in bordered frame)
+        if (!abilityTriggeredThisTurn) {
+            centerPrint(y++, m.name + " dealt " + to_string(dmg) + " damage!");
+            refresh();
+            ncWait();
+        } else {
+            // Ability was triggered: show full result in bordered frame instead
+            displayAbilityDamageResult(m, playerAttack, dmg, playerAttackMissed, p);
+        }
     }
 }
 
@@ -1394,35 +1568,52 @@ void bossFight(Player &p, int bossMin, int bossMax) {
     napms(1000);
     
     int bossHP = 100;
+    int animationFrame = 0;
 
     while (bossHP > 0 && p.hp > 0) {
         clear();
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        int bossX = (maxX - 24) / 2;
+        int bossStartY = max(5, (maxY - 16) / 2);
         
         // Display player stats panel
         PlayerStats statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
-        displayPlayerStats(statsPanel);
-        
-        y = getCenteredStartY(3);
-        centerPrint(y++, "BOSS BATTLE - Boss HP: " + to_string(bossHP));
-        centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
-        // Bottom hint
-        {
-            int maxY2, maxX2;
-            getmaxyx(stdscr, maxY2, maxX2);
-            const string bottomHint = "Press 1 / 2 / 3 to choose...";
-            int hintY = max(0, maxY2 - 2);
-            move(hintY, 0); clrtoeol();
-            attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-            mvprintw(hintY, max(0, (maxX2 - static_cast<int>(bottomHint.size())) / 2), "%s", bottomHint.c_str());
-            attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
-        }
-        showButton();
-        refresh();
-        
-        int choice = readKeyWithWindowGuard();
-        if (choice == KET_HOME_BUTTON) {
-            returnToDifficultyMenu = true;
-            return;
+        int choice = 0;
+        bool valid = false;
+
+        while (!valid) {
+            clear();
+            displayPlayerStats(statsPanel);
+            drawBossAnimFrame(animationFrame, bossX, bossStartY, maxY);
+
+            y = bossStartY - 3;
+            centerPrint(y++, "BOSS BATTLE - DREAD KING HP: " + to_string(bossHP));
+            centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+
+            // Bottom hint
+            {
+                const string bottomHint = "Press 1 / 2 / 3 to choose...";
+                int hintY = max(0, maxY - 2);
+                move(hintY, 0); clrtoeol();
+                attron(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
+                mvprintw(hintY, max(0, (maxX - static_cast<int>(bottomHint.size())) / 2), "%s", bottomHint.c_str());
+                attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
+            }
+            showButton();
+            refresh();
+
+            choice = readKeyAnimFrame(120);
+            animationFrame++;
+
+            if (choice == ERR) continue;
+            if (choice == KET_HOME_BUTTON) {
+                returnToDifficultyMenu = true;
+                return;
+            }
+            if (choice == '1' || choice == '2' || choice == '3') {
+                valid = true;
+            }
         }
         
         int playerAttack = 0;
@@ -1467,8 +1658,9 @@ void bossFight(Player &p, int bossMin, int bossMax) {
         // Display player stats panel
         statsPanel = {p.hp, 100, p.atk, p.def, p.gold, p.exp, p.level, p.hasKey};
         displayPlayerStats(statsPanel);
+        drawBossAnimFrame(animationFrame, bossX, bossStartY, maxY);
         
-        y = getCenteredStartY(4);
+        y = bossStartY - 3;
         if (playerAttack > 0) centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
         else if (choice == '1' || choice == '2') centerPrint(y++, "Attack missed!");
 
@@ -1661,6 +1853,110 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
     ncWait();
 }
 
+// ===== Chest Event Display =====
+void displayChestEvent(Player &p) {
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    
+    clear();
+    
+    // Draw yellow border
+    attron(COLOR_PAIR(2) | A_BOLD);
+    for (int x = 8; x < maxX - 8; x++) {
+        mvaddch(8, x, '=');
+        mvaddch(maxY - 8, x, '=');
+    }
+    for (int y = 8; y < maxY - 8; y++) {
+        mvaddch(y, 8, '|');
+        mvaddch(y, maxX - 9, '|');
+    }
+    mvaddch(8, 8, '+');
+    mvaddch(8, maxX - 9, '+');
+    mvaddch(maxY - 8, 8, '+');
+    mvaddch(maxY - 8, maxX - 9, '+');
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    
+    // Title
+    attron(COLOR_PAIR(3) | A_BOLD);
+    string titleText = "=== TREASURE CHEST ===";
+    int titleX = (maxX - static_cast<int>(titleText.length())) / 2;
+    mvprintw(10, titleX, "%s", titleText.c_str());
+    attroff(COLOR_PAIR(3) | A_BOLD);
+    
+    // Chest animation - cycle through 3 frames over time
+    for (int i = 0; i < 3; i++) {
+        clear();
+        
+        // Redraw border
+        attron(COLOR_PAIR(2) | A_BOLD);
+        for (int x = 8; x < maxX - 8; x++) {
+            mvaddch(8, x, '=');
+            mvaddch(maxY - 8, x, '=');
+        }
+        for (int y = 8; y < maxY - 8; y++) {
+            mvaddch(y, 8, '|');
+            mvaddch(y, maxX - 9, '|');
+        }
+        mvaddch(8, 8, '+');
+        mvaddch(8, maxX - 9, '+');
+        mvaddch(maxY - 8, 8, '+');
+        mvaddch(maxY - 8, maxX - 9, '+');
+        attroff(COLOR_PAIR(2) | A_BOLD);
+        
+        // Title
+        attron(COLOR_PAIR(3) | A_BOLD);
+        mvprintw(10, titleX, "%s", titleText.c_str());
+        attroff(COLOR_PAIR(3) | A_BOLD);
+        
+        // Draw chest ASCII art
+        int chestY = 13;
+        int chestX = maxX / 2 - 6;
+        
+        attron(COLOR_PAIR(4) | A_BOLD);
+        if (i < 2) {
+            // Closed chest (frame 0-1)
+            mvprintw(chestY, chestX, "  ______  ");
+            mvprintw(chestY + 1, chestX, " |  []  | ");
+            mvprintw(chestY + 2, chestX, " |______| ");
+            mvprintw(chestY + 3, chestX, "  ------  ");
+        } else {
+            // Open chest (frame 2)
+            mvprintw(chestY, chestX, "  ______  ");
+            mvprintw(chestY + 1, chestX, " |  ^^  | ");
+            mvprintw(chestY + 2, chestX, " |______|  ");
+            mvprintw(chestY + 3, chestX, "    **    ");
+        }
+        attroff(COLOR_PAIR(4) | A_BOLD);
+        
+        refresh();
+        napms(500);
+    }
+    
+    // Show gold amount info
+    int infoY = 19;
+    attron(COLOR_PAIR(1));
+    string beforeText = "Before: " + to_string(p.gold) + " Gold";
+    int beforeX = (maxX - static_cast<int>(beforeText.length())) / 2;
+    mvprintw(infoY, beforeX, "%s", beforeText.c_str());
+    
+    // Update gold
+    p.gold += 20;
+    
+    string afterText = "After: " + to_string(p.gold) + " Gold (+20)";
+    int afterX = (maxX - static_cast<int>(afterText.length())) / 2;
+    mvprintw(infoY + 2, afterX, "%s", afterText.c_str());
+    
+    attron(COLOR_PAIR(2) | A_BOLD);
+    string msgText = "Press Enter to continue";
+    int msgX = (maxX - static_cast<int>(msgText.length())) / 2;
+    mvprintw(infoY + 4, msgX, "%s", msgText.c_str());
+    attroff(COLOR_PAIR(2) | A_BOLD);
+    attroff(COLOR_PAIR(1));
+    
+    refresh();
+    ncWait();
+}
+
 // ===== Map Display =====
 #include <ncurses.h>
 
@@ -1796,12 +2092,8 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
         return; 
     }
     if (grid[px][py] == 'C') { 
-        clear();
-        centerPrint(getCenteredStartY(1), "Chest! +20 Gold");
-        p.gold += 20; 
+        displayChestEvent(p);
         grid[px][py] = '.';
-        refresh();
-        ncWait();
         return; 
     }
     if (grid[px][py] == 'B') {
