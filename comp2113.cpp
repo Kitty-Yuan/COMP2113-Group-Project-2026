@@ -1424,13 +1424,11 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     playerAttack = (int)(playerAttack * 0.5);
                     monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.35);
                     abilityEffectLines.push_back("Incorporeal Form - becomes intangible and evades attacks");
-                    abilityEffectLines.push_back("Your attack damage is reduced by 50%!");
                 } else {
                     // Ability 2: Spectral Drain - reduces player attack by 30% THIS TURN ONLY
                     playerAttack = (int)(playerAttack * 0.7);
                     monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.25);
                     abilityEffectLines.push_back("Spectral Drain - drains your vital energy");
-                    abilityEffectLines.push_back("Your attack damage is reduced by 30%!");
                 }
             }
             // ===== CHESTNUT Abilities =====
@@ -1440,7 +1438,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     playerAttack = (int)(playerAttack * 0.5);
                     monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.30);
                     abilityEffectLines.push_back("Spore Burst - releases toxic spores into the air");
-                    abilityEffectLines.push_back("Your attack damage is reduced by 50%!");
                 } else {
                     // Ability 2: Toxic Cloud - 70% chance player attack misses
                     if (rand() % 100 < 70) {
@@ -1461,7 +1458,6 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     // Ability 1: Fire Blow - fixed +10 monster damage THIS TURN
                     monsterAbilityDamageBonus = 10;
                     abilityEffectLines.push_back("Fire Blow - unleashes a blazing wave of flame");
-                    abilityEffectLines.push_back("Owl deals an extra 10 damage this turn!");
                 } else {
                     // Ability 2: Flash Blindness - 30% chance player attack misses
                     if (rand() % 100 < 30) {
@@ -1483,14 +1479,12 @@ void fight(Player &p, int monsterMin, int monsterMax) {
                     goldStolen = min(15, p.gold);
                     p.gold = max(0, p.gold - goldStolen);
                     abilityEffectLines.push_back("Consume Gold - absorbs your precious coins");
-                    abilityEffectLines.push_back("You lost " + to_string(goldStolen) + " gold!");
                     monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.20);
                 } else {
                     // Ability 2: Gelatinous Body - 100% chance player attack misses
                     playerAttack = 0;
                     playerAttackMissed = true;
                     abilityEffectLines.push_back("Gelatinous Body - becomes a slippery gelatinous mass");
-                    abilityEffectLines.push_back("Your attack passes right through!");
                     monsterAbilityDamageBonus = (int)(((rand() % (monsterMax - monsterMin + 1)) + monsterMin) * 0.15);
                 }
             }
