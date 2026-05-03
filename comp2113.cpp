@@ -1438,7 +1438,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     displayPlayerStats(statsPanel);
     
     int monsterIndex = rand() % monsters.size();
-    Monster m = monsters[monsterIndex];
+    // ===== DYNAMIC MEMORY ALLOCATION =====
+    // Create a dynamic copy of the selected monster for battle state tracking
+    Monster* battleMonster = new Monster(monsters[monsterIndex]);
+    Monster& m = *battleMonster;  // Reference for easier use
     
     // Animation frame for monster effects
     int animationFrame = 0;
@@ -1719,6 +1722,10 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             displayAbilityDamageResult(m, playerAttack, dmg, playerAttackMissed, p, goldStolen);
         }
     }
+    
+    // ===== DYNAMIC MEMORY CLEANUP =====
+    // Delete the dynamically allocated monster copy
+    delete battleMonster;
 }
 
 /**

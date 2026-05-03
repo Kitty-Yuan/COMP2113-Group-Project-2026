@@ -327,6 +327,14 @@ Example: `player1__difficulty_2.save`
 - Save system (`user_save_system.cpp`) for persistence
 - ncurses integration for terminal UI rendering
 
+### Memory Management
+- **Dynamic Memory Allocation** - Battle monsters are dynamically created using `new` for state-isolated combat instances (`Monster* battleMonster = new Monster(...)`)
+- **Manual Cleanup** - Explicit `delete` calls release allocated memory at the end of each battle, preventing memory leaks
+- **Stack Allocation** - Game state objects (Player, SaveData) allocated on stack for fast access
+- **STL Containers** - `std::vector` and `std::string` for automatic memory management of dynamic collections
+- **RAII Principle** - Resource cleanup tied to scope lifetime where appropriate
+- **Mixed Memory Strategy** - Combines stack, heap, and container allocation based on use case
+
 ---
 
 ## 📖 Additional Resources
@@ -356,6 +364,7 @@ This project demonstrates:
 - **Game Architecture** - Modular design separating UI, logic, and persistence
 - **Procedural Generation** - Algorithms for creating varied gameplay
 - **C++17 Features** - Structured bindings, modern C++ practices
+- **Memory Management** - RAII principles and stack-based allocation patterns
 - **Data Persistence** - File I/O and serialization
 - **Terminal Graphics** - ncurses library for interactive UI
 - **Combat Systems** - Stat-based gameplay mechanics
