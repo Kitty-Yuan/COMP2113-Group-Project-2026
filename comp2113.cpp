@@ -803,7 +803,15 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
     }
 }
 
-// ===== Tutorial =====
+/**
+ * @brief Runs an interactive tutorial session for new players.
+ * @details This function creates a mini 5x5 sandbox where players learn:
+ * 1. Movement using WASD.
+ * 2. Combat mechanics (Normal/Strong/Defend) through a scripted monster encounter.
+ * 3. Objective progression (picking up the 'K'ey to unlock the 'G'oal).
+ * 4. The "Catch the Princess" mini-game concept.
+ * @param p Reference to the Player struct (tutorial stats carry over to the first game).
+ */
 void tutorial(Player &p) {
     clear();
     centerPrint(getCenteredStartY(1), "===== TUTORIAL =====");
@@ -834,7 +842,7 @@ void tutorial(Player &p) {
         int startX = max(0, (maxX - 10) / 2);
 
         // ======================
-        // 🎯 STEP HINT SYSTEM
+        // STEP HINT SYSTEM
         // ======================
         if (step == 0)
             centerPrint(startY + y++, "Step 1: Move with W/A/S/D");
@@ -1034,10 +1042,10 @@ void tutorial(Player &p) {
             refresh();
             napms(800);
 
-            // 🎮 进入小游戏
+            // Trigger the tutorial mini-game
             tutorialMinigame(p);
 
-            // 🎯 完成
+            // Completion
             centerPrint(getCenteredStartY(1),
                 "Tutorial Complete!");
             refresh();
@@ -1046,10 +1054,17 @@ void tutorial(Player &p) {
             break;
         }
     }
-}    
+}
 
-
-// ===== Special Ability Display =====
+/**
+ * @brief Stage 1 of special ability animation: Displays the trigger and effect description.
+ * @details Clears the screen and draws a decorative bordered frame. It shows the 
+ * monster's name, appearance, and a description of the special ability being used.
+ * @param m The Monster using the ability.
+ * @param abilityMsg The header text for the ability.
+ * @param effectLines A list of descriptive lines explaining what the effect does.
+ * @param p Current player (to display stats panel).
+ */
 // Stage 1: Display ability trigger and effect description
 void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg, 
                                   const vector<string> &effectLines, const Player &p) {
@@ -1122,6 +1137,17 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg,
     ncWait();
 }
 
+/**
+ * @brief Stage 2 of special ability animation: Displays the damage and resource changes.
+ * @details Within the same bordered frame as Stage 1, this shows the numeric outcomes 
+ * of the interaction, including damage dealt by both parties and any stolen resources.
+ * @param m The Monster involved.
+ * @param playerDamage Amount of damage dealt to the monster.
+ * @param monsterDamage Amount of damage dealt to the player.
+ * @param playerAttackMissed Boolean flag to show "MISSED" status.
+ * @param p Current player (to update stats panel).
+ * @param goldStolen Specific to Blob-type enemies, indicates gold reduction.
+ */
 // Stage 2: Display attack result within the same bordered frame
 void displayAbilityDamageResult(const Monster &m, int playerDamage, int monsterDamage, 
                                  bool playerAttackMissed, const Player &p, int goldStolen = 0) {
@@ -1192,6 +1218,18 @@ void displayAbilityDamageResult(const Monster &m, int playerDamage, int monsterD
     ncWait();
 }
 
+/**
+ * @brief Renders a specific frame of a monster's idle/action animation.
+ * @details This is the core animation engine for battle encounters. It:
+ * 1. Selects ASCII art frames based on the monster's name and current frame count.
+ * 2. Applies unique color palettes (e.g., flickering white for Ghost, pulsing red for Spores).
+ * 3. Handles spatial offsets (like the Ghost's floating movement) and state-based 
+ * visuals (like the Owl's blinking or Blob's squishing).
+ * @param m The Monster object to animate.
+ * @param frame The current animation frame index (used for timing/oscillations).
+ * @param baseX, baseY The screen coordinates for the top-left of the animation area.
+ * @param maxY The screen boundary to prevent drawing outside ncurses window.
+ */
 // ===== Per-Monster Animation Frames =====
 void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int maxY) {
     // Frame strings (no leading newline)
@@ -1309,6 +1347,19 @@ void drawMonsterAnimFrame(const Monster &m, int frame, int baseX, int baseY, int
     attroff(COLOR_PAIR(colorPair) | attrs);
 }
 
+/**
+ * @brief Renders the animation frames for the Boss encounter.
+ * @details Specifically designed for the final boss, this function cycles through 
+ * three distinct animation phases (Idle, Charge, and Slash) to create a dynamic battle atmosphere. 
+ * It features:
+ * 1. State-based ASCII switching using a frame-based phase logic.
+ * 2. Visual feedback through rhythmic flickering.
+ * 3. Dedicated color styling
+ * @param frame The current animation cycle index.
+ * @param baseX The horizontal starting X-coordinate position.
+ * @param baseY The vertical starting Y-coordinate position.
+ * @param maxY The bottom boundary limit for the ncurses window.
+ */
 // ===== Boss Animation Frames =====
 void drawBossAnimFrame(int frame, int baseX, int baseY, int maxY) {
     static const string boss_idle =
