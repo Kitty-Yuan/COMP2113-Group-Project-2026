@@ -363,7 +363,7 @@ This project demonstrates:
 
 - **Game Architecture** - Modular design separating UI, logic, and persistence
 - **Procedural Generation** - Algorithms for creating varied gameplay
-- **C++17 Features** - Structured bindings, modern C++ practices
+- **C++11 Features** - Structured bindings, modern C++ practices
 - **Memory Management** - RAII principles and stack-based allocation patterns
 - **Data Persistence** - File I/O and serialization
 - **Terminal Graphics** - ncurses library for interactive UI
