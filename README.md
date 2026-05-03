@@ -86,21 +86,37 @@ A terminal-based dungeon crawler game built with C++ and ncurses. Navigate throu
 
 ---
 
-## � API Documentation
+##  API Documentation
 
 For a comprehensive reference of all functions, structures, and game mechanics:
 
-🔗 **[Open API Reference](API_REFERENCE.html)** - Complete API documentation with:
-- All function signatures and parameters
-- Data structure definitions
-- Monster ability mechanics
-- Game flow diagrams
-- Quick search functionality (use the search box at the top)
+### Access the Documentation
+
+**Local (Recommended):**
+1. Clone/download the repository
+2. Open `API_REFERENCE.html` directly in your browser
+   ```bash
+   # macOS
+   open API_REFERENCE.html
+   
+   # Linux
+   xdg-open API_REFERENCE.html
+   
+   # Or just double-click the file
+   ```
+
+### Documentation Features
+- 📖 All function signatures and parameters
+- 🏗️ Data structure definitions  
+- ⚔️ Monster ability mechanics with detailed effects
+- 📊 Game flow diagrams and state machines
+- 🔍 Quick search functionality (use the search box at the top)
+- 📝 Usage examples for all major systems
 
 ### How to Use the Documentation
-1. **Search** - Use the search box at the top to quickly find functions or structures
-2. **Navigation** - Click the menu items to jump to different sections
-3. **Examples** - Each section includes usage examples and detailed explanations
+1. **Search** - Use the search box to quickly find functions or structures by name
+2. **Navigation** - Click menu items in the left sidebar to jump to sections
+3. **Details** - Each entry includes full signatures, parameters, and explanations
 
 ---
 
