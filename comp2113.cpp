@@ -624,14 +624,12 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
 
     int px = 1, py = 1;
     int ex = N/2, ey = N/2;
-
     int steps = 0;
 
     while (true) {
         clear();
 
         int startY = getCenteredStartY(N + 5);
-
         centerPrint(startY++, "Catch the enemy!");
         centerPrint(startY++, "It moves every 2 steps...");
         centerPrint(startY++, "---------------------");
@@ -655,14 +653,33 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
         int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
 
+        // Invalid key (non-movement)
+        if (m == '\0') {
+            attron(COLOR_PAIR(3) | A_BOLD);
+            centerPrint(startY, "Invalid key! Use W/A/S/D or Arrow keys only.");
+            attroff(COLOR_PAIR(3) | A_BOLD);
+            refresh();
+            napms(800);   // Show message briefly, then auto-refresh (loop continues)
+            continue;
+        }
+
         int nx = px, ny = py;
         if (m == 'w') nx--;
         else if (m == 's') nx++;
         else if (m == 'a') ny--;
         else if (m == 'd') ny++;
 
-        if (grid[nx][ny] == '#') continue;
+        // Wall collision
+        if (grid[nx][ny] == '#') {
+            attron(COLOR_PAIR(3) | A_BOLD);
+            centerPrint(startY, "Blocked by wall!");
+            attroff(COLOR_PAIR(3) | A_BOLD);
+            refresh();
+            napms(800);   // Auto continue
+            continue;
+        }
 
+        // Valid move
         px = nx;
         py = ny;
         steps++;
@@ -673,7 +690,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
             centerPrint(getCenteredStartY(2), "You caught the enemy!");
             centerPrint(getCenteredStartY(2)+1, "Victory!");
             refresh();
-            ncWait();
+            ncWait();     // Wait for Enter to return
             return;
         }
 
@@ -696,10 +713,19 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
                 }
                 tries++;
             }
+
+            // ===== catch the enemy after enemy move =====
+            if (px == ex && py == ey) {
+                clear();
+                centerPrint(getCenteredStartY(2), "Foolish enemy walked right into you!");
+                centerPrint(getCenteredStartY(2)+1, "You caught the enemy! Victory!");
+                refresh();
+                ncWait();   // Wait for Enter
+                return;
+            }
         }
     }
 }
-
 
 // ===== Tutorial =====
 void tutorial(Player &p) {
