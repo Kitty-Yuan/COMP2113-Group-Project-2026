@@ -847,6 +847,13 @@ void ncWait() {
     }
 }
 
+/**
+ * @brief Reads a key with a timeout, suitable for animation frames.
+ * @details Handles window resizing, minimum size enforcement, and mouse interactions 
+ * for top-bar buttons while maintaining the animation flow.
+ * @param timeoutMs The time in milliseconds to wait for input.
+ * @return The character code, KET_HOME_BUTTON, or ERR if no valid input.
+ */
 int readKeyAnimFrame(int timeoutMs) {
     if (!isWindowLargeEnough()) {
         enforceWindowSizeGate();
@@ -891,7 +898,12 @@ int readKeyAnimFrame(int timeoutMs) {
     return ch;
 }
 
-
+/**
+ * @brief Displays the main title screen.
+ * @details Renders the game title and "Press ENTER" hint centered on the screen.
+ * Supports mouse clicks for Manual and Quit buttons displayed on the title page.
+ * @return True if the user starts the game, false if they quit.
+ */
 bool showTitle() {
     // Use a dedicated color pair for the title. If the terminal supports custom colors,
     // define a softer pink; otherwise fall back to magenta.
@@ -983,7 +995,7 @@ bool showTitle() {
 
 
 
-// --- Princess Asset ---
+/** @brief ASCII and Braille art data for the Princess character. */
 const vector<string> PRINCESS_UI = {
     "    Y⡖Y⠞Y⠳Y⢲",
     "  Y⣠Y⠊Y⠉Y⠉Y⠉Y⠉Y⠑Y⣄",
@@ -1001,6 +1013,13 @@ const vector<string> PRINCESS_UI = {
 
 // --- Rendering Functions ---
 
+/**
+ * @brief Renders the Princess ASCII art with complex color mapping.
+ * @details Parses special color keys (W, Y, R) within the art strings and 
+ * correctly handles multi-byte UTF-8 Braille characters.
+ * @param startY Vertical starting position.
+ * @param startX Horizontal starting position.
+ */
 void drawPrincess(int startY, int startX) {
     for (int y = 0; y < (int)PRINCESS_UI.size(); ++y) {
         const string& line = PRINCESS_UI[y];
@@ -1040,6 +1059,15 @@ void drawPrincess(int startY, int startX) {
     }
 }
 
+/**
+ * @brief Simulates a typewriter effect for a paragraph of text.
+ * @details Updates the Princess animation frame during the typing process.
+ * @param paragraph Vector of strings representing the text lines.
+ * @param startY Vertical starting position for the text.
+ * @param delay_ms Milliseconds to pause between characters.
+ * @param canInterrupt If true, pressing 'S' will skip the typing animation.
+ * @return True if the animation was interrupted/skipped, false otherwise.
+ */
 bool typeParagraph(const vector<string>& paragraph, int startY, int delay_ms, bool canInterrupt) {
     // Calculate UI positioning for the Princess (Top Right)
     int princessX = COLS - 30;
@@ -1071,6 +1099,11 @@ bool typeParagraph(const vector<string>& paragraph, int startY, int delay_ms, bo
     return false;
 }
 
+/**
+ * @brief Orchestrates the game's introduction sequence.
+ * @details Manages multiple pages of story text, skip logic, and bonus rewards 
+ * given to the player upon completion or skip.
+ */
 void showIntro() {
     vector<vector<string>> pages = {
         {"A hundred years ago, in the Mushroom Kingdom...", "", "Oh wait, speaking of the Mushroom Kingdom a hundred years ago,", "", "did you know there was an incredibly delicious fruit in the forests?"},
@@ -1134,6 +1167,11 @@ void showIntro() {
     }
 }
 
+/**
+ * @brief Renders the difficulty level indicator on the UI.
+ * @details Displays the difficulty string vertically on the left side of the screen.
+ * @param difficulty Numeric representation of difficulty (1:EASY to 4:HELL).
+ */
 void displayDifficultyLevel(int difficulty) {
     [[maybe_unused]] int maxY;
     [[maybe_unused]] int maxX;
@@ -1160,6 +1198,11 @@ void displayDifficultyLevel(int difficulty) {
     attroff(COLOR_PAIR(3) | A_BOLD | A_REVERSE);
 }
 
+/**
+ * @brief Displays the comprehensive game manual in a scrollable popup.
+ * @details Handles scrolling via keyboard (Arrows/W/S/PageKeys) and mouse, 
+ * calculates scroll offsets, and manages a sub-window (popup) for content.
+ */
 void showHelp() {
     // Comprehensive game manual content
     vector<string> manual = {
@@ -1423,7 +1466,10 @@ void showHelp() {
     }
 }
 
+/** * @brief Anonymous namespace for internal UI layout helpers.
+ */
 namespace {
+/** @brief Defines a rectangular area for a UI button. */
 struct ButtonRect {
     int x;
     int y;
@@ -1432,6 +1478,7 @@ struct ButtonRect {
     TopButtonAction action;
 };
 
+/** @brief Generates the layout definitions for the side navigation buttons. */
 vector<ButtonRect> getTopButtonRects() {
     const int buttonWidth = 14;
     const int buttonHeight = 3;
@@ -1449,7 +1496,7 @@ vector<ButtonRect> getTopButtonRects() {
         {startX, startY + 2 * (buttonHeight + buttonGap), buttonWidth, buttonHeight, TopButtonAction::Help},
     };
 }
-}  // namespace
+}
 
 /**
  * @brief Renders interactive navigation buttons at the top of the screen.
