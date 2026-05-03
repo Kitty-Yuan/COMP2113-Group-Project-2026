@@ -607,7 +607,7 @@ void levelUp(Player &p) {
     }
 }
 
-//Tutorial Catch Princess
+// ===== Tutorial Minigame =====
 void tutorialMinigame([[maybe_unused]] Player &p) {
     const int N = 10;
     char grid[N][N];
@@ -659,7 +659,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
             centerPrint(startY, "Invalid key! Use W/A/S/D or Arrow keys only.");
             attroff(COLOR_PAIR(3) | A_BOLD);
             refresh();
-            napms(800);   // Show message briefly, then auto-refresh (loop continues)
+            napms(800);   // show briefly, then auto-continue
             continue;
         }
 
@@ -675,7 +675,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
             centerPrint(startY, "Blocked by wall!");
             attroff(COLOR_PAIR(3) | A_BOLD);
             refresh();
-            napms(800);   // Auto continue
+            napms(800);   // auto-continue
             continue;
         }
 
@@ -684,23 +684,22 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
         py = ny;
         steps++;
 
-        // ===== 🎯 catch the enemy =====
+        // ===== catch the enemy after player move =====
         if (px == ex && py == ey) {
             clear();
             centerPrint(getCenteredStartY(2), "You caught the enemy!");
             centerPrint(getCenteredStartY(2)+1, "Victory!");
             refresh();
-            ncWait();     // Wait for Enter to return
+            ncWait();
             return;
         }
 
-        // ===== 👾 movement=====
+        // ===== enemy movement =====
         if (steps % 2 == 0) {
             int dx[] = {-1, 1, 0, 0};
             int dy[] = {0, 0, -1, 1};
 
             int tries = 0;
-
             while (tries < 10) {
                 int dir = rand() % 4;
                 int nx_e = ex + dx[dir];
@@ -720,7 +719,7 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
                 centerPrint(getCenteredStartY(2), "Foolish enemy walked right into you!");
                 centerPrint(getCenteredStartY(2)+1, "You caught the enemy! Victory!");
                 refresh();
-                ncWait();   // Wait for Enter
+                ncWait();
                 return;
             }
         }
@@ -734,8 +733,9 @@ void tutorial(Player &p) {
     refresh();
     ncWait();
 
+    // Removed static 'P' from starting cell (player drawn dynamically)
     char demoMap[5][5] = {
-        {'P','.','#','.','K'},
+        {'.','.','#','.','K'},
         {'.','#','.','.','.'},
         {'.','.','B','#','.'},
         {'#','.','#','.','.'},
@@ -743,8 +743,8 @@ void tutorial(Player &p) {
     };
 
     bool hasKey = false;
-    int x = 0, y_pos = 0;
-    int step = 0;
+    int x = 0, y_pos = 0;   // player start at (0,0)
+    int step = 0;            // tutorial step (1:move,2:fight,3:key,4:exit)
 
     while (true) {
         clear();
@@ -757,25 +757,18 @@ void tutorial(Player &p) {
         int startY = getCenteredStartY(12);
         int startX = max(0, (maxX - 10) / 2);
 
-        // ======================
-        // 🎯 STEP HINT SYSTEM
-        // ======================
+        // Step hints
         if (step == 0)
             centerPrint(startY + y++, "Step 1: Move with W/A/S/D");
-
         else if (step == 1)
             centerPrint(startY + y++, "Step 2: Go fight enemy (B)");
-
         else if (step == 2)
             centerPrint(startY + y++, "Step 3: Go get the key (K)");
-
         else if (step == 3)
             centerPrint(startY + y++, "Step 4: Reach the exit (G)");
         centerPrint(startY + y++, "--------------------------");
 
-        // ======================
-        // MAP
-        // ======================
+        // Draw map
         for (int i = 0; i < 5; i++) {
             string row;
             for (int j = 0; j < 5; j++) {
@@ -787,9 +780,7 @@ void tutorial(Player &p) {
             y++;
         }
 
-        // ======================
-        // STATS
-        // ======================
+        // Stats display
         string stats = "HP=" + to_string(p.hp) +
                        " ATK=" + to_string(p.atk) +
                        " DEF=" + to_string(p.def) +
@@ -797,16 +788,11 @@ void tutorial(Player &p) {
                        " EXP=" + to_string(p.exp) +
                        " LV=" + to_string(p.level) +
                        " KEY=" + (hasKey ? "Y" : "N");
-
         centerPrint(startY + y++, stats);
-
         centerPrint(startY + y++, "Move: W/A/S/D | Battle: 1/2/3");
-
         refresh();
 
-        // ======================
-        // INPUT
-        // ======================
+        // Player movement input
         int key = readKeyWithWindowGuard();
         char m = normalizeMoveKey(key);
         if (m == '\0') continue;
@@ -823,51 +809,102 @@ void tutorial(Player &p) {
         x = nx;
         y_pos = ny;
 
-        if (step == 0) {
-            step = 1;
-        }
+        if (step == 0) step = 1;
 
-        // ======================
-        // KEY
-        // ======================
+        // ====================== KEY ======================
         if (demoMap[x][y_pos] == 'K') {
             clear();
             centerPrint(getCenteredStartY(1), "You found the Key!");
             ncWait();
-
             hasKey = true;
             demoMap[x][y_pos] = '.';
-            if (step <= 2) step = 3;  
-
+            if (step <= 2) step = 3;
             napms(300);
         }
-        
-       // ======================
-        // BATTLE
-        // ======================
-       else if (demoMap[x][y_pos] == 'B') {
+
+        // ====================== BATTLE ======================
+        else if (demoMap[x][y_pos] == 'B') {
             demoMap[x][y_pos] = '.';
 
             clear();
             centerPrint(getCenteredStartY(1), "monster encountered!");
             refresh();
             napms(500);
-            
-            int monsterHP=20;
-            int minPower=5,maxPower=7;
-            while (monsterHP>0 && p.hp>0) {
+
+            int monsterHP = 20;
+            int monsterMin = 5, monsterMax = 7;
+            bool showInvalidMsg = false;
+
+            // ----- Guided training state machine -----
+            int guidePhase = 1;       // 1=force option1, 2=force option2, 3=force option3, 4=free
+            bool explained[4] = {false, false, false, false}; // explained[1], explained[2], explained[3]
+
+            while (monsterHP > 0 && p.hp > 0) {
                 clear();
-                y = getCenteredStartY(2);
-                centerPrint(y++, "BATTLE - Your HP: " + to_string(p.hp) + " | Monster HP: " + to_string(monsterHP));
-                centerPrint(y++, "Choose: 1) Normal  2) Strong  3) Defend");
+                int yDisplay = getCenteredStartY(2);
+                centerPrint(yDisplay++, "BATTLE - Your HP: " + to_string(p.hp) + " | Monster HP: " + to_string(monsterHP));
+
+                // Show guidance hint if in training mode
+                if (guidePhase <= 3) {
+                    attron(COLOR_PAIR(2) | A_BOLD);
+                    string guideMsg = "[TRAINING] Please press " + to_string(guidePhase);
+                    if (guidePhase == 1) guideMsg += " for Normal Attack";
+                    else if (guidePhase == 2) guideMsg += " for Strong Attack";
+                    else guideMsg += " for Defend";
+                    centerPrint(yDisplay++, guideMsg);
+                    attroff(COLOR_PAIR(2) | A_BOLD);
+                } else {
+                    centerPrint(yDisplay++, "Choose freely: 1) Normal  2) Strong  3) Defend");
+                }
+
+                if (showInvalidMsg) {
+                    attron(COLOR_PAIR(3) | A_BOLD);
+                    if (guidePhase <= 3)
+                        centerPrint(yDisplay++, "Please press " + to_string(guidePhase) + "!");
+                    else
+                        centerPrint(yDisplay++, "Invalid! Press 1, 2, or 3.");
+                    attroff(COLOR_PAIR(3) | A_BOLD);
+                }
                 refresh();
-                
+
                 int choice = readKeyWithWindowGuard();
-                
-                int playerAttack=0;
-               int defendSuccess=0;
-                if (choice=='1') playerAttack=rand()%p.atk+1;
-                else if (choice=='2') {
+                int playerAttack = 0;
+                int defendSuccess = 0;
+
+                // --- Check if choice matches required guide phase ---
+                bool isAllowed = false;
+                if (guidePhase <= 3) {
+                    if (choice == ('0' + guidePhase)) isAllowed = true;
+                    else {
+                        showInvalidMsg = true;
+                        continue;
+                    }
+                } else {
+                    // free mode: any of 1,2,3 allowed
+                    if (choice == '1' || choice == '2' || choice == '3') isAllowed = true;
+                    else {
+                        showInvalidMsg = true;
+                        continue;
+                    }
+                }
+
+                // Reset invalid flag
+                showInvalidMsg = false;
+
+                // --- Execute the chosen action ---
+                if (choice == '1') {
+                    playerAttack = rand() % p.atk + 1;
+                    // Show explanation for option 1 (only once)
+                    if (guidePhase == 1 && !explained[1]) {
+                        clear();
+                        centerPrint(getCenteredStartY(2), "Normal Attack: deals 1 to ATK damage.");
+                        centerPrint(getCenteredStartY(2)+1, "No additional cost. Press any key to continue.");
+                        refresh();
+                        ncWait();
+                        explained[1] = true;
+                    }
+                }
+                else if (choice == '2') {
                     if (p.hp <= 3) {
                         clear();
                         centerPrint(getCenteredStartY(1), "Not enough HP! (need at least 3 HP)");
@@ -890,87 +927,152 @@ void tutorial(Player &p) {
                     } else {
                         playerAttack = 0;
                     }
-                } 
-                    
-                else if (choice=='3') defendSuccess=(rand()%100<40)?1:0;
-                
-                monsterHP-=playerAttack;
-                
-                clear();
-                y = getCenteredStartY(4);
-                if(playerAttack>0) {
-                    centerPrint(y++, "You dealt " + to_string(playerAttack) + " damage!");
-                    refresh();
-                    ncWait();
-                }
-                if(monsterHP<=0){
-                    centerPrint(y++, "monster defeated!");
-                    p.gold+=10; 
-                    p.exp+=20;
-                    refresh();
-                    ncWait();
-                    break;
-                }
-                
-                int edmg=(rand()%(maxPower-minPower+1))+minPower;
-                if(choice=='3') {
-                    if(defendSuccess) {
-                        int counterDmg=(int)(p.atk*0.4+edmg*(0.4+rand()%20/100.0));
-                        monsterHP-=counterDmg;
-                        p.hp+=5;
-                        edmg=0;
-                        centerPrint(y++, "Defend success! Counter: " + to_string(counterDmg) + " damage!");
+                    if (guidePhase == 2 && !explained[2]) {
+                        clear();
+                        centerPrint(getCenteredStartY(2), "Strong Attack: consumes 3 HP.");
+                        centerPrint(getCenteredStartY(2)+1, "75% chance to deal 1.3~1.69x ATK damage, otherwise misses.");
+                        centerPrint(getCenteredStartY(2)+2, "Press any key to continue.");
                         refresh();
                         ncWait();
-                        if(monsterHP<=0) {
-                            centerPrint(y++, "monster defeated!");
-                            p.gold+=10; p.exp+=20; refresh(); ncWait(); break;
-                        }
-                    } else {
-                        edmg=(int)(edmg*0.4);
+                        explained[2] = true;
                     }
                 }
-                if(edmg<1) edmg=1;
-                p.hp-=edmg;
-                centerPrint(y++, "monster dealt " + to_string(edmg) + " damage!");
-                refresh();
-                ncWait();
+                else if (choice == '3') {
+                    defendSuccess = (rand() % 100 < 40) ? 1 : 0;
+                    if (guidePhase == 3 && !explained[3]) {
+                        clear();
+                        centerPrint(getCenteredStartY(2), "Defend: 40% chance to fully block and counterattack,");
+                        centerPrint(getCenteredStartY(2)+1, "otherwise reduces damage by 60%.");
+                        centerPrint(getCenteredStartY(2)+2, "Press any key to continue.");
+                        refresh();
+                        ncWait();
+                        explained[3] = true;
+                    }
+                }
+
+                // --- Apply player damage (only for non-defend) ---
+                if (choice != '3') {
+                    monsterHP -= playerAttack;
+                    clear();
+                    yDisplay = getCenteredStartY(4);
+                    if (playerAttack > 0) {
+                        centerPrint(yDisplay++, "You dealt " + to_string(playerAttack) + " damage!");
+                    } else if (choice == '1' || choice == '2') {
+                        centerPrint(yDisplay++, "Attack missed!");
+                    }
+                    refresh();
+                    ncWait();
+                }
+
+                // Check monster death after player attack
+                if (monsterHP <= 0) {
+                    clear();
+                    centerPrint(getCenteredStartY(2), "Monster defeated!");
+                    centerPrint(getCenteredStartY(2)+1, "+10 Gold, +20 EXP");
+                    p.gold += 10;
+                    p.exp += 20;
+                    refresh();
+                    ncWait();
+                    if (step < 2) step = 2;
+                    break;
+                }
+
+                // --- Monster attack calculation ---
+                int dmg = rand() % (monsterMax - monsterMin + 1) + monsterMin;
+
+                // --- Defense handling (special screen for clarity) ---
+                if (choice == '3') {
+                    clear();
+                    yDisplay = getCenteredStartY(2);
+                    centerPrint(yDisplay++, "BATTLE - Your HP: " + to_string(p.hp) + " | Monster HP: " + to_string(monsterHP));
+
+                    if (defendSuccess) {
+                        int counterDmg = (int)(p.atk * 0.4 + dmg * (0.4 + rand() % 20 / 100.0));
+                        monsterHP -= counterDmg;
+                        p.hp += 5;
+                        dmg = 0;
+                        attron(COLOR_PAIR(4) | A_BOLD);
+                        centerPrint(yDisplay++, "Defend success! Counter attack: " + to_string(counterDmg) + " damage!");
+                        attroff(COLOR_PAIR(4) | A_BOLD);
+                        if (monsterHP > 0) {
+                            centerPrint(yDisplay++, "Monster dealt 0 damage!");
+                        }
+                        refresh();
+                        ncWait();
+
+                        if (monsterHP <= 0) {
+                            clear();
+                            centerPrint(getCenteredStartY(2), "Monster defeated!");
+                            centerPrint(getCenteredStartY(2)+1, "+10 Gold, +20 EXP");
+                            p.gold += 10;
+                            p.exp += 20;
+                            refresh();
+                            ncWait();
+                            if (step < 2) step = 2;
+                            break;
+                        }
+                    } else {
+                        dmg = (int)(dmg * 0.4);
+                        attron(COLOR_PAIR(3) | A_BOLD);
+                        centerPrint(yDisplay++, "Defense failed! Damage reduced to " + to_string(dmg));
+                        attroff(COLOR_PAIR(3) | A_BOLD);
+                        refresh();
+                        ncWait();
+                    }
+                }
+
+                if (dmg < 1) dmg = 1;
+                p.hp -= dmg;
+
+                // Show monster damage for non-defense choices
+                if (choice != '3') {
+                    clear();
+                    yDisplay = getCenteredStartY(4);
+                    centerPrint(yDisplay++, "Monster dealt " + to_string(dmg) + " damage!");
+                    refresh();
+                    ncWait();
+                }
+                // For defense, damage already shown
+
+                // --- Advance guide phase after a valid move (only once per phase) ---
+                if (guidePhase <= 3) {
+                    guidePhase++;
+                    if (guidePhase == 4) {
+                        // Training completed
+                        clear();
+                        centerPrint(getCenteredStartY(2), "Training complete! Now you can fight freely.");
+                        centerPrint(getCenteredStartY(2)+1, "Use 1, 2, or 3 anytime.");
+                        refresh();
+                        ncWait();
+                    }
+                }
             }
-            demoMap[x][y_pos]='.';
+            demoMap[x][y_pos] = '.';
         }
 
-        // ======================
-        // EXIT
-        // ======================
+        // ====================== EXIT ======================
         else if (demoMap[x][y_pos] == 'G') {
-
             clear();
 
             if (step < 3 || !hasKey) {
-                centerPrint(getCenteredStartY(1),
-                    "Finish the tutorial steps first!");
+                centerPrint(getCenteredStartY(1), "Finish the tutorial steps first!");
                 ncWait();
                 continue;
             }
 
-            centerPrint(getCenteredStartY(1),
-                "You found the exit...");
+            centerPrint(getCenteredStartY(1), "You found the exit...");
             refresh();
             napms(800);
 
-            // 🎮 进入小游戏
             tutorialMinigame(p);
-
-            // 🎯 完成
-            centerPrint(getCenteredStartY(1),
-                "Tutorial Complete!");
+            clear();   // Clear minigame leftovers
+            centerPrint(getCenteredStartY(1), "Tutorial Complete!");
             refresh();
             ncWait();
-
             break;
         }
     }
-}    
+}
 
 
 // ===== Special Ability Display =====
