@@ -413,7 +413,7 @@ void princessRoomMinigame(Player &p, bool isTrial) {
     char room[roomSize][roomSize];
     srand(time(0));
 
-    int maxSteps = isTrial ? 15 : (12 + (p.hp + 9) / 10); 
+    int maxSteps = isTrial ? 15 : (4 + (p.hp + 9) / 10); 
 
     for (int i = 0; i < roomSize; i++) {
         for (int j = 0; j < roomSize; j++) {
