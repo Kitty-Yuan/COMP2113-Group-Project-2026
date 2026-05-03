@@ -61,7 +61,7 @@ A terminal-based dungeon crawler game built with C++ and ncurses. Navigate throu
 ## 🚀 Getting Started
 
 ### Prerequisites
-- C++17 or later
+- C++11 or later
 - ncurses library (`libncurses-dev` on Linux, included on macOS)
 - Make build system
 - POSIX-compliant system (Linux, macOS, or WSL on Windows)
