@@ -62,13 +62,17 @@ bool startDifficultySession(const string &username,
                             int &monsterMax,
                             int &bossMin,
                             int &bossMax,
-                            bool allowTutorial) {
-    chooseDifficulty(username, monsterMin, monsterMax, bossMin, bossMax);
+                            bool allowTutorial,
+                            bool chooseDiffAgain = true) {
+    if (chooseDiffAgain) {
+        chooseDifficulty(username, monsterMin, monsterMax, bossMin, bossMax);
+    }
     activeSaveSlot = buildDifficultySaveSlot(username, currentDifficulty);
 
     bool loadedFromSave = false;
     user_save_system::SaveData loadedData;
-    // Only restore if save exists AND was not a completed run (cleared=true)
+    
+    // Try to load existing save (if exists and not completed)
     if (user_save_system::hasSave(activeSaveSlot) &&
         user_save_system::loadProgress(activeSaveSlot, loadedData) &&
         !loadedData.cleared) {
@@ -89,19 +93,20 @@ bool startDifficultySession(const string &username,
         refresh();
         ncWait();
 
-        if (allowTutorial) {
-            clear();
-            centerPrint(getCenteredStartY(1), "Press T for Tutorial, any other key to skip");
-            refresh();
-
-            int ch = readKeyWithWindowGuard();
-            if (ch == 'T' || ch == 't') {
-                Player temp = p;
-                tutorial(temp);
-            }
-        }
-
         initializeNewMap();
+    }
+
+    // Show tutorial prompt if allowTutorial is true (regardless of save state)
+    if (allowTutorial) {
+        clear();
+        centerPrint(getCenteredStartY(1), "Press T for Tutorial, any other key to skip");
+        refresh();
+
+        int ch = readKeyWithWindowGuard();
+        if (ch == 'T' || ch == 't') {
+            Player temp = p;
+            tutorial(temp);
+        }
     }
 
     returnToDifficultyMenu = false;
@@ -1022,7 +1027,7 @@ void displaySpecialAbilityEffect(const Monster &m, const string &abilityMsg,
 
 // Stage 2: Display attack result within the same bordered frame
 void displayAbilityDamageResult(const Monster &m, int playerDamage, int monsterDamage, 
-                                 bool playerAttackMissed, const Player &p) {
+                                 bool playerAttackMissed, const Player &p, int goldStolen = 0) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
     
@@ -1070,6 +1075,14 @@ void displayAbilityDamageResult(const Monster &m, int playerDamage, int monsterD
     }
     int playerX = (maxX - static_cast<int>(playerResult.length())) / 2;
     mvprintw(resultY++, playerX, "%s", playerResult.c_str());
+    
+    // Display gold stolen if applicable
+    if (goldStolen > 0) {
+        resultY++;
+        string goldResult = "Blob stole " + to_string(goldStolen) + " gold!";
+        int goldX = (maxX - static_cast<int>(goldResult.length())) / 2;
+        mvprintw(resultY++, goldX, "%s", goldResult.c_str());
+    }
     
     // Display monster's attack result inside border
     resultY += 2;
@@ -1393,6 +1406,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
         vector<string> abilityEffectLines;
         int monsterAbilityDamageBonus = 0;  // Monster's damage bonus from ability
         bool playerAttackMissed = false;
+        int goldStolen = 0;  // Track gold stolen by Blob
 
         // New rule: after player picks an attack (1/2), there is a 40% chance
         // to trigger special ability 1 or 2 for this turn.
@@ -1466,7 +1480,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             else if (m.name == "Blob") {
                 if (triggeredAbilityIndex == 1) {
                     // Ability 1: Consume Gold - steal 15 gold from player THIS TURN
-                    int goldStolen = min(15, p.gold);
+                    goldStolen = min(15, p.gold);
                     p.gold = max(0, p.gold - goldStolen);
                     abilityEffectLines.push_back("Consume Gold - absorbs your precious coins");
                     abilityEffectLines.push_back("You lost " + to_string(goldStolen) + " gold!");
@@ -1552,7 +1566,7 @@ void fight(Player &p, int monsterMin, int monsterMax) {
             ncWait();
         } else {
             // Ability was triggered: show full result in bordered frame instead
-            displayAbilityDamageResult(m, playerAttack, dmg, playerAttackMissed, p);
+            displayAbilityDamageResult(m, playerAttack, dmg, playerAttackMissed, p, goldStolen);
         }
     }
 }
@@ -1809,10 +1823,10 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
     if (r < 20) {
         fight(p, monsterMin, monsterMax);
     } 
-    else if (r < 35) {
+    else if (r < 30) {
         shop(p);
     } 
-    else if (r < 50) {
+    else if (r < 45) {
         clear();
         displayDifficultyLevel(currentDifficulty);
         int mushroomRoll = rand() % 100;
@@ -2199,7 +2213,7 @@ int main() {
                 break;
             }
 
-            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true, true);
             continue;
         }
         if (px == gx && py == gy && p.hasKey) { 
@@ -2238,7 +2252,7 @@ int main() {
 
             // Return to difficulty selection
             returnToDifficultyMenu = false;
-            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true);
             continue;
         }
         if (px == gx && py == gy && !p.hasKey) {
@@ -2260,7 +2274,7 @@ int main() {
 
         if (key == KET_HOME_BUTTON) {
             user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
-            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+            startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true);
             continue;
         }
 
@@ -2274,7 +2288,7 @@ int main() {
                 }
                 if (action == TopButtonAction::Home) {
                     user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
-                    startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+                    startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true);
                     continue;
                 }
                 if (action == TopButtonAction::Quit) {
@@ -2289,7 +2303,7 @@ int main() {
             movePlayer(m, p, monsterMin, monsterMax, bossMin, bossMax);
             user_save_system::saveProgress(activeSaveSlot, buildSaveData(p, monsterMin, monsterMax, bossMin, bossMax));
             if (returnToDifficultyMenu) {
-                startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, false);
+                startDifficultySession(username, activeSaveSlot, p, monsterMin, monsterMax, bossMin, bossMax, true);
                 continue;
             }
         }

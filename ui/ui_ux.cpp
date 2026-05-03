@@ -199,8 +199,8 @@ Monster ghost = {
     ~` ~` ~ `~
     )",
 
-    "Incorporeal Form: Reduces damage taken by 50%.",
-    "Haunting Presence: Chance to frighten enemies, reducing their attack power.",
+    "Incorporeal Form: Reduces your attack damage by 50%.",
+    "Spectral Drain: Reduces your attack damage by 30%.",
     "Hehehe, I'm the ghost. Don't be scared of me! I can turn into a mist to avoid physical attacks, and I can also haunt my enemies to make them less effective in battle. If you see me floating around, watch out for my spooky presence!"
 };
 
@@ -221,8 +221,8 @@ Monster chestnut = {
     (____)
 )",
 
-    "Spore Burst: Randomly releases spores that damage and poison enemies.",
-    "Fungal Shield: Creates a temporary shield that absorbs damage.",
+    "Spore Burst: Reduces your attack damage by 50%.",
+    "Toxic Cloud: 70% chance your attack will miss.",
     "Hi, I'm a chestnut monster! I can release poisonous spores to damage my enemies, and I can also create a shield made of fungus to protect myself from attacks. Be careful when you encounter me, as my spores can cause ongoing damage and my shield can make me harder to defeat!"
 };
 
@@ -242,8 +242,8 @@ Monster owl = {
       VV VV
     )",
 
-    "fireBlow: owl will get angry when player is attacking it, and it will blow fire to player randomly, dealing 10% damage",
-    "nightVision: this is a magic owl. It has the ability to call for night to come during one night. Owl can see player in the dark, so it will not miss player even in dark environment. However, player will have 20% chance to dodge owl's attack in the dark",
+    "Fire Blow: Unleashes a blazing wave dealing extra 10 damage.",
+    "Flash Blindness: 30% chance your attack will miss.",
     "This mysterious owl is known for its silent flight and piercing gaze. It can unleash a fiery breath attack that ignites the target, causing damage over time. The owl's night vision allows it to track players even in complete darkness, making it a formidable foe in shadowy environments. However, players have a chance to dodge its attacks when in the dark, adding an element of strategy to encounters with this elusive creature."
 };
 
@@ -262,8 +262,8 @@ Monster blob = {
    `------`
 )",
 
-    "eatMoney",
-    "Split: When reduced to low health, splits into two smaller blobs with half health.",
+    "Consume Gold: Steals up to 15 gold coins from you.",
+    "Gelatinous Body: Your attack passes right through, causing 100% miss.",
     "This cute monster is called Blob. It has a gelatinous body and a big appetite for gold coins. It can consume gold to heal itself, making it a tricky opponent in battle. When Blob's health drops below a certain threshold, it splits into two smaller blobs, each with half of the original health. This ability allows Blob to prolong fights and overwhelm opponents with numbers."
 };
 
