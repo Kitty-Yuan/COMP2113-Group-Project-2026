@@ -1398,7 +1398,11 @@ vector<ButtonRect> getTopButtonRects() {
 }
 }  // namespace
 
-
+/**
+ * @brief Renders interactive navigation buttons at the top of the screen.
+ * @details Draws "HOME", "QUIT", and "MANUAL" buttons inside ASCII boxes. 
+ * Buttons are positioned dynamically based on terminal width.
+ */
 void showButton(){
     vector<string> labels = {"HOME", "QUIT", "MANUAL"};
 
@@ -1426,6 +1430,13 @@ void showButton(){
     }
 }
 
+/**
+ * @brief Processes mouse click events to detect button interactions.
+ * @details Checks if mouse coordinates fall within the rectangular bounds 
+ * defined for the top-row buttons.
+ * @param event The ncurses mouse event structure.
+ * @return The TopButtonAction associated with the clicked button, or None.
+ */
 TopButtonAction getTopButtonActionFromMouse(const MEVENT &event) {
     for (const ButtonRect &rect : getTopButtonRects()) {
         if (event.x >= rect.x - 1 && event.x < rect.x + rect.width + 1 &&
@@ -1436,7 +1447,18 @@ TopButtonAction getTopButtonActionFromMouse(const MEVENT &event) {
 
     return TopButtonAction::None;
 }
-
+/**
+ * @brief Displays a custom input field and captures user string input.
+ * @details Handles real-time character echoing, backspacing, and optional 
+ * character masking (e.g., for passwords). Also manages terminal resizing 
+ * to ensure the UI stays centered during input.
+ * @param y The vertical row to place the input field.
+ * @param label The text prompt (e.g., "Username: ").
+ * @param maskInput If true, displays asterisks instead of plain text.
+ * @param contextLines Pointer to background text to redraw during refresh.
+ * @param contextStartY Starting row for redrawing context text.
+ * @return The final string entered by the user.
+ */
 string promptInputLine(int y,
                        const string &label,
                        bool maskInput,
@@ -1508,6 +1530,14 @@ string promptInputLine(int y,
     return input;
 }
 
+/**
+ * @brief Orchestrates the login and registration workflow.
+ * @details Prompts for a username and password, validates character sets 
+ * (alphanumeric, underscores, hyphens), and interfaces with the save system 
+ * to authenticate or create a new account. Allows up to 3 attempts.
+ * @param username Reference to update with the successful login name.
+ * @return true if authenticated successfully, false otherwise.
+ */
 bool authenticateUser(string &username) {
     for (int attempt = 0; attempt < 3; ++attempt) {
         clear();
@@ -1594,6 +1624,15 @@ bool authenticateUser(string &username) {
     return false;
 }
 
+/**
+ * @brief Draws a stylized ASCII mushroom with dynamic patterns.
+ * @details Uses a multi-line template and replaces placeholder characters 
+ * with a specific 'pattern' character and color pair.
+ * @param startY Top vertical coordinate.
+ * @param startX Left horizontal coordinate.
+ * @param colorPair The ncurses color index for the mushroom cap.
+ * @param pattern The character used to fill the cap (e.g., 'X', 'O').
+ */
 void drawMushroom(int startY, int startX, int colorPair, char pattern) {
     vector<string> mushroom = {
         "   ___.........___   ",
@@ -1620,7 +1659,14 @@ void drawMushroom(int startY, int startX, int colorPair, char pattern) {
         attroff(COLOR_PAIR(1));
     }
 }
-
+/**
+ * @brief Plays a fire-breathing animation effect.
+ * @details Expands a sequence of "flame" characters across the screen 
+ * horizontally and vertically over a specified duration to simulate fire.
+ * @param startX Origin horizontal coordinate.
+ * @param startY Origin vertical coordinate.
+ * @param duration Total time in milliseconds for the animation.
+ */
 void fireEffect(int startX, int startY, int duration) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
@@ -1695,11 +1741,21 @@ void fireEffect(int startX, int startY, int duration) {
 // Global monsters vector
 std::vector<Monster> monsters = {ghost, chestnut, owl, blob};
 
+/**
+ * @brief Selects a random monster from the global monster pool.
+ * @return Pointer to a Monster struct.
+ */
 Monster* getRandomMonster() {
     int randomIndex = rand() % monsters.size();
     return &monsters[randomIndex];
 }
 
+/**
+ * @brief Renders the monster encounter UI screen.
+ * @details Displays the monster's name, ASCII art, and a word-wrapped 
+ * introduction description. Also lists the monster's special attacks.
+ * @param y Reference to the vertical cursor position for sequential printing.
+ */
 void displayMonsterEncounter(int &y) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
