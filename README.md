@@ -331,13 +331,14 @@ This project demonstrates:
 
 ## 📝 License
 
-This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
+MIT Licences. This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
 
 ---
 
 ## 👥 Project Team
 
-COMP2113 Group 60 2026 - University of Hong Kong
+COMP2113 Group 68 2026 - The University of Hong Kong
+Yuan Shuyi, Yin Yuqiong, Lu Xinqi, Zhou Hanyu
 
 ---
 
