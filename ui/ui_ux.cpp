@@ -34,6 +34,16 @@ __  __                   _  __      _       _     _
                     MAZE NIGHT
 )";
 
+/**
+ * @brief Renders a single progress-style attribute bar.
+ * @details Calculates the fill percentage and displays it with a specific color 
+ * based on the attribute type (HP, ATK, or DEF).
+ * @param value The current value of the attribute.
+ * @param maxVal The maximum possible value for scaling.
+ * @param type The string identifier for the attribute ("HP", "ATK", "DEF").
+ * @param y Vertical screen coordinate.
+ * @param x Horizontal screen coordinate.
+ */
 void show_ATT(int value, int maxVal, string type, int y, int x) {
     const int BAR_LENGTH = 12;
 
@@ -70,7 +80,12 @@ void show_ATT(int value, int maxVal, string type, int y, int x) {
              type == "HP" ? "HP" : type == "ATK" ? "ATK" : "DEF", value, maxVal);
 }
 
-// ===== Player Stats Display Panel =====
+/**
+ * @brief Renders the complete player statistics panel.
+ * @details Draws a framed GUI box containing HP, ATK, DEF, and EXP bars, 
+ * along with numeric values for Gold, Level, and Key status.
+ * @param stats Constant reference to the PlayerStats structure to be displayed.
+ */
 void displayPlayerStats(const PlayerStats &stats) {
     int startX = 2;
     int startY = 1;
@@ -342,6 +357,10 @@ struct Cloud {
     }
 };
 
+/**
+ * @brief Represents the player character in the side-scrolling demo.
+ * @details Handles the rendering of the player ASCII art at a fixed screen position.
+ */
 class SideScrollPlayer {
 private:
     int screenY;
@@ -351,6 +370,7 @@ private:
     int height;
 
 public:
+    /** @brief Initializes the player's screen position and calculates art bounds. */
     SideScrollPlayer(int centerY, int centerX) : screenY(centerY), screenX(centerX), art(player) {
         height = 0;
         width = 0;
@@ -373,6 +393,7 @@ public:
         }
     }
 
+    /** @brief Renders the player art. */
     void draw() const {
         int lineY = screenY;
         string line;
@@ -390,6 +411,11 @@ public:
     }
 };
 
+/**
+ * @brief Main engine for the side-scrolling mini-game/demo.
+ * @details Manages the lifecycle of the demo, including cloud spawning, 
+ * movement updates, input handling, and UI rendering.
+ */
 class SideScrollGame {
 private:
     vector<Cloud> clouds;
@@ -401,6 +427,7 @@ private:
     bool running;
 
 public:
+    /** @brief Sets up ncurses environment and initializes cloud objects. */
     SideScrollGame() : cloudSpawnCounter(0), cloudSpawnDelay(20), score(0), running(true) {
         initscr();
         cbreak();
@@ -416,7 +443,7 @@ public:
             spawnCloud(screenWidth + (i * 30));
         }
     }
-
+    /** @brief Cleans up ncurses and closes the window. */
     ~SideScrollGame() {
         endwin();
     }
@@ -497,7 +524,11 @@ public:
     }
 };
 
-// ===== User interaction UI =====
+/**
+ * @brief Class managing the interactive monster selection menu.
+ * @details Handles vertical menu navigation, rendering monster ASCII previews, 
+ * and displaying specific monster combat attributes.
+ */
 class user_interaction {
 private:
     int selected;
@@ -506,10 +537,11 @@ private:
     bool quit_flag;
 
 public:
+    /** @brief Initializes the menu selection to the first monster in the list. */
     user_interaction() : selected(0), quit_flag(false) {
         monsters_list = {&ghost, &chestnut, &owl};
     }
-
+    /** @brief Renders the full monster list, highlights the selection, and draws ASCII art. */
     void display_menu() {
         clear();
         getmaxyx(stdscr, max_y, max_x);
@@ -554,6 +586,7 @@ public:
         refresh();
     }
 
+    /** @brief Handles arrow keys for navigation, Enter for selection, and 'Q' for exit. */
     void handle_input(int ch) {
         switch (ch) {
             case KEY_UP:
@@ -575,6 +608,7 @@ public:
         }
     }
 
+    /** @brief Main loop for the monster menu interaction. */
     void run() {
         while (!quit_flag) {
             display_menu();
@@ -584,6 +618,7 @@ public:
     }
 };
 
+/** @brief Entry point for the side-scrolling mini-game demo. */
 int runSideScrollDemo() {
     SideScrollGame game;
     game.run();
@@ -596,6 +631,7 @@ int runSideScrollDemo() {
     return 0;
 }
 
+/** @brief Entry point for the monster selection menu demo. */
 int runMonsterMenuDemo() {
     initscr();
     clear();
@@ -612,6 +648,7 @@ int runMonsterMenuDemo() {
     return 0;
 }
 
+/** @brief Helper to calculate the X coordinate for horizontally centering a string. */
 int getCenteredX(const string &text) {
     [[maybe_unused]] int maxY;
     int maxX;
@@ -619,16 +656,19 @@ int getCenteredX(const string &text) {
     return max(0, (maxX - static_cast<int>(text.size())) / 2);
 }
 
+/** @brief Helper to calculate the starting Y coordinate for vertically centering a block of text. */
 int getCenteredStartY(int totalLines) {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
     return max(0, (maxY - totalLines) / 2);
 }
 
+/** @brief Utility function to print a string at the horizontal center of a specific row. */
 void centerPrint(int y, const string &text) {
     mvprintw(y, getCenteredX(text), "%s", text.c_str());
 }
 
+/** @brief Validates if the current terminal window meets the 120x32 minimum size. */
 bool isWindowLargeEnough() {
     const int requiredRows = 32;
     const int requiredCols = 120;
@@ -637,6 +677,7 @@ bool isWindowLargeEnough() {
     return maxY >= requiredRows && maxX >= requiredCols;
 }
 
+/** @brief Pauses the game and displays a warning until the terminal is resized sufficiently. */
 void enforceWindowSizeGate() {
     const int requiredRows = 32;
     const int requiredCols = 120;
@@ -669,6 +710,11 @@ void enforceWindowSizeGate() {
     timeout(-1);
 }
 
+/** * @brief Reads a key while ensuring the UI is valid and large enough.
+ * @details Handles mouse clicks on top-bar buttons (Home/Help/Quit) and 
+ * redirects window resizing events to the size enforcement gate.
+ * @return The character code or a custom constant like KET_HOME_BUTTON.
+ */
 int readKeyWithWindowGuard() {
     timeout(120);
     while (true) {
@@ -712,12 +758,14 @@ int readKeyWithWindowGuard() {
     }
 }
 
+/** @brief Logic check to see if an input key (Enter) should advance the current screen. */
 bool shouldAdvanceFromWaitKey(int ch) {
     // Accept only ENTER for a concise, explicit continue action.
     if (ch == ERR || ch == KEY_RESIZE || ch == KEY_MOUSE) return false;
     return ch == '\n' || ch == KEY_ENTER;
 }
 
+/** @brief Draws a reverse-video "Press ENTER to continue" hint at the bottom. */
 void drawSpaceContinueHint() {
     const string hint = "Press ENTER to continue...";
     int maxY, maxX;
@@ -730,6 +778,7 @@ void drawSpaceContinueHint() {
     attroff(COLOR_PAIR(1) | A_BOLD | A_REVERSE);
 }
 
+/** @brief Renders a red highlighted continue hint with bold styling. */
 void showEnterToContinueHint() {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
@@ -752,6 +801,10 @@ void showEnterToContinueHint() {
     refresh();
 }
 
+/** * @brief Standard blocking wait function that pauses for an Enter key press.
+ * @details Continuously checks for window size validity and handles top-bar button 
+ * clicks (like Home) during the wait period.
+ */
 void ncWait() {
     const string hint = "Press ENTER to continue...";
 
