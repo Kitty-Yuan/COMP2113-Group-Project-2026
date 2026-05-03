@@ -1086,16 +1086,13 @@ void tutorial(Player &p) {
                 int defendSuccess = 0;
 
                 // Check if choice matches required guide phase (if in training)
-                bool isAllowed = false;
                 if (guidePhase <= 3) {
-                    if (choice == ('0' + guidePhase)) isAllowed = true;
-                    else {
+                    if (choice == ('0' + guidePhase)) {
                         showInvalidMsg = true;
                         continue;
                     }
                 } else {
-                    if (choice == '1' || choice == '2' || choice == '3') isAllowed = true;
-                    else {
+                    if (choice != '1' && choice != '2' && choice != '3') {
                         showInvalidMsg = true;
                         continue;
                     }
