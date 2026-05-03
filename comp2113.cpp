@@ -1420,6 +1420,14 @@ void drawBossAnimFrame(int frame, int baseX, int baseY, int maxY) {
     attroff(COLOR_PAIR(colorPair) | attrs);
 }
 
+/**
+ * @brief Manages a standard combat encounter.
+ * @details Handles the turn-based loop including player input (Normal, Strong, Defend),
+ * real-time monster animations, and special ability triggers for specific monster types.
+ * @param p Reference to the player state.
+ * @param monsterMin Minimum possible monster attack damage.
+ * @param monsterMax Maximum possible monster attack damage.
+ */
 // ===== Battle System =====
 void fight(Player &p, int monsterMin, int monsterMax) {
     clear();
@@ -1713,6 +1721,14 @@ void fight(Player &p, int monsterMin, int monsterMax) {
     }
 }
 
+/**
+ * @brief Manages the final boss encounter.
+ * @details Similar to standard combat but utilizes unique boss animation phases 
+ * and increased HP. Higher rewards in gold and experience are granted upon victory.
+ * @param p Reference to the player state.
+ * @param bossMin Minimum boss attack damage.
+ * @param bossMax Maximum boss attack damage.
+ */
 // ===== Boss Fight =====
 void bossFight(Player &p, int bossMin, int bossMax) {
     int y = getCenteredStartY(4);
@@ -1862,6 +1878,12 @@ void bossFight(Player &p, int bossMin, int bossMax) {
     }
 }
 
+/**
+ * @brief Handles the interactive shop interface.
+ * @details Displays a themed boutique where the player can exchange gold for 
+ * healing items or permanent stat increases. Includes graphical mushroom renders.
+ * @param p Reference to the player state for gold and stat updates.
+ */
 // ===== Shop System =====
 void shop(Player &p) {
     bool shopping = true;
