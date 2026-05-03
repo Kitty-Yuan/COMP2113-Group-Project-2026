@@ -573,7 +573,14 @@ void princessRoomMinigame(Player &p, bool isTrial) {
         }
     }
 }
-// ===== Difficulty =====
+/**
+ * @brief Handles difficulty selection UI and sets game parameters.
+ * @details Displays a menu with difficulty levels (Easy to Hell). Already cleared 
+ * levels are highlighted. Based on choice, it sets map SIZE and monster stats.
+ * @param username Current user (used to check cleared status).
+ * @param[out] monsterMin, monsterMax Min/Max attack range for regular monsters.
+ * @param[out] bossMin, bossMax Min/Max attack range for the final boss.
+ */
 void chooseDifficulty(const string &username, int &monsterMin, int &monsterMax, int &bossMin, int &bossMax) {
     int diff = 0;
 
@@ -638,14 +645,18 @@ void chooseDifficulty(const string &username, int &monsterMin, int &monsterMax, 
     ncWait();
 }
 
-//Intro Screen
+/**
+ * @brief Displays the narrative introduction screen.
+ * @details Shows a splash screen with basic control instructions and event 
+ * hints to set the mood for the adventure.
+ */
 void introScreen() {
     clear();
 
     int y = getCenteredStartY(10);
 
     centerPrint(y++, "==================================");
-    centerPrint(y++, "      YOUR ADVENTURE BEGINS      ");
+    centerPrint(y++, "       YOUR ADVENTURE BEGINS      ");
     centerPrint(y++, "==================================");
     y++;
 
@@ -673,8 +684,12 @@ void introScreen() {
     }
 }
 
-
-// ===== Level Up =====
+/**
+ * @brief Processes player experience and handles level-up stat increases.
+ * @details Checks if EXP >= 100, then increments level and boosts HP, ATK, and DEF.
+ * Displays a level-up notification to the player.
+ * @param p Reference to the Player object to be updated.
+ */
 void levelUp(Player &p) {
     while (p.exp >= 100) {
         p.exp -= 100;
@@ -690,7 +705,12 @@ void levelUp(Player &p) {
     }
 }
 
-//Tutorial Catch Princess
+/**
+ * @brief A simplified version of the chase mini-game for the tutorial.
+ * @details Introduces the player to the movement-based chase mechanic on a 
+ * fixed 10x10 grid where the enemy moves every two player steps.
+ * @param p Reference to the Player (used for consistency, stats not modified here).
+ */
 void tutorialMinigame([[maybe_unused]] Player &p) {
     const int N = 10;
     char grid[N][N];
@@ -782,7 +802,6 @@ void tutorialMinigame([[maybe_unused]] Player &p) {
         }
     }
 }
-
 
 // ===== Tutorial =====
 void tutorial(Player &p) {
