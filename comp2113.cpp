@@ -1980,6 +1980,17 @@ void shop(Player &p) {
     }
     clear();
 }
+
+/**
+ * @brief Triggers a random world event based on player movement.
+ * @details Determines the outcome of landing on an empty cell, including 
+ * monster encounters, shop access, finding stat-boosting mushrooms, or no event.
+ * @param p Player reference.
+ * @param monsterMin Minimum monster attack.
+ * @param monsterMax Maximum monster attack.
+ * @param bossMin Minimum boss attack.
+ * @param bossMax Maximum boss attack.
+ */
 // ===== Event System =====
 void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossMin, [[maybe_unused]] int bossMax) {
     int r = rand() % 100;
@@ -2030,6 +2041,12 @@ void event(Player &p, int monsterMin, int monsterMax, [[maybe_unused]] int bossM
     ncWait();
 }
 
+/**
+ * @brief Displays the treasure chest opening sequence.
+ * @details Renders a multi-frame ASCII animation of a chest opening, 
+ * followed by a gold reward and a summary of the player's updated balance.
+ * @param p Player reference for gold updates.
+ */
 // ===== Chest Event Display =====
 void displayChestEvent(Player &p) {
     int maxY, maxX;
@@ -2134,9 +2151,13 @@ void displayChestEvent(Player &p) {
     ncWait();
 }
 
+/**
+ * @brief Renders the game world grid to the terminal.
+ * @details Draws a formatted grid showing the player position (P), walls (#), 
+ * undiscovered cells (?), and explored paths (.). Uses color-coded attributes 
+ * for improved navigation visibility.
+ */
 // ===== Map Display =====
-#include <ncurses.h>
-
 void displayMap() {
     // Don't clear here - let the main loop handle clearing
     // clear();
@@ -2227,6 +2248,16 @@ void displayMap() {
     refresh();
 }
 
+/**
+ * @brief Handles player movement and interaction with map cells.
+ * @details Updates player coordinates, tracks discovery/visits, and triggers 
+ * specific logic for keys, traps, chests, bosses, or the rescue goal based 
+ * on the target cell's character.
+ * @param m Movement direction input (w/a/s/d).
+ * @param p Player reference.
+ * @param monsterMin/Max Attack range for standard encounters.
+ * @param bossMin/Max Attack range for boss encounters.
+ */
 // ===== Movement =====
 void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, int bossMax) {
     int nx = px, ny = py;
@@ -2303,6 +2334,16 @@ void movePlayer(char m, Player &p, int monsterMin, int monsterMax, int bossMin, 
             
 }
 
+/**
+ * @brief Entry point and core engine loop for the game.
+ * @details Initializes ncurses settings, color pairs, and mouse support.
+ * Manages the high-level game state, including:
+ * 1. User authentication and title/intro sequences.
+ * 2. Difficulty session management and save data persistence.
+ * 3. The primary game loop, which refreshes the map and player stats.
+ * 4. Victory/death conditions and input handling for movement and mouse events.
+ * @return 0 on successful termination.
+ */
 // ===== Main =====
 int main() {
     setlocale(LC_ALL, "");
